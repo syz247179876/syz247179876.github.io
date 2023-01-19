@@ -1,0 +1,577 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="django对接支付宝的采坑之旅一、背景自己使用Django开发的电子商城项目中订单提交支付需要对支付宝进行付款，在开发中使用alipay的接口时出现了一些问题，不过最后降低版本后，成功实现了沙箱模拟支付宝接口[[1]][1]的调用。做此笔记，记录学习过程中遇到的问题，防止以后出现同样的问题浪费时间。 二、使用支付宝接口的过程我所开发的环境：Python3.6+Django2.2 1.安装依赖包p">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django对接支付宝的采坑之旅（详细介绍）">
+<meta property="og:url" content="https://syzzjw.cn/2020/06/14/django%E5%AF%B9%E6%8E%A5%E6%94%AF%E4%BB%98%E5%AE%9D%E7%9A%84%E9%87%87%E5%9D%91%E4%B9%8B%E6%97%85%EF%BC%88%E8%AF%A6%E7%BB%86%E4%BB%8B%E7%BB%8D%EF%BC%89/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="django对接支付宝的采坑之旅一、背景自己使用Django开发的电子商城项目中订单提交支付需要对支付宝进行付款，在开发中使用alipay的接口时出现了一些问题，不过最后降低版本后，成功实现了沙箱模拟支付宝接口[[1]][1]的调用。做此笔记，记录学习过程中遇到的问题，防止以后出现同样的问题浪费时间。 二、使用支付宝接口的过程我所开发的环境：Python3.6+Django2.2 1.安装依赖包p">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/VDR3%29KRV2L9%7B%29AXIQPXOQE7.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%5BY%5BOK1EHC%25O%249U0CKUWA%7D40.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/W%25ZCJGIKLZI%60PRIX68X0I_Y.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/M7JJ%7D%24%28QKCRY%40%60%29J%5DC%28H9%293.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/W%25ZCJGIKLZI%60PRIX68X0I_Y.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%24L1%601S%5BA%602%7DMTRLMXM%60VQ%29P.png">
+<meta property="article:published_time" content="2020-06-14T15:15:21.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.438Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="AliPay">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/VDR3%29KRV2L9%7B%29AXIQPXOQE7.png">
+  
+  <title>Django对接支付宝的采坑之旅（详细介绍） - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Django对接支付宝的采坑之旅（详细介绍）">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-06-14 23:15" pubdate>
+        2020年6月14日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      9.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      30 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Django对接支付宝的采坑之旅（详细介绍）</h1>
+            
+            <div class="markdown-body">
+              <h3 id="django对接支付宝的采坑之旅"><a href="#django对接支付宝的采坑之旅" class="headerlink" title="django对接支付宝的采坑之旅"></a><strong>django对接支付宝的采坑之旅</strong></h3><h4 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a><strong>一、背景</strong></h4><p>自己使用Django开发的电子商城项目中订单提交支付需要对支付宝进行付款，在开发中使用alipay的接口时出现了一些问题，不过最后降低版本后，成功实现了沙箱模拟支付宝接口[[1]][1]的调用。做此笔记，记录学习过程中遇到的问题，防止以后出现同样的问题浪费时间。</p>
+<h4 id="二、使用支付宝接口的过程"><a href="#二、使用支付宝接口的过程" class="headerlink" title="二、使用支付宝接口的过程"></a><strong>二、使用支付宝接口的过程</strong></h4><p>我所开发的环境：Python3.6+Django2.2</p>
+<h5 id="1-安装依赖包"><a href="#1-安装依赖包" class="headerlink" title="1.安装依赖包"></a><strong>1.安装依赖包</strong></h5><p><code>pip install python-alipay-sdk==1.10.1</code></p>
+<p>这里我选择了安装1.10.1版本的alipay包，因为一开始安装了最新版的，在创建<code>alipay</code>对象的时候出现了<code>startwith无法对bytes类型的密钥进行判断加载</code>，感到很奇怪，因为<code>startwith</code>函数在我python3.6的版本一下是针对的只有str类型。尝试了很多次后，经提点，降低了alipay的版本。因为不同版本改动还是比较大的，这才使得异常消失。</p>
+<h5 id="2-注册成为支付宝开发者"><a href="#2-注册成为支付宝开发者" class="headerlink" title="2.注册成为支付宝开发者"></a><strong>2.注册成为支付宝开发者</strong></h5><p>首先添加应用</p>
+<img style="width:90%" src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/VDR3%29KRV2L9%7B%29AXIQPXOQE7.png" srcset="/img/loading.gif" lazyload />
+
+
+<p>添加应用成功后，获取到的appid，这个需要保存到项目中（稍后会提到），然后进行密钥的配置</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%5BY%5BOK1EHC%25O%249U0CKUWA%7D40.png" srcset="/img/loading.gif" lazyload>{:width=50%}</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/W%25ZCJGIKLZI%60PRIX68X0I_Y.png" srcset="/img/loading.gif" lazyload>{:width=60%}</p>
+<h5 id="3-获取应用公私密钥以及支付宝公钥"><a href="#3-获取应用公私密钥以及支付宝公钥" class="headerlink" title="3.获取应用公私密钥以及支付宝公钥"></a><strong>3.获取应用公私密钥以及支付宝公钥</strong></h5><p>获取密钥的方式，有两种，一种是利用openssl获取密钥，另一种使用支付宝提供的密钥生成工具获取密钥。</p>
+<p>我使用的是用支付宝开发平台助手进行密钥的生成。</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/M7JJ%7D%24%28QKCRY%40%60%29J%5DC%28H9%293.png" srcset="/img/loading.gif" lazyload>{:width=60%}</p>
+<p>按照上述选择后生成密钥，可以将密钥赋值下来，稍后添加到项目中使用，以及用应用公钥来获取支付宝密钥。</p>
+<p>去开发者界面设置接口加签方式，点击设置。</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/W%25ZCJGIKLZI%60PRIX68X0I_Y.png" srcset="/img/loading.gif" lazyload>{:width=60%}</p>
+<p>进去后，输入应用公钥，然后获取支付宝公钥。</p>
+<p>这里简单说一下:因为我对加密算法不是很了解，就我知道的介绍一下：</p>
+<p>（1）公钥和私钥可以适用于非对称加密算法。公钥顾名思义，是公开的，因此公钥尝尝用来进行加密，而私钥是隐私的，只有本人知道，因此用于对公钥加密后的信息进行解密，这样就只有我拿到了我的信息，别人是拿不到的。</p>
+<p>（2）数字签名，是由交易信息＋私钥信息计算得出的，因为数字签名隐含私钥信息，所以可以证明自己的身份。</p>
+<h5 id="4-Django使用alipay"><a href="#4-Django使用alipay" class="headerlink" title="4.Django使用alipay"></a><strong>4.Django使用alipay</strong></h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><br>    app_private_key_string = <span class="hljs-built_in">open</span>(settings.APP_KEY_PRIVATE_PATH).read()<br>    alipay_public_key_string = <span class="hljs-built_in">open</span>(settings.ALIPAY_PUBLIC_KEY_PATH).read()<br>	<br>	<br><span class="hljs-meta">@property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_alipay</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-comment"># 2.创建alipay对象</span><br>        alipay = AliPay(<br>            appid=settings.ALIPAY_APPID,  <span class="hljs-comment"># 创建的应用appid</span><br>            app_notify_url=settings.ALIPAY_NOTIFY_URL,  <span class="hljs-comment"># 处理支付宝回调的POST请求</span><br>            app_private_key_string=self.app_private_key_string,  <span class="hljs-comment"># 应用私钥</span><br>            alipay_public_key_string=self.alipay_public_key_string, <span class="hljs-comment"># 支付宝公钥</span><br>            sign_type=<span class="hljs-string">&quot;RSA2&quot;</span>,  <span class="hljs-comment"># 2048推荐使用RSA2非对称加密算法，1024使用RSA非对称加密算法</span><br>            debug=settings.ALIPAY_DEBUG, <span class="hljs-comment"># 是否启用调试模式，调试模式就是沙箱环境，非调试模式就是项目上线环境，两者的区别在于请求支付宝的url不同</span><br>        )<br>        <span class="hljs-keyword">return</span> alipay<br><br><span class="hljs-meta">    @staticmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">combine_str</span>(<span class="hljs-params">alipay, order</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;assemble the url of get&quot;&quot;&quot;</span><br>        order_string = alipay.api_alipay_trade_page_pay(<br>            subject=settings.ALIPAY_SUBJECT,  <span class="hljs-comment"># 该支付界面的主题</span><br>            out_trade_no=order.orderId,  <span class="hljs-comment"># 交易编号</span><br>            total_amount=<span class="hljs-built_in">str</span>(order.total_price),  <span class="hljs-comment"># 支付总金额，类型为Decimal(),不支持序列化，需要强转成str</span><br>            return_url=settings.ALIPAY_RETURN_URL,  <span class="hljs-comment"># 支付成功后的回调地址,用于显示给用户</span><br>        )<br>        <span class="hljs-keyword">return</span> order_string<br></code></pre></td></tr></table></figure>
+
+<p>以上两个方法分别是生成alipay对象，和组装url，向支付宝发送GET请求，跳转到支付界面。</p>
+<p><strong>注：</strong></p>
+<p>alipay2.0+ 和我当前1.10.1的版本关于Alipay的区别还是有一些的，下面是1.10.1的Alipay的部分源码。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params"></span></span><br><span class="hljs-function"><span class="hljs-params">    self,</span></span><br><span class="hljs-function"><span class="hljs-params">    appid,</span></span><br><span class="hljs-function"><span class="hljs-params">    app_notify_url,</span></span><br><span class="hljs-function"><span class="hljs-params">    app_private_key_path=<span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    app_private_key_string=<span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    alipay_public_key_path=<span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    alipay_public_key_string=<span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    sign_type=<span class="hljs-string">&quot;RSA2&quot;</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    debug=<span class="hljs-literal">False</span></span></span><br><span class="hljs-function"><span class="hljs-params"></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    初始化:</span><br><span class="hljs-string">    alipay = AliPay(</span><br><span class="hljs-string">      appid=&quot;&quot;,</span><br><span class="hljs-string">      app_notify_url=&quot;http://example.com&quot;,</span><br><span class="hljs-string">      app_private_key_path=&quot;&quot;,</span><br><span class="hljs-string">      alipay_public_key_path=&quot;&quot;,</span><br><span class="hljs-string">      sign_type=&quot;RSA2&quot;</span><br><span class="hljs-string">    )</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    self._appid = <span class="hljs-built_in">str</span>(appid) <br>    self._app_notify_url = app_notify_url<br>    self._app_private_key_path = app_private_key_path  <span class="hljs-comment"># 2.0+版本砍掉了，需要自己从配置文件中read()出来</span><br>    self._app_private_key_string = app_private_key_string<br>    self._alipay_public_key_path = alipay_public_key_path  <span class="hljs-comment"># 2.0+版本砍掉了</span><br>    self._alipay_public_key_string = alipay_public_key_string<br><br>    self._app_private_key = <span class="hljs-literal">None</span><br>    self._alipay_public_key = <span class="hljs-literal">None</span><br>    <span class="hljs-keyword">if</span> sign_type <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> (<span class="hljs-string">&quot;RSA&quot;</span>, <span class="hljs-string">&quot;RSA2&quot;</span>):<br>        <span class="hljs-keyword">raise</span> AliPayException(<span class="hljs-literal">None</span>, <span class="hljs-string">&quot;Unsupported sign type &#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(sign_type))<br>    self._sign_type = sign_type<br><br>    <span class="hljs-keyword">if</span> debug <span class="hljs-keyword">is</span> <span class="hljs-literal">True</span>:<br>        self._gateway = <span class="hljs-string">&quot;https://openapi.alipaydev.com/gateway.do&quot;</span>  <span class="hljs-comment"># 沙箱环境</span><br>    <span class="hljs-keyword">else</span>:<br>        self._gateway = <span class="hljs-string">&quot;https://openapi.alipay.com/gateway.do&quot;</span>  <span class="hljs-comment"># 上线环境</span><br><br>    <span class="hljs-comment"># load key file immediately</span><br>    self._load_key()  <span class="hljs-comment"># 加载pem密钥文件中的密钥</span><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_load_key</span>(<span class="hljs-params">self</span>):</span><br>    <span class="hljs-comment"># load private key</span><br>    content = self._app_private_key_string<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> content:<br>        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(self._app_private_key_path) <span class="hljs-keyword">as</span> fp:   <span class="hljs-comment"># 2.0+版本砍掉了，直接调用content进行配置</span><br>            content = fp.read()<br>    self._app_private_key = RSA.importKey(content)  <span class="hljs-comment"># 调用RSA的非对称加密算法</span><br><br>    <span class="hljs-comment"># load public key</span><br>    content = self._alipay_public_key_string<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> content:<br>        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(self._alipay_public_key_path) <span class="hljs-keyword">as</span> fp:<br>            content = fp.read()<br>    self._alipay_public_key = RSA.importKey(content)<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>生成实例化主要过程是读取配置文件，然后进行RSA加密算法，获取加密后的密钥。</p>
+<p>一开始我错的原因在于RSA包中的加密算法。如下是RSA加密密钥的算法的加密部分源码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">import_key</span>(<span class="hljs-params">extern_key, passphrase=<span class="hljs-literal">None</span></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;Import an RSA key (public or private half), encoded in standard</span><br><span class="hljs-string">    form.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">      extern_key (string or byte string):</span><br><span class="hljs-string">        The RSA key to import.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        The following formats are supported for an RSA **public key**:</span><br><span class="hljs-string"></span><br><span class="hljs-string">        - X.509 certificate (binary or PEM format)</span><br><span class="hljs-string">        - X.509 ``subjectPublicKeyInfo`` DER SEQUENCE (binary or PEM</span><br><span class="hljs-string">          encoding)</span><br><span class="hljs-string">        - `PKCS#1`_ ``RSAPublicKey`` DER SEQUENCE (binary or PEM encoding)</span><br><span class="hljs-string">        - OpenSSH (textual public key only)</span><br><span class="hljs-string"></span><br><span class="hljs-string">        The following formats are supported for an RSA **private key**:</span><br><span class="hljs-string"></span><br><span class="hljs-string">        - PKCS#1 ``RSAPrivateKey`` DER SEQUENCE (binary or PEM encoding)</span><br><span class="hljs-string">        - `PKCS#8`_ ``PrivateKeyInfo`` or ``EncryptedPrivateKeyInfo``</span><br><span class="hljs-string">          DER SEQUENCE (binary or PEM encoding)</span><br><span class="hljs-string">        - OpenSSH (textual public key only)</span><br><span class="hljs-string"></span><br><span class="hljs-string">        For details about the PEM encoding, see `RFC1421`_/`RFC1423`_.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        The private key may be encrypted by means of a certain pass phrase</span><br><span class="hljs-string">        either at the PEM level or at the PKCS#8 level.</span><br><span class="hljs-string"></span><br><span class="hljs-string">      passphrase (string):</span><br><span class="hljs-string">        In case of an encrypted private key, this is the pass phrase from</span><br><span class="hljs-string">        which the decryption key is derived.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Returns: An RSA key object (:class:`RsaKey`).</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Raises:</span><br><span class="hljs-string">      ValueError/IndexError/TypeError:</span><br><span class="hljs-string">        When the given key cannot be parsed (possibly because the pass</span><br><span class="hljs-string">        phrase is wrong).</span><br><span class="hljs-string"></span><br><span class="hljs-string">    .. _RFC1421: http://www.ietf.org/rfc/rfc1421.txt</span><br><span class="hljs-string">    .. _RFC1423: http://www.ietf.org/rfc/rfc1423.txt</span><br><span class="hljs-string">    .. _`PKCS#1`: http://www.ietf.org/rfc/rfc3447.txt</span><br><span class="hljs-string">    .. _`PKCS#8`: http://www.ietf.org/rfc/rfc5208.txt</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    extern_key = tobytes(extern_key)<br>    <span class="hljs-keyword">if</span> passphrase <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        passphrase = tobytes(passphrase)<br><br>    <span class="hljs-keyword">if</span> extern_key.startswith(<span class="hljs-string">b&#x27;-----&#x27;</span>):<br>        <span class="hljs-comment"># This is probably a PEM encoded key.</span><br>        (der, marker, enc_flag) = PEM.decode(tostr(extern_key), passphrase)<br>        <span class="hljs-keyword">if</span> enc_flag:<br>            passphrase = <span class="hljs-literal">None</span><br>        <span class="hljs-keyword">return</span> _import_keyDER(der, passphrase)<br><br>    <span class="hljs-keyword">if</span> extern_key.startswith(<span class="hljs-string">b&#x27;ssh-rsa &#x27;</span>):<br>            <span class="hljs-comment"># This is probably an OpenSSH key</span><br>            keystring = binascii.a2b_base64(extern_key.split(<span class="hljs-string">b&#x27; &#x27;</span>)[<span class="hljs-number">1</span>])<br>            keyparts = []<br>            <span class="hljs-keyword">while</span> <span class="hljs-built_in">len</span>(keystring) &gt; <span class="hljs-number">4</span>:<br>                l = struct.unpack(<span class="hljs-string">&quot;&gt;I&quot;</span>, keystring[:<span class="hljs-number">4</span>])[<span class="hljs-number">0</span>]<br>                keyparts.append(keystring[<span class="hljs-number">4</span>:<span class="hljs-number">4</span> + l])<br>                keystring = keystring[<span class="hljs-number">4</span> + l:]<br>            e = Integer.from_bytes(keyparts[<span class="hljs-number">1</span>])  <span class="hljs-comment"># 将bytes类型的变量转为十进制</span><br>            n = Integer.from_bytes(keyparts[<span class="hljs-number">2</span>])<br>            <span class="hljs-keyword">return</span> construct([n, e])<br><br>    <span class="hljs-keyword">if</span> bord(extern_key[<span class="hljs-number">0</span>]) == <span class="hljs-number">0x30</span>:<br>            <span class="hljs-comment"># This is probably a DER encoded key</span><br>            <span class="hljs-keyword">return</span> _import_keyDER(extern_key, passphrase)<br><br>    <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;RSA key format is not supported&quot;</span>)<br><br><span class="hljs-comment"># Backward compatibility</span><br>importKey = import_key<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong> </p>
+<p>alipay2.0+版本中增加了对<code>extern_key.startswith(b&#39;-----begin openssl key &#39;):</code>的判断，而问题就出在这里。</p>
+<h5 id="5-调用支付宝接口使用的流程"><a href="#5-调用支付宝接口使用的流程" class="headerlink" title="5.调用支付宝接口使用的流程"></a><strong>5.调用支付宝接口使用的流程</strong></h5><p>下面我结合我的项目中对接支付宝的例子进行说明：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br></pre></td><td class="code"><pre><code class="hljs python"><br>common_logger = Logging.logger(<span class="hljs-string">&#x27;django&#x27;</span>)<br><br>order_logger = Logging.logger(<span class="hljs-string">&#x27;order_&#x27;</span>)<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PaymentOperation</span>(<span class="hljs-params">APIView</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    the operation of Ali payment</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    serializer_class = PaymentSerializer<br><br>    app_private_key_string = <span class="hljs-built_in">open</span>(settings.APP_KEY_PRIVATE_PATH).read()<br>    alipay_public_key_string = <span class="hljs-built_in">open</span>(settings.ALIPAY_PUBLIC_KEY_PATH).read()<br><br><span class="hljs-meta">    @property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_serializer_class</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">return</span> self.serializer_class<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_serializer</span>(<span class="hljs-params">self, *args, **kwargs</span>):</span><br>        serializer_class = self.serializer_class<br>        <span class="hljs-keyword">return</span> serializer_class(*args, **kwargs)<br><br><br><span class="hljs-meta">    @property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_alipay</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-comment"># 2.创建alipay对象</span><br>        alipay = AliPay(<br>            appid=settings.ALIPAY_APPID,<br>            app_notify_url=settings.ALIPAY_NOTIFY_URL,  <span class="hljs-comment"># 处理支付宝回调的POST请求</span><br>            app_private_key_string=self.app_private_key_string,<br>            alipay_public_key_string=self.alipay_public_key_string,<br>            sign_type=<span class="hljs-string">&quot;RSA2&quot;</span>,<br>            debug=settings.ALIPAY_DEBUG,<br>        )<br>        <span class="hljs-keyword">return</span> alipay<br><br><span class="hljs-meta">    @staticmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">combine_str</span>(<span class="hljs-params">alipay, order</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;assemble the url of get&quot;&quot;&quot;</span><br>        order_string = alipay.api_alipay_trade_page_pay(<br>            subject=settings.ALIPAY_SUBJECT,<br>            out_trade_no=order.orderId,  <span class="hljs-comment"># 交易编号</span><br>            total_amount=<span class="hljs-built_in">str</span>(order.total_price),  <span class="hljs-comment"># 支付总金额，类型为Decimal(),不支持序列化，需要强转成str</span><br>            return_url=settings.ALIPAY_RETURN_URL,  <span class="hljs-comment"># 支付成功后的回调地址,显示给用户</span><br>        )<br>        <span class="hljs-keyword">return</span> order_string<br><br><span class="hljs-meta">    @method_decorator(<span class="hljs-params">login_required(<span class="hljs-params">login_url=<span class="hljs-string">&#x27;consumer/login/&#x27;</span></span>)</span>)</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, request</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        创建订单基本信息,address,order_id</span><br><span class="hljs-string">        核对总价钱</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        user = request.user<br><br>        order = self.get_serializer_class.create_order(request, user)<br>        <span class="hljs-keyword">if</span> order <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-keyword">return</span> Response(response_code.create_order_error)<br><br>        <span class="hljs-comment"># 创建alipay对象</span><br>        alipay = self.get_alipay<br><br>        <span class="hljs-comment"># 调用方法,生成url</span><br>        <span class="hljs-comment"># 电脑网站支付，需要跳转到https://openapi.alipay.com/gateway.do? + order_string</span><br>        <span class="hljs-comment"># 字符串拼接</span><br>        order_string = self.combine_str(alipay, order)<br><br>        <span class="hljs-comment"># 4.返回url</span><br>        response_code.create_order_success.update(&#123;<span class="hljs-string">&quot;alipay_url&quot;</span>: settings.ALIPAY_GATE + order_string&#125;)<br>        <span class="hljs-keyword">return</span> Response(response_code.create_order_success)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">post</span>(<span class="hljs-params">self, request</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;this function used to accept the post returned by alipay&quot;&quot;&quot;</span><br><br>        data = request.data<br>        common_logger.info(data)<br>        sign = data.get(<span class="hljs-string">&#x27;sign&#x27;</span>, <span class="hljs-literal">None</span>)<br>        alipay = self.get_alipay<br>        status = alipay.verify(data, sign)  <span class="hljs-comment"># 验证签名</span><br>        <span class="hljs-keyword">if</span> status:<br>            <span class="hljs-comment"># modify order</span><br>            common_logger.info(data.get(<span class="hljs-string">&#x27;out_trade_no&#x27;</span>))<br>            <span class="hljs-keyword">return</span> Response(<span class="hljs-string">&#x27;成功&#x27;</span>)<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-keyword">return</span> Response(<span class="hljs-string">&#x27;失败&#x27;</span>)<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">UpdateOperation</span>(<span class="hljs-params">APIView</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;receive the GET from alipay,display to user on screen&quot;&quot;&quot;</span><br><br><span class="hljs-meta">    @property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_out_trade_no</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">int</span>(<span class="hljs-built_in">round</span>(time.time() * <span class="hljs-number">1000000</span>))<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">update_order</span>(<span class="hljs-params">self, order_id</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;更新订单&quot;&quot;&quot;</span><br>        Order_basic.order_basic_.update(orderId=order_id)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, request</span>):</span><br>        data = request.GET<br>        common_logger.info(data)<br>        out_trade_no = data.get(<span class="hljs-string">&#x27;out_trade_no&#x27;</span>)<br>        total_amount = data.get(<span class="hljs-string">&#x27;total_amount&#x27;</span>)<br>        Order_basic.order_basic_.<span class="hljs-built_in">filter</span>(orderId=out_trade_no).update(status=<span class="hljs-string">&quot;2&quot;</span>, trade_number=self.get_out_trade_no)<br>        <span class="hljs-keyword">return</span> redirect(<span class="hljs-string">&#x27;/order/personal_order/&#x27;</span>)<br>		<br><br></code></pre></td></tr></table></figure>
+
+
+<p><strong>说明：</strong></p>
+<p>① 首先创建alipay对象，获取前端传过来的基本数据，生成订单号（或者传过来订单号也行），创建订单基本表，以及订单详情表。</p>
+<p>② 根据这些信息和使用的网关类型（沙箱or上线），拼接成新的url。</p>
+<p>③ 将url返回给前端，前端进行重定向到相应的页面。</p>
+<p>④ 用户进行付款，付款后，支付宝会回调两个请求，一个POST,一个GET只有项目正式上线，支付宝才会回调POST请求，不然只会回调GET请求（我用日志测试过，沙箱环境，接收不到POST请求）</p>
+<p>⑤ 回调的POS或GET请求用于更新订单信息，最后返回给用户界面显示</p>
+<p>如果还不是特别明白的话，我在网上找到了这张图，可以看下这张图</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%24L1%601S%5BA%602%7DMTRLMXM%60VQ%29P.png" srcset="/img/loading.gif" lazyload>{:width=90%}</p>
+<p>参考文档：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/fzlee/alipay/blob/master/README.zh-hans.md#alipay.trade.page.pay">https://github.com/fzlee/alipay/blob/master/README.zh-hans.md#alipay.trade.page.pay</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/AliPay/">AliPay</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/06/15/%E8%AE%B0%E5%AF%B9DRF%E8%B0%83%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">记对DRF调用配置文件的源码分析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/06/12/ajax%E4%B8%8D%E5%90%8C%E6%95%B0%E6%8D%AE%E8%AF%B7%E6%B1%82%E7%9A%84%E7%B1%BB%E5%9E%8B%EF%BC%8Cdjango%E5%AF%B9%E5%BA%94%E4%B8%8D%E5%90%8C%E7%9A%84%E8%A7%A3%E6%9E%90/">
+                        <span class="hidden-mobile">ajax不同数据请求的类型，Django对应不同的解析</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

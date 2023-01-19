@@ -1,0 +1,537 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="Django调用阿里OCR身份识别验证中Image编码的小问题目前正在做的一个项目，打算在里面添加身份证图像识别，直接获取用户的姓名，生日，性别这些基本信息。所以采用了阿里的OCR的API,阿里的API要求传入的image必须为base64编码过得数值，要通过base64编码，首先要转为二进制。而我通过前端传进来的FILE对象为InMemoryUploadedFile对象。它无法直接通过bytes">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django调用阿里OCR身份识别验证的Image编码小问题">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/30/django%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8COCR%E8%BA%AB%E4%BB%BD%E8%AF%86%E5%88%AB%E9%AA%8C%E8%AF%81%E7%9A%84Image%E7%BC%96%E7%A0%81%E5%B0%8F%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="Django调用阿里OCR身份识别验证中Image编码的小问题目前正在做的一个项目，打算在里面添加身份证图像识别，直接获取用户的姓名，生日，性别这些基本信息。所以采用了阿里的OCR的API,阿里的API要求传入的image必须为base64编码过得数值，要通过base64编码，首先要转为二进制。而我通过前端传进来的FILE对象为InMemoryUploadedFile对象。它无法直接通过bytes">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-30T05:42:14.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.438Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="OCR">
+<meta property="article:tag" content="OpenAPI">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>Django调用阿里OCR身份识别验证的Image编码小问题 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Django调用阿里OCR身份识别验证的Image编码小问题">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-30 13:42" pubdate>
+        2020年5月30日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      6.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      19 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Django调用阿里OCR身份识别验证的Image编码小问题</h1>
+            
+            <div class="markdown-body">
+              <h4 id="Django调用阿里OCR身份识别验证中Image编码的小问题"><a href="#Django调用阿里OCR身份识别验证中Image编码的小问题" class="headerlink" title="Django调用阿里OCR身份识别验证中Image编码的小问题"></a><strong>Django调用阿里OCR身份识别验证中Image编码的小问题</strong></h4><p>目前正在做的一个项目，打算在里面添加身份证图像识别，直接获取用户的姓名，生日，性别这些基本信息。所以采用了阿里的OCR的API,阿里的API要求传入的image必须为base64编码过得数值，要通过base64编码，首先要转为二进制。而我通过前端传进来的FILE对象为<code>InMemoryUploadedFile</code>对象。它无法直接通过<code>bytes()</code>转换类型,而是要通过<code>InMemoryUploadedFile</code>中文件属性来读取。</p>
+<p><strong>出现的问题：</strong></p>
+<p><strong><code>base64</code>所需的是二进制数据，而不是<code>InMemoryUploadedFile</code>对象!</strong></p>
+<p><strong>解决方案</strong></p>
+<p><code>InMemoryUploadedFile</code>拥有的一些属性:</p>
+<p><code>image = request.data.get(&#39;image&#39;)</code></p>
+<p><code>image.file, image.field_name, image.name, image.content_type,image.size, image.charset, image.content_type_extra</code></p>
+<p>我要获取二进制的数据，主要通过<code>image.file.read()</code>，也就是以文件对象的方式<code>read()</code>出二进制数据。</p>
+<p>获取其二进制数据后，我就可以对其进行base64编码。</p>
+<p>以下的例子是我前端加后端实现身份证识别</p>
+<h5 id="后端"><a href="#后端" class="headerlink" title="后端"></a><strong>后端</strong></h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ocr_id_card</span>:</span><br>    <span class="hljs-string">&quot;&quot;&quot;阿里api身份证识别&quot;&quot;&quot;</span><br><br>    AppCode = <span class="hljs-comment">#你的appcode</span><br>    url = <span class="hljs-string">&#x27;https://dm-51.data.aliyun.com/rest/160601/ocr/ocr_idcard.json&#x27;</span><br><br>    params = &#123;<br>        <span class="hljs-string">&#x27;image&#x27;</span>: <span class="hljs-literal">None</span>,<br>        <span class="hljs-string">&#x27;configure&#x27;</span>: &#123;&#125;,<br>    &#125;<br><br>    headers = &#123;<br>        <span class="hljs-string">&#x27;Authorization&#x27;</span>: <span class="hljs-string">&#x27;APPCODE 你的appcode&#x27;</span>,  <span class="hljs-comment"># APPCODE +你的appcod,一定要有空格!</span><br>        <span class="hljs-string">&#x27;Content-Type&#x27;</span>: <span class="hljs-string">&#x27;application/json; charset=UTF-8&#x27;</span>  <span class="hljs-comment"># 根据接口的格式来</span><br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, image, card_type</span>):</span><br>        image = <span class="hljs-built_in">str</span>(base64.b64encode(image), encoding=<span class="hljs-string">&#x27;utf-8&#x27;</span>)<br>        configure = &#123;<span class="hljs-string">&quot;side&quot;</span>: card_type&#125;<br>        self.params.update(&#123;<span class="hljs-string">&#x27;image&#x27;</span>: image, <span class="hljs-string">&#x27;configure&#x27;</span>: configure&#125;)<br>        self.json_result = <span class="hljs-literal">None</span><br>        self.card_type = card_type<br><br>    <span class="hljs-string">&quot;&quot;&quot;def test(self, card_type):</span><br><span class="hljs-string">        path = &#x27;C:\\Users\\ASUS\\Desktop\\index.jpg&#x27;</span><br><span class="hljs-string">        with open(path, &#x27;rb&#x27;) as f:</span><br><span class="hljs-string">            data = f.read()</span><br><span class="hljs-string">            image = str(base64.b64encode(data), encoding=&#x27;utf-8&#x27;)</span><br><span class="hljs-string">            configure = &#123;&quot;side&quot;: card_type&#125;</span><br><span class="hljs-string">            self.body.update(&#123;&#x27;image&#x27;: image, &#x27;configure&#x27;: configure&#125;)&quot;&quot;&quot;</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_posturl_result</span>(<span class="hljs-params">self, card_type</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get result from aliyun api&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">try</span>:<br>            params = json.dumps(self.params).encode(encoding=<span class="hljs-string">&#x27;utf-8&#x27;</span>)<br>            req = urllib.request.Request(self.url, params, self.headers)  <span class="hljs-comment"># structure request</span><br>            r = urllib.request.urlopen(req)  <span class="hljs-comment"># post request</span><br>            result = r.read().decode(<span class="hljs-string">&#x27;utf-8&#x27;</span>)<br>            self.json_result = json.loads(result)<br>            r.close()<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            consumer_logger.error(e)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get detail in dict&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;address&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">birth</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get birth in dict&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;birth&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">actual_name</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get name in dict&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;name&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">nationality</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get nationality in dict&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;nationality&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">id_card</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get id card in dict&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;num&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sex</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get sex in dict&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;sex&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">is_success</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get status to check whether this request is success&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.json_result.pop(<span class="hljs-string">&#x27;success&#x27;</span>)<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Interface_identify</span>:</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, image, card_type</span>):</span><br>        self.user_instance = ocr_id_card(image, card_type)<br>        self.user_instance.get_posturl_result(card_type)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_detail</span>(<span class="hljs-params">self, infor_key</span>):</span><br>        func = <span class="hljs-built_in">getattr</span>(self.user_instance, infor_key)<br>        <span class="hljs-keyword">return</span> func()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">is_success</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;get status to check whether this request is success&quot;&quot;&quot;</span><br>        has_result = <span class="hljs-literal">True</span> <span class="hljs-keyword">if</span> self.user_instance.json_result <span class="hljs-keyword">else</span> <span class="hljs-literal">False</span><br>        <span class="hljs-keyword">if</span> has_result:<br>            is_success = self.get_detail(<span class="hljs-string">&#x27;is_success&#x27;</span>)<br>            <span class="hljs-keyword">return</span> is_success<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br><br><br></code></pre></td></tr></table></figure>
+
+<p><strong>前端</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><br><span class="hljs-comment">//身份证件正面上传</span><br>		  upload.render(&#123;<br>			  elem: <span class="hljs-string">&#x27;#face&#x27;</span><br>			  , <span class="hljs-attr">headers</span>:headers<br>			  , <span class="hljs-attr">accept</span>:<span class="hljs-string">&#x27;images&#x27;</span><br>			  , <span class="hljs-attr">auto</span>:<span class="hljs-literal">false</span><br>			  , <span class="hljs-attr">size</span>:<span class="hljs-number">3000</span><br>			  , <span class="hljs-attr">data</span>:&#123;<span class="hljs-string">&#x27;card_type&#x27;</span>:<span class="hljs-string">&#x27;face&#x27;</span>&#125;<br>			  , <span class="hljs-attr">drag</span>:<span class="hljs-literal">true</span><br>			  , <span class="hljs-attr">exts</span>:<span class="hljs-string">&#x27;jpg|png|jpeg&#x27;</span><br>			  , <span class="hljs-attr">bindAction</span>:<span class="hljs-string">&#x27;#verified&#x27;</span><br>			  , <span class="hljs-attr">field</span>:<span class="hljs-string">&#x27;image&#x27;</span><br>			  , <span class="hljs-attr">url</span>: <span class="hljs-string">&#x27;/consumer/verificatio	n-name-chsc-api/&#x27;</span> <span class="hljs-comment">//改成您自己的上传接口</span><br>			  , <span class="hljs-attr">choose</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">obj</span>) </span>&#123;<br>				  <span class="hljs-comment">//预读本地文件示例，不支持ie8</span><br>				  obj.preview(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">index, file, result</span>) </span>&#123;<br>					  $(<span class="hljs-string">&#x27;#face&#x27;</span>).prop(<span class="hljs-string">&#x27;src&#x27;</span>, result); <span class="hljs-comment">//图片链接（base64）</span><br>				  &#125;);<br>			  &#125;<br>			  , <span class="hljs-attr">done</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">res</span>) </span>&#123;<br>				  <span class="hljs-comment">//如果上传失败</span><br>				  <span class="hljs-keyword">if</span> (res.code === <span class="hljs-number">21</span>) &#123;<br>					  layer.msg(<span class="hljs-string">&#x27;认证成功!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1000</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>					  $(<span class="hljs-string">&quot;.step-2&quot;</span>).children().children().css(&#123;<span class="hljs-string">&#x27;opacity&#x27;</span>:<span class="hljs-number">1</span>&#125;);<br>					  <span class="hljs-built_in">window</span>.location.href = <span class="hljs-string">&#x27;/consumer/personal_idcard&#x27;</span>;<br>				  &#125;<br>				  <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (res.code === -<span class="hljs-number">21</span>)&#123;<br>				  	  layer.msg(<span class="hljs-string">&#x27;图像识别失败!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1200</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>				  &#125;<br>				  <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(res.code === <span class="hljs-number">500</span>)&#123;<br>				  	layer.msg(<span class="hljs-string">&#x27;服务器无响应!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1200</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>				  &#125;<br>				  $(<span class="hljs-string">&#x27;#face&#x27;</span>).removeAttr(<span class="hljs-string">&#x27;src&#x27;</span>);<br>				  <span class="hljs-comment">//上传成功</span><br>			  &#125;<br>			  , <span class="hljs-attr">error</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>&#123;<br>				  <span class="hljs-comment">//演示失败状态，并实现重传</span><br>				  layer.msg(<span class="hljs-string">&#x27;服务器无响应!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1200</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>				  $(<span class="hljs-string">&#x27;#face&#x27;</span>).removeAttr(<span class="hljs-string">&#x27;src&#x27;</span>);<br>			  &#125;<br>		  &#125;);<br><br>         <span class="hljs-comment">//身份证件背面上传</span><br>		  upload.render(&#123;<br>			  elem: <span class="hljs-string">&#x27;#back&#x27;</span><br>			  , <span class="hljs-attr">headers</span>:headers<br>			  , <span class="hljs-attr">accept</span>:<span class="hljs-string">&#x27;images&#x27;</span><br>			  , <span class="hljs-attr">size</span>:<span class="hljs-number">3000</span><br>			  , <span class="hljs-attr">data</span>:&#123;<span class="hljs-string">&#x27;card_type&#x27;</span>:<span class="hljs-string">&#x27;back&#x27;</span>&#125;<br>			  , <span class="hljs-attr">exts</span>:<span class="hljs-string">&#x27;jpg|png|jpeg&#x27;</span><br>			  , <span class="hljs-attr">drag</span>:<span class="hljs-literal">true</span><br>			  , <span class="hljs-attr">auto</span>:<span class="hljs-literal">false</span><br>			  , <span class="hljs-attr">bindAction</span>:<span class="hljs-string">&#x27;#verified&#x27;</span><br>			  , <span class="hljs-attr">field</span>:<span class="hljs-string">&#x27;image&#x27;</span><br>			  , <span class="hljs-attr">url</span>: <span class="hljs-string">&#x27;/consumer/verification-name-chsc-api/&#x27;</span> <span class="hljs-comment">//改成您自己的上传接口</span><br>			  , <span class="hljs-attr">before</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">obj</span>) </span>&#123;<br>				  <span class="hljs-comment">//预读本地文件示例，不支持ie8</span><br>				  obj.preview(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">index, file, result</span>) </span>&#123;<br>					  $(<span class="hljs-string">&#x27;#face&#x27;</span>).attr(<span class="hljs-string">&#x27;src&#x27;</span>, result); <span class="hljs-comment">//图片链接（base64）</span><br>				  &#125;);<br>			  &#125;<br>			  , <span class="hljs-attr">done</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">res</span>) </span>&#123;<br>				  <span class="hljs-comment">//如果上传失败</span><br>				  <span class="hljs-keyword">if</span> (res.code === <span class="hljs-number">21</span>) &#123;<br>					  layer.msg(<span class="hljs-string">&#x27;认证成功!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1000</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>					  $(<span class="hljs-string">&quot;.step-2&quot;</span>).children().children().css(&#123;<span class="hljs-string">&#x27;opacity&#x27;</span>:<span class="hljs-number">1</span>&#125;);<br>					  $(<span class="hljs-string">&quot;#verified&quot;</span>).text(<span class="hljs-string">&#x27;实名认证成功！&#x27;</span>);<br>				  &#125;<br>				  <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (res.code === -<span class="hljs-number">21</span>)&#123;<br>				  	  layer.msg(<span class="hljs-string">&#x27;图像识别失败!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1200</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>				  &#125;<br>				  <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(res.code === <span class="hljs-number">500</span>)&#123;<br>				  	layer.msg(<span class="hljs-string">&#x27;服务器无响应!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1200</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>				  &#125;<br>				  $(<span class="hljs-string">&#x27;#back&#x27;</span>).removeAttr(<span class="hljs-string">&#x27;src&#x27;</span>);<br>				  <span class="hljs-comment">//上传成功</span><br>			  &#125;<br>			  , <span class="hljs-attr">error</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>&#123;<br>				  layer.msg(<span class="hljs-string">&#x27;服务器无响应!&#x27;</span>, &#123;<span class="hljs-attr">icon</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">time</span>: <span class="hljs-number">1200</span>, <span class="hljs-attr">closeBtn</span>: <span class="hljs-number">0</span>&#125;);<br>				  $(<span class="hljs-string">&#x27;#back&#x27;</span>).removeAttr(<span class="hljs-string">&#x27;src&#x27;</span>);<br>			  &#125;<br>		  &#125;);<br>		  <br>		  <br></code></pre></td></tr></table></figure>
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/OCR/">OCR</a>
+                    
+                      <a class="hover-with-bg" href="/tags/OpenAPI/">OpenAPI</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/06/01/springmvc%E4%B8%AD%E4%BD%BF%E7%94%A8@SessionAttributes%E8%8E%B7%E5%8F%96session%E7%9A%84%E5%B0%8F%E9%97%AE%E9%A2%98/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">SpringMVC中使用@SessionAttributes获取session的小问题</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/29/request.POST%E4%B8%8D%E8%83%BD%E4%BF%AE%E6%94%B9%E5%B1%9E%E6%80%A7%E5%80%BC%E7%9A%84%E9%97%AE%E9%A2%98/">
+                        <span class="hidden-mobile">Django中request.POST不能修改属性值的问题</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,550 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="django 使用memcache分布式缓存(官方推荐的一款分布式缓存系统) 五一节快乐~，每天都要进步一点点 之前的博客项目使用的是redis，没有使用memcache，所有的和worker都是存储在redis中，感觉像有些安全性不是很高的的缓存也可以存储在memcache中。因此在目前这个项目中，我打算使用两种缓存结合使用，结合两者各自的优势使用  一、什么是memcache？memcache">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django 使用memcache缓存">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/01/Django%20%E4%BD%BF%E7%94%A8memcache%E7%BC%93%E5%AD%98/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="django 使用memcache分布式缓存(官方推荐的一款分布式缓存系统) 五一节快乐~，每天都要进步一点点 之前的博客项目使用的是redis，没有使用memcache，所有的和worker都是存储在redis中，感觉像有些安全性不是很高的的缓存也可以存储在memcache中。因此在目前这个项目中，我打算使用两种缓存结合使用，结合两者各自的优势使用  一、什么是memcache？memcache">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-01T07:13:15.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.420Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="memcache">
+<meta property="article:tag" content="缓存">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>Django 使用memcache缓存 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Django 使用memcache缓存">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-01 15:13" pubdate>
+        2020年5月1日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      5 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Django 使用memcache缓存</h1>
+            
+            <div class="markdown-body">
+              <h3 id="django-使用memcache分布式缓存-官方推荐的一款分布式缓存系统"><a href="#django-使用memcache分布式缓存-官方推荐的一款分布式缓存系统" class="headerlink" title="django 使用memcache分布式缓存(官方推荐的一款分布式缓存系统)"></a><strong>django 使用memcache分布式缓存(官方推荐的一款分布式缓存系统)</strong></h3><hr>
+<h4 id="五一节快乐-，每天都要进步一点点"><a href="#五一节快乐-，每天都要进步一点点" class="headerlink" title="五一节快乐~，每天都要进步一点点"></a><strong>五一节快乐~，每天都要进步一点点</strong></h4><hr>
+<p>之前的博客项目使用的是redis，没有使用memcache，所有的和worker都是存储在redis中，感觉像有些安全性不是很高的的缓存也可以存储在memcache中。因此在目前这个项目中，我打算使用两种缓存结合使用，结合两者各自的优势使用</p>
+<hr>
+<h4 id="一、什么是memcache？"><a href="#一、什么是memcache？" class="headerlink" title="一、什么是memcache？"></a><strong>一、什么是memcache？</strong></h4><p>memcache是一款分布式的缓存系统，其目的是减小用户等待时间，降低RDBMS的访问压力,动态的提高web服务器请求性能。其特点有协议简单，基于内存存储方式，访问速度快。</p>
+<hr>
+<h4 id="二、django中如何使用memcache和redis"><a href="#二、django中如何使用memcache和redis" class="headerlink" title="二、django中如何使用memcache和redis"></a><strong>二、django中如何使用memcache和redis</strong></h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 缓存</span><br>CACHES = &#123;<br>    <span class="hljs-string">&#x27;redis&#x27;</span>:<br>        &#123;<br>            <span class="hljs-string">&#x27;BACKEND&#x27;</span>: <span class="hljs-string">&#x27;django_redis.cache.RedisCache&#x27;</span>,<br>            <span class="hljs-string">&#x27;LOCATION&#x27;</span>: <span class="hljs-string">&#x27;redis://:password@127.0.0.1:6379/2&#x27;</span>,<br>            <span class="hljs-string">&#x27;OPTIONS&#x27;</span>: &#123;<br>                <span class="hljs-string">&#x27;CLIENT_CLASS&#x27;</span>: <span class="hljs-string">&#x27;django_redis.client.DefaultClient&#x27;</span>,<br>            &#125;<br>        &#125;,<br>    <span class="hljs-string">&#x27;default&#x27;</span>:<br>        &#123;<br>            <span class="hljs-string">&#x27;BACKEND&#x27;</span>: <span class="hljs-string">&#x27;django.core.cache.backends.memcached.MemcachedCache&#x27;</span>,<br>            <span class="hljs-string">&#x27;LOCATION&#x27;</span>: <span class="hljs-string">&#x27;127.0.0.1:11211&#x27;</span>,<br>            <span class="hljs-string">&#x27;OPTIONS&#x27;</span>: &#123;<br>                <span class="hljs-string">&#x27;server_max_value_length&#x27;</span>: <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">2</span>,  <span class="hljs-comment"># 支持对象的最大大小的容量</span><br>            &#125;<br>        &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong>cache配置中必须配置<code>default</code>,因为</p>
+<p><code>from django.core.cache import cache</code></p>
+<p><code>from django.core.cache import caches</code></p>
+<p>cache就等价于<code>caches[&#39;default&#39;]</code>，而caches就是setting.py中配置的缓存集。</p>
+<p>当要是用某一种缓存的话，<code>cache = caches[&#39;redis&#39;]</code>就可以获取该缓存的客户端。</p>
+<h4 id="memcache和redis的区别？"><a href="#memcache和redis的区别？" class="headerlink" title="memcache和redis的区别？"></a><strong>memcache和redis的区别？</strong></h4><p>共同点：都是基于内存的缓存系统。</p>
+<p>不同点：</p>
+<p>① redis支持的数据类型更加丰富，有常用的5中数据类型，set，zset，list，hash，string。而memcache只支持键值对</p>
+<p>② 过期策略，memcache可以在set时就指定，例如set key1 0 0 8,即永不过期。而Redis可以通过例如expire 设定，例如expire name 10。</p>
+<p>③ memcache可以缓存图片，视频等其他东西</p>
+<p>③ 分布式，设定memcache集群，利用magent做一主多从;redis可以做一主多从，也可以一主一从。 </p>
+<p>④ 恢复能力，主机断电后，redis可以通过AOF恢复丢失的数据，数据完整性较高，即具备持久化能力，而memcache不具备，数据丢失了就真的丢失了。</p>
+<p>⑤ redis中的键的值最大可以达到512M，而memcache中的键的值最大可以达到1M。</p>
+<h4 id="memcache和redis使用的不同场景"><a href="#memcache和redis使用的不同场景" class="headerlink" title="memcache和redis使用的不同场景"></a><strong>memcache和redis使用的不同场景</strong></h4><p>① 因为memcache是多核的，而redis是单核的，所以平均下来，redis在每一个核上存储的性能要比memcache更高一点，但是当数据超过100k的时候，memcache的性能将变得更高。</p>
+<p>② memcache适合多读少些的操作，对于查询信息来说性能比较高，例如用户信息，文章信息，商品信息等而redis适合对读写效率都很高的操作，对数据的安全性也要求较高，常用于处理复杂的业务，如用户登录次数统计等。</p>
+<p>③ 当考虑到数据需要安全存储的时候，redis将会是不错的选择。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/memcache/">memcache</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/memcache/">memcache</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E7%BC%93%E5%AD%98/">缓存</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/01/HTTP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">HTTP协议详解</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/01/python%20%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F%20+%20%E4%B8%80%E8%A1%8C%E5%AE%9E%E7%8E%B0/">
+                        <span class="hidden-mobile">python 快速排序 + 一行实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

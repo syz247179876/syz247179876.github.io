@@ -1,0 +1,560 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一 背景之前做了项目中,很多地方都使用了redis,都使用了不同的redis数据结构来实现不同的需求,但是做完之后,却没有及时总结,现在,将设计到redis各数据结构的使用从项目中剥离出来,进行分析,本篇先着重讲zset数据结构的用途与常见指令,底层原理解析留在以后的笔记中学习记录! 我使用的后端框架Django,原生的redis操作集,redis版本6.0.6  二  zset数据结构我们都直到">
+<meta property="og:type" content="article">
+<meta property="og:title" content="总结redis的zset数据结构实战用法">
+<meta property="og:url" content="https://syzzjw.cn/2020/07/21/%E6%80%BB%E7%BB%93redis%E7%9A%84zset%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%AE%9E%E6%88%98%E7%94%A8%E6%B3%95/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一 背景之前做了项目中,很多地方都使用了redis,都使用了不同的redis数据结构来实现不同的需求,但是做完之后,却没有及时总结,现在,将设计到redis各数据结构的使用从项目中剥离出来,进行分析,本篇先着重讲zset数据结构的用途与常见指令,底层原理解析留在以后的笔记中学习记录! 我使用的后端框架Django,原生的redis操作集,redis版本6.0.6  二  zset数据结构我们都直到">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-21T05:25:40.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>总结redis的zset数据结构实战用法 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="总结redis的zset数据结构实战用法">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-07-21 13:25" pubdate>
+        2020年7月21日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      5.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      17 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">总结redis的zset数据结构实战用法</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一-背景"><a href="#一-背景" class="headerlink" title="一 背景"></a><strong>一 背景</strong></h3><p>之前做了项目中,很多地方都使用了redis,都使用了不同的redis数据结构来实现不同的需求,但是做完之后,却没有及时总结,现在,将设计到redis各数据结构的使用从项目中剥离出来,进行分析,本篇先着重讲zset数据结构的用途与常见指令,底层原理解析留在以后的笔记中学习记录!</p>
+<p>我使用的后端框架Django,原生的redis操作集,redis版本6.0.6</p>
+<hr>
+<h3 id="二-zset数据结构"><a href="#二-zset数据结构" class="headerlink" title="二  zset数据结构"></a><strong>二  zset数据结构</strong></h3><p>我们都直到redis中的有常用的五大数据结构,分别为string, list, hash, set, zset,可以看到set是集合,而zset是有序集合.本篇所要讲的zset是基于集合上一种有顺序(分值)的的数据结构,有序集合中的每一个元素项会对应一个分数值,并且分数是可以重复的,它会按照分值进行排序,从小到大,或从大到小,我使用zset的频率比set要多得多.接下来我将通过自己项目中的例子来分析zset中常见的操作.</p>
+<hr>
+<h3 id="三-开启讲解"><a href="#三-开启讲解" class="headerlink" title="三  开启讲解"></a><strong>三  开启讲解</strong></h3><h4 id="1-搜索历史记录栏和热搜词汇排行榜"><a href="#1-搜索历史记录栏和热搜词汇排行榜" class="headerlink" title="1.搜索历史记录栏和热搜词汇排行榜"></a><strong>1.搜索历史记录栏和热搜词汇排行榜</strong></h4><p>   搜索历史记录栏可以说对于每个网络应用程序都是必不可少的功能,像存储用户搜索历史这样的热点数据,如果存储在像mysql这样关系型数据,纯I/O读写的速度是较慢的,存储在mysql中,每次添加会给数据库带来过大的压力,而使用mongodb非关系性数据库来说,它使用内存映射存储引擎,它会把磁盘I/O操作转化为内存操作,因而大大提升了读写性能.因此该功能实现可以基于mongodb,而我这里选了历史搜索记录,因为在我(小菜鸟)看来,第一时间想到的实现方法就是基于redis的zset数据结构,并且搜索记录不必一直存在,可以持续1个月或几个月就可以自动删除,还有一方面的原因就是自己对mongodb用法,使用场景,原理不是特别了解.</p>
+<hr>
+<p><strong>项目关键代码</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 上下文管理器代码</span><br><span class="hljs-meta">@contextlib.contextmanager</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">manage_redis</span>(<span class="hljs-params">db, redis_class=BaseRedis, redis=<span class="hljs-literal">None</span></span>):</span><br>    <span class="hljs-keyword">try</span>:<br>        <span class="hljs-comment"># redis = get_redis_connection(db)  # redis实例链接</span><br>        redis = redis_class.choice_redis_db(db).redis  <span class="hljs-comment"># 单例获取redis实例对象</span><br>        <span class="hljs-keyword">yield</span> redis<br>    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>        redis_logger.error(e)<br>        <span class="hljs-keyword">raise</span> RedisOperationError()<br>    <span class="hljs-keyword">finally</span>:<br>        redis.close()  <span class="hljs-comment"># 其实可以不要,除非single client connection, 每条执行执行完都会调用conn.release()</span><br><br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 记录用户搜索的关键词和维护热搜数据</span><br><span class="hljs-meta">@client_key  </span><span class="hljs-comment"># 自定义的装饰器,用于获取唯一key标识</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">save_search</span>(<span class="hljs-params">self, sender, key, **kwargs</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    记录某用户的浏览记录</span><br><span class="hljs-string">    有效时间1个月</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">with</span> manage_redis(self.DB, <span class="hljs-built_in">type</span>(self)) <span class="hljs-keyword">as</span> redis:<br>        <span class="hljs-comment"># 为每个用户维护一个搜索有序集合</span><br>        <span class="hljs-comment"># 为所有关键词维护一个有序集合,用于分析</span><br>        <span class="hljs-keyword">with</span> redis.pipeline() <span class="hljs-keyword">as</span> pipe:<br>            pipe.zadd(self.user_key(sender), &#123;key: self.score&#125;)<br>            <span class="hljs-comment"># 60*60*24*30 = 25920000 30天存活</span><br>            pipe.expire(self.user_key(sender), <span class="hljs-number">25920000</span>)<br>            pipe.zincrby(self.heat_key(datetime.datetime.today()), <span class="hljs-number">1</span>, key)  <span class="hljs-comment"># 将该关键字添加到热搜有序集合中,如果存在key,则+1,不存在设置为1</span><br>            pipe.execute()<br>            <br>            <br><span class="hljs-meta">@client_key</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">delete_search_single</span>(<span class="hljs-params">self, sender, key, **kwargs</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    单删某条搜索历史记录</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">with</span> manage_redis(self.DB, <span class="hljs-built_in">type</span>(self)) <span class="hljs-keyword">as</span> redis:<br>        redis.zrem(self.user_key(sender), key)<br><br>        <br><span class="hljs-meta">@client_key</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">delete_search_all</span>(<span class="hljs-params">self, sender, **kwargs</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    群删所有搜索历史记录</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">with</span> manage_redis(self.DB, <span class="hljs-built_in">type</span>(self)) <span class="hljs-keyword">as</span> redis:<br>        redis.delete(self.user_key(sender))<br>        <br><br><span class="hljs-meta">@client_key</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">retrieve_last_ten</span>(<span class="hljs-params">self, sender, key, **kwargs</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;根据分页获取最新的10条搜索记录&quot;&quot;&quot;</span><br><br>    <span class="hljs-comment"># with 生存周期持续到函数结束</span><br>    <span class="hljs-keyword">with</span> manage_redis(self.DB, <span class="hljs-built_in">type</span>(self)) <span class="hljs-keyword">as</span> redis:<br>        page = kwargs.get(<span class="hljs-string">&#x27;page&#x27;</span>)<br>        count = kwargs.get(<span class="hljs-string">&#x27;count&#x27;</span>)<br>        result = redis.zrevrange(self.user_key(sender), page * count, (page + <span class="hljs-number">1</span>) * count)  <span class="hljs-comment"># 返回分数从高到低的前十个(时间最近的前十个)</span><br>        <span class="hljs-keyword">return</span> result<br>    <br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">heat_search</span>(<span class="hljs-params">self, sender, key, **kwargs</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    每日热搜</span><br><span class="hljs-string">    动态更新每日的前十位</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">with</span> manage_redis(self.DB, <span class="hljs-built_in">type</span>(self)) <span class="hljs-keyword">as</span> redis:<br>        date = datetime.datetime.today()<br>        result = redis.zrevrange(self.heat_key(date), <span class="hljs-number">0</span>, <span class="hljs-number">10</span>)  <span class="hljs-comment"># 前十大热搜</span><br>        <span class="hljs-keyword">return</span> result<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h4 id="总体分析"><a href="#总体分析" class="headerlink" title="总体分析:"></a><strong>总体分析:</strong></h4><p>1).我这里使用了上下文管理器来获取redis和自动释放redis,通过传递配置中使用的DB和类型,获取单例操作类的redis实例.</p>
+<p>2).因为涉及到的redis指令较多,我使用了pipeline来传输命令,统一操作,这样一方面可以减少与redis通信多次命令执行的RTT(往返时间),另一方面可以可以保证数据的顺序,按照队列先进先出的顺序.</p>
+<hr>
+<h4 id="save-search-函数方法分析"><a href="#save-search-函数方法分析" class="headerlink" title="save_search()函数方法分析"></a><strong><code>save_search()</code>函数方法分析</strong></h4><p>1).首先向pipeline推送zadd命令,zadd命令是向制定name的有序集合中添加一条数据{key:score}, name用于唯一表示有序集合,key用于唯一标识一条数据项的键,score表示其对应的分数值,这里我将时间戳作为score.因此score越小表示浏览的时间越早,这样在从redis取出显示在前端就可以按照时间从前往后的顺序进行展示,有效的减少了时间复杂度.zadd命令时间复杂度为0(log(N))</p>
+<p>2).然后为该键设置过期时间,通过expire命令设定30天存活</p>
+<p>3).借着使用zincrby方法维护一个有序集合,用于记录每天的热搜词汇,每当有一个用户搜索词汇时,将该词汇添加到集合中,每次加1,如果一开始没有该词汇,则默认为1,时间复杂度为0(log(N))</p>
+<p>4).最后,执行execute(),依次执行pipeline中的指令.</p>
+<hr>
+<h4 id="heat-search-函数方法分析"><a href="#heat-search-函数方法分析" class="headerlink" title="** heat_search() 函数方法分析**"></a>** <code>heat_search()</code> 函数方法分析**</h4><p>1)使用zrevrange()操作来查找按照score值递减来排列,具有相同score的成员按照字典序的反序排序.该函数,返回热搜sorted set中排名前十的关键词返回.时间复杂度为O(N+log(M)),M表示当前sorted set中所具有的元素个数,M表示返回的数据个数.<br>ps:zrevrange()中可以添加score=True属性,来获取带有分数值的列表</p>
+<hr>
+<h4 id="2-足迹记录"><a href="#2-足迹记录" class="headerlink" title="2.足迹记录"></a><strong>2.足迹记录</strong></h4><p>足迹记录和搜索历史记录有者异曲同工的作用.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_foot_commodity_id</span>(<span class="hljs-params">self, user_id, validated_data</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    消费者浏览某个商品，添加足迹</span><br><span class="hljs-string">    :param validated_data: 验证后的数据</span><br><span class="hljs-string">    :param user_id:用户id</span><br><span class="hljs-string">    :return:boolean</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-comment"># add_foot.apply_async(args=(pickle.dumps(self), user_id, validated_data))  # can&#x27;t pickle _thread.lock objects</span><br>    <span class="hljs-keyword">with</span> manage_redis(self.db) <span class="hljs-keyword">as</span> redis:<br>        <span class="hljs-keyword">try</span>:<br>            key = self.key(<span class="hljs-string">&#x27;foot&#x27;</span>, user_id)<br>            timestamp = self.score  <span class="hljs-comment"># 毫秒级别的时间戳</span><br>            commodity_id = validated_data[<span class="hljs-string">&#x27;pk&#x27;</span>]<br>            <span class="hljs-comment"># pipe = self.redis.pipeline()  # 添加管道，减少客户端和服务端之间的TCP包传输次数</span><br>            redis.zadd(key, &#123;commodity_id: timestamp&#125;)  <span class="hljs-comment"># 分别表示用户id（加密），当前日期+时间戳（分数值），商品id</span><br>            <span class="hljs-comment"># 每个用户最多记录100条历史记录</span><br>            <span class="hljs-keyword">if</span> redis.zcard(key) &gt;= <span class="hljs-number">100</span>:  <span class="hljs-comment"># 集合中key为键的数量</span><br>                redis.zremrangebyrank(key, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>)  <span class="hljs-comment"># 移除时间最早的那条记录</span><br>            <span class="hljs-comment"># pipe.execute()</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            consumer_logger.error(e)<br>            <span class="hljs-keyword">raise</span> RedisOperationError()<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h4 id="分析"><a href="#分析" class="headerlink" title="分析:"></a><strong>分析:</strong></h4><p>这个项目中添加足迹的相关操作我也是使用了sorted key, 因为大多数用户可能并不会在意自己的浏览足迹,而且用户每浏览一个商品都会添加足迹,但是多次浏览同一个商品,商品不变只是浏览的时间变化了,因此用sorted key 来模拟这个功能还是比较合适的,时间作为score,商品id作为key,key唯一,而分数值可以相同,替换旧的分数值.</p>
+<p>zard()操作用于计算当前集合中数据项的个数,我这里限定了记录100条足迹记录,一旦某次添加超过了,就自动删除时间最早的那条记录,使用zremrangebyrank方法,按照排名区间删除,start和stop分别设置为0,0处表示分数值最小(即时间最早).</p>
+<hr>
+<h4 id="3-运动排行榜"><a href="#3-运动排行榜" class="headerlink" title="3.运动排行榜"></a><strong>3.运动排行榜</strong></h4><p>排行榜在像游戏APP,运动APP中很常见,我们熟悉的就是微信运动排行榜,用redis实现排行榜毋庸置疑,每日更新,非常nice!话不多说,上代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">retrieve_cur_rank_user</span>(<span class="hljs-params">self, member, mold, today=<span class="hljs-literal">None</span>, redis_name=<span class="hljs-string">&#x27;default&#x27;</span></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    当天计数,获取当前用户在全服运动榜中的排名和运动值,从大到小</span><br><span class="hljs-string"></span><br><span class="hljs-string">    :param redis_name: redis name in config</span><br><span class="hljs-string">    :param mold:运动项目类型</span><br><span class="hljs-string">    :param today:当天日期</span><br><span class="hljs-string">    :param member: 用户id</span><br><span class="hljs-string">    :return [rank ,score]</span><br><span class="hljs-string"></span><br><span class="hljs-string">    键:&#x27;rank&#x27;-mold-date</span><br><span class="hljs-string"></span><br><span class="hljs-string">    数据结构:sorted set</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    member = <span class="hljs-built_in">str</span>(member)<br>    today = today <span class="hljs-keyword">or</span> (datetime.datetime.now()).strftime(<span class="hljs-string">&#x27;%Y-%m-%d&#x27;</span>)<br>    <span class="hljs-keyword">with</span> manager_redis(redis_name) <span class="hljs-keyword">as</span> redis:<br>        name = self.key(<span class="hljs-string">&#x27;rank&#x27;</span>, mold, today)<br>        pipe = redis.pipeline()<br>        pipe.zrevrank(name, member)  <span class="hljs-comment"># 获取当前用户的排名</span><br>        pipe.zscore(name, member)  <span class="hljs-comment"># 获取当前用户的运动值</span><br>        result = pipe.execute()<br>        <span class="hljs-keyword">return</span> result<br><br></code></pre></td></tr></table></figure>
+
+<hr>
+<h4 id="分析-1"><a href="#分析-1" class="headerlink" title="分析"></a><strong>分析</strong></h4><p>1.使用revrank从有序集成员中按score值从小到大进行排序,排名以0为底,socre分数值最大的成员排名为0</p>
+<p>2.使用zscore来从有序集成员中获取当前用户的运动值</p>
+<p>3.使用pipeline减少RTT的时间消耗</p>
+<hr>
+<h3 id="四-总结"><a href="#四-总结" class="headerlink" title="四  总结:"></a><strong>四  总结</strong>:</h3><p>以上是我几个项目中使用redis的zset的部分典型实例.由于代码太多,则就不全不贴出来,有兴趣的可以去看我github上的项目.</p>
+<p>1.第一个项目地址:<a target="_blank" rel="noopener" href="https://github.com/syz247179876/Django-Mall">https://github.com/syz247179876/Django-Mall</a></p>
+<p>2.第二个项目地址:<a target="_blank" rel="noopener" href="https://github.com/syz247179876/Flask-Sports">https://github.com/syz247179876/Flask-Sports</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Redis/">Redis</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Redis/">Redis</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/07/22/Vue%E4%B8%AD$attrs%E5%92%8C$listener%E7%9A%84%E7%94%A8%E6%B3%95/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Vue中$attrs和$listener的用法</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/07/20/%E5%9C%A8window10%E7%8E%A9Linux%E7%B3%BB%E7%BB%9F%E5%88%9D%E4%BD%93%E9%AA%8C/">
+                        <span class="hidden-mobile">在window10玩Linux系统初体验</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

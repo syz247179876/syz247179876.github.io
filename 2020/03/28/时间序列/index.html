@@ -1,0 +1,794 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一、基本的now用法  In: import datetime m&#x3D;datetime.datetime.now()  # 获取当前日期时间 year&#x3D;datetime.datetime.now().year  # 获取当前年份 month&#x3D;datetime.datetime.now().month  # 获取当前月份 day&#x3D;datetime.datetime.now().day      #">
+<meta property="og:type" content="article">
+<meta property="og:title" content="时间序列">
+<meta property="og:url" content="https://syzzjw.cn/2020/03/28/%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一、基本的now用法  In: import datetime m&#x3D;datetime.datetime.now()  # 获取当前日期时间 year&#x3D;datetime.datetime.now().year  # 获取当前年份 month&#x3D;datetime.datetime.now().month  # 获取当前月份 day&#x3D;datetime.datetime.now().day      #">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-03-28T04:20:30.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="时间类型">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>时间序列 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="时间序列">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-03-28 12:20" pubdate>
+        2020年3月28日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      6.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      20 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">时间序列</h1>
+            
+            <div class="markdown-body">
+              <p><hr />
+<h2 id="now">一、基本的now用法</h2>
+<hr />
+<div class="codehilite"><pre><span></span><span class="n">In</span><span class="p">:</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">m</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>  <span class="c1"># 获取当前日期时间</span>
+<span class="n">year</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span>  <span class="c1"># 获取当前年份</span>
+<span class="n">month</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">month</span>  <span class="c1"># 获取当前月份</span>
+<span class="n">day</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">day</span>      <span class="c1"># 获取当前天数</span>
+<span class="n">m</span><span class="p">,</span><span class="n">year</span><span class="p">,</span><span class="n">month</span><span class="p">,</span><span class="n">day</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">371776</span><span class="p">),</span> <span class="mi">2020</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span> <span class="c1"># 类型为datetime</span>
+</pre></div></p>
+<p><hr />
+<h2 id="date">二、 date模块的用法</h2>
+<div class="codehilite"><pre><span></span><span class="n">In</span><span class="p">:</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="n">new_date</span> <span class="o">=</span> <span class="n">date</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># 显示特定的日期</span>
+<span class="n">new_date</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">new_date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>  <span class="c1"># 显示今天日期</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">new_date</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span>  <span class="c1"># 返回字符串,与datetime.time.ctime()格式相同</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="s1">&#39;Mon Jan  1 00:00:00 2018&#39;</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">new_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="mi">1999</span><span class="p">,</span><span class="mi">12</span><span class="p">)</span> <span class="c1"># 替换年月日并返回新的日期</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1999</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">new_date</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span> <span class="c1">#将date转换为time模块中的time.struct_time对象</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">time</span><span class="o">.</span><span class="n">struct_time</span><span class="p">(</span><span class="n">tm_year</span><span class="o">=</span><span class="mi">2018</span><span class="p">,</span> <span class="n">tm_mon</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tm_mday</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tm_hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_sec</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_wday</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_yday</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tm_isdst</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">new_date</span><span class="o">.</span><span class="n">weekday</span><span class="p">()</span> <span class="c1">#返回一周内的星期 0-6</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="mi">0</span>     <span class="c1"># 从0开始，0代表星期一，而6就代表星期天</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">date</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span><span class="n">date</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">31</span><span class="p">))</span> <span class="c1">#随机返回日期，uniform是随机生成区间范围内的实数</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+</pre></div></p>
+<p><hr />
+<h2 id="time">三、time模块用法</h2>
+<div class="codehilite"><pre><span></span><span class="n">In</span><span class="p">:</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">new_time</span><span class="o">=</span><span class="n">mktime</span><span class="p">((</span><span class="mi">2018</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="c1">#时间元组-&gt;秒,即转为时间戳</span>
+<span class="n">new_time</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="mf">1541385000.0</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">localtime</span><span class="p">(</span><span class="n">new_time</span><span class="p">)</span>  <span class="c1">#秒-&gt;时间元组，与timetuple()不同，timetuple()是将date转为时间元祖</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">time</span><span class="o">.</span><span class="n">struct_time</span><span class="p">(</span><span class="n">tm_year</span><span class="o">=</span><span class="mi">2018</span><span class="p">,</span> <span class="n">tm_mon</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">tm_mday</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">tm_hour</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tm_min</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">tm_sec</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_wday</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_yday</span><span class="o">=</span><span class="mi">309</span><span class="p">,</span> <span class="n">tm_isdst</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">asctime</span><span class="p">(</span><span class="n">localtime</span><span class="p">(</span><span class="n">new_time</span><span class="p">))</span> <span class="c1">#时间元组-&gt;字符串</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="s1">&#39;Sun May 20 10:30:00 2018&#39;</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">strptime</span><span class="p">(</span><span class="s1">&#39;Sun May 20 10:30:00 2018&#39;</span><span class="p">)</span> <span class="c1">#字符串-&gt;时间元组</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">time</span><span class="o">.</span><span class="n">struct_time</span><span class="p">(</span><span class="n">tm_year</span><span class="o">=</span><span class="mi">2018</span><span class="p">,</span> <span class="n">tm_mon</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">tm_mday</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">tm_hour</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tm_min</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">tm_sec</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tm_wday</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">tm_yday</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span> <span class="n">tm_isdst</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">detestr</span> <span class="o">=</span> <span class="n">new_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># 将date类型转为 字符串</span>
+<span class="n">datestr</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="s1">&#39;2018-01-01&#39;</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">time</span><span class="p">()</span>  <span class="c1">#当前秒数</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="mf">1577423336.532038</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">asctime</span><span class="p">(</span><span class="n">localtime</span><span class="p">(</span><span class="n">time</span><span class="p">()))</span>  <span class="c1">#当前时间字符串</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="s1">&#39;Mon Jan 20 10:48:19 2020&#39;</span></p>
+<p><span class="n">In</span><span class="p">:</span>
+<span class="n">NOW</span><span class="o">=</span><span class="n">localtime</span><span class="p">(</span><span class="n">time</span><span class="p">())</span> <span class="c1">#格式化显示当前时间</span>
+<span class="s2">&quot;</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NOW</span><span class="o">.</span><span class="n">tm_year</span><span class="p">,</span><span class="n">NOW</span><span class="o">.</span><span class="n">tm_mon</span><span class="p">,</span><span class="n">NOW</span><span class="o">.</span><span class="n">tm_mday</span><span class="p">,</span><span class="n">NOW</span><span class="o">.</span><span class="n">tm_hour</span><span class="p">,</span><span class="n">NOW</span><span class="o">.</span><span class="n">tm_min</span><span class="p">,</span><span class="n">NOW</span><span class="o">.</span><span class="n">tm_sec</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="s1">&#39;2020-1-20-10-50-5&#39;</span>
+</pre></div></p>
+<p><hr />
+<p>1.将datetime类型转成str</p>
+<div class="codehilite"><pre><span></span><span class="n">In</span><span class="p">:</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="n">str_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># 将当前日期转为字符串</span>
+<span class="n">str_date</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="s1">&#39;2020-01-20&#39;</span>
+</pre></div></p>
+<p>2.将str类型转成datetime</p>
+
+<div class="codehilite"><pre><span></span><span class="n">In</span><span class="p">:</span>
+<span class="n">form</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s2">&quot;2019-04-15&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># 将固定字符串转为固定格式的日期类型</span>
+<span class="n">Out</span><span class="p">:</span>
+<span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="n">date</span> <span class="c1"># 类是一个日期类，由年、月、日组成。由于Python也是面向对象编程语言，所以针对类，就会有构造函数，该类的构造函数如下： </span>
+
+<p><span class="k">class</span> <span class="nc">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span><br><span class="n">year</span> <span class="p">:</span> <span class="c1"># 表示年,范围[MINYEAR, MAXYEAR]，即[1, 9999]</span><br><span class="n">month</span> <span class="p">:</span> <span class="c1"># 表示月，范围[1, 12]</span><br><span class="n">day</span> <span class="p">:</span> <span class="c1"># 一月中第几天，最大值根据给定的year，month参数来决定。例如闰年2月份有29天</span><br></pre></div></p>
+<p><hr />
+<h2 id="date_1">四、date模块的十大用法</h2>
+<p>一、date对象所能表示的最大最小日期，返回的是datetime.date类型的对象</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; import datetime
+&gt;&gt;&gt; datetime.date.max  <span class="c1"># 获取最大日期，调用__repr__内置方法</span>
+datetime.date<span class="o">(</span><span class="m">9999</span>, <span class="m">12</span>, <span class="m">31</span><span class="o">)</span>
+&gt;&gt;&gt; print datetime.date.min  <span class="c1"># 获取最小日期</span>
+<span class="m">0001</span>-01-01
+&gt;&gt;&gt;
+</pre></div></p>
+<p><hr />
+<p>二、date.today() 函数：返回一个当前本地日期的date类型的对象</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt;import datetime
+&gt;&gt;&gt; datetime.date.today<span class="o">()</span> <span class="c1"># 返回本地日期对象，调用__repr__内置方法</span>
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span>
+&gt;&gt;&gt; print datetime.date.today<span class="o">()</span> <span class="c1">#</span>
+<span class="m">2018</span>-01-16
+&gt;&gt;&gt;
+</pre></div></p>
+<p><hr />
+<p>三、date.fromtimestamp()函数：根据给定的时间戳，返回一个date对象</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; import datetime
+&gt;&gt;&gt; import <span class="nb">time</span>
+&gt;&gt;&gt; <span class="nv">now</span><span class="o">=</span>time.time<span class="o">()</span>  <span class="c1"># 返回时间戳</span>
+&gt;&gt;&gt; print now
+<span class="m">1516110787</span>.69
+&gt;&gt;&gt; <span class="nv">s</span><span class="o">=</span>datetime.date.fromtimestamp<span class="o">(</span>now<span class="o">)</span> <span class="c1"># 根据给定的时间戳，返回date对象</span>
+&gt;&gt;&gt; s
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span> <span class="c1"># 返回固定参数的date对象</span>
+&gt;&gt;&gt; print s
+<span class="m">2018</span>-01-16
+&gt;&gt;&gt;
+</pre></div></p>
+<p><hr />
+<p>四、date.weekday()函数：参数必须是一个date类型的对象，返回该日期是一周中的第几天。返回值是一个整型。星期一，返回0；星期二，返回1。。。</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">s</span><span class="o">=</span>datetime.date.today<span class="o">()</span>
+&gt;&gt;&gt; print s
+<span class="m">2018</span>-01-16
+&gt;&gt;&gt; s
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span>
+&gt;&gt;&gt; type<span class="o">(</span>s<span class="o">)</span> <span class="c1"># 查看date返回的类型</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;datetime.date&#39;</span>&gt;
+&gt;&gt;&gt; <span class="nv">d</span><span class="o">=</span>datetime.date.weekday<span class="o">(</span>s<span class="o">)</span> <span class="c1"># 返回对应类型的</span>
+&gt;&gt;&gt; d
+<span class="m">0</span>
+&gt;&gt;&gt; print d
+<span class="m">0</span>
+&gt;&gt;&gt; type<span class="o">(</span>d<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;int&#39;</span>&gt;
+&gt;&gt;&gt;
+</pre></div></p>
+<p><hr />
+<p>五、date.isoweekday()函数：该函数需要一个datetime.date类型的参数。返回weekday中的星期几，星期一，返回1；星期二，返回2；以此类推。</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">s</span><span class="o">=</span>datetime.date.today<span class="o">()</span>
+&gt;&gt;&gt; print s
+<span class="m">2018</span>-05-20
+&gt;&gt;&gt; s
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">5</span>, <span class="m">20</span><span class="o">)</span>
+&gt;&gt;&gt; <span class="nv">d</span><span class="o">=</span>datetime.date.isoweekday<span class="o">(</span>s<span class="o">)</span>
+&gt;&gt;&gt; d
+<span class="m">1</span>
+&gt;&gt;&gt; type<span class="o">(</span>d<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;int&#39;</span>&gt;
+&gt;&gt;&gt;
+</pre></div></p>
+<p><hr />
+<p>六、date.isocalendar（）函数：该函数需要一个datetime.date类型的参数。返回date类型对象中的year（年），week（周），weekday（一周中的第几天）
+，返回的是一个元祖类型</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">s</span><span class="o">=</span>datetime.date.today<span class="o">()</span>
+&gt;&gt;&gt; print s
+<span class="m">2018</span>-5-20
+&gt;&gt;&gt; s
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">5</span>, <span class="m">20</span><span class="o">)</span>
+&gt;&gt;&gt; <span class="nv">d</span><span class="o">=</span>datetime.date.isocalendar<span class="o">(</span>s<span class="o">)</span>
+&gt;&gt;&gt; d
+<span class="o">(</span><span class="m">2018</span>, <span class="m">20</span>, <span class="m">7</span><span class="o">)</span>
+&gt;&gt;&gt; print d
+<span class="o">(</span><span class="m">2018</span>, <span class="m">20</span>, <span class="m">7</span><span class="o">)</span>  <span class="c1"># 代表2018年中的第20周，第三周中的第7天,即5月20日</span>
+&gt;&gt;&gt; type<span class="o">(</span>d<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;tuple&#39;</span>&gt;
+&gt;&gt;&gt;
+</pre></div></p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">s</span><span class="o">=</span>datetime.date<span class="o">(</span><span class="m">2018</span>,1,14<span class="o">)</span>
+&gt;&gt;&gt; s
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">14</span><span class="o">)</span>
+&gt;&gt;&gt; print s
+<span class="m">2018</span>-01-14
+&gt;&gt;&gt; d
+<span class="o">(</span><span class="m">2018</span>, <span class="m">3</span>, <span class="m">2</span><span class="o">)</span>
+&gt;&gt;&gt; <span class="nv">d</span><span class="o">=</span>datetime.date.isocalendar<span class="o">(</span>s<span class="o">)</span>
+&gt;&gt;&gt; d
+<span class="o">(</span><span class="m">2018</span>, <span class="m">2</span>, <span class="m">7</span><span class="o">)</span>     <span class="c1"># 代表2018年中的第3周，第三周中的第7天</span>
+&gt;&gt;&gt;
+</pre></div>
+
+<p><hr />
+<p>七、date.strftime(fmt) 返回自定义格式的时间字符串。fmt是自定义的时间格式</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">a</span><span class="o">=</span>datetime.date.today<span class="o">()</span>
+&gt;&gt;&gt; a
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span>
+&gt;&gt;&gt; <span class="nv">b</span><span class="o">=</span>a.strftime<span class="o">(</span><span class="s2">&quot;%Y-%m-%d %H:%M:%S&quot;</span><span class="o">)</span>
+&gt;&gt;&gt; b
+<span class="s1">&#39;2018-01-16 00:00:00&#39;</span>
+&gt;&gt;&gt; print b
+<span class="m">2018</span>-01-16 <span class="m">00</span>:00:00
+&gt;&gt;&gt; type<span class="o">(</span>b<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;str&#39;</span>&gt;
+</pre></div></p>
+<p><hr />
+<p>八、.replace(year, month, day)：生成一个新的日期对象  用参数指定的年，月，日代替原有对象中的属性。（原有对象仍保持不变）</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; date1
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span>
+&gt;&gt;&gt; <span class="nv">date_new</span><span class="o">=</span>date1.replace<span class="o">(</span><span class="nv">year</span><span class="o">=</span><span class="m">2017</span><span class="o">)</span>  <span class="c1"># 将year替换为2017</span>
+&gt;&gt;&gt; date_new
+datetime.date<span class="o">(</span><span class="m">2017</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span>
+&gt;&gt;&gt; <span class="nv">date_new</span><span class="o">=</span>date1.replace<span class="o">(</span><span class="nv">day</span><span class="o">=</span><span class="m">30</span><span class="o">)</span>
+&gt;&gt;&gt; date_new
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">30</span><span class="o">)</span>
+</pre></div></p>
+<p><hr />
+<p>九、日期的其他操作&ndash;日期加上一个时间间隔（datetime.timedela类的对象)</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">now</span><span class="o">=</span>datetime.date.today<span class="o">()</span>
+&gt;&gt;&gt; now
+datetime.date<span class="o">(</span><span class="m">2018</span>, <span class="m">1</span>, <span class="m">16</span><span class="o">)</span>
+&gt;&gt;&gt; print now
+<span class="m">2018</span>-01-16
+&gt;&gt;&gt; <span class="nv">b</span><span class="o">=</span>datetime.timedelta<span class="o">(</span><span class="nv">days</span><span class="o">=</span><span class="m">10</span><span class="o">)</span> <span class="c1"># 表示正向推移10天，如果day=-10，表示反向推移10天</span>
+&gt;&gt;&gt; b
+datetime.timedelta<span class="o">(</span><span class="m">10</span><span class="o">)</span>
+&gt;&gt;&gt; type<span class="o">(</span>b<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;datetime.timedelta&#39;</span>&gt;
+&gt;&gt;&gt; print b
+<span class="m">10</span> days, <span class="m">0</span>:00:00
+&gt;&gt;&gt; print now+b   <span class="c1"># 表示推迟10天之后的日期</span>
+<span class="m">2018</span>-01-26
+&gt;&gt;&gt; print now-b  <span class="c1"># 表示提前10天之前的日期</span>
+<span class="m">2018</span>-01-06
+&gt;&gt;&gt; print now-b-b   <span class="c1"># 表示提前20天之前的日期</span>
+<span class="m">2017</span>-12-27
+&gt;&gt;&gt;
+</pre></div></p>
+<p><hr />
+<p>十、日期的其他操作&ndash;两个date类型对象相减。返回两个日期的间隔对象，即：datetime.timedelta类型的对象</p>
+<div class="codehilite"><pre><span></span>&gt;&gt;&gt; <span class="nv">date1</span><span class="o">=</span>datetime.date.today<span class="o">()</span>
+&gt;&gt;&gt; <span class="nv">date2</span><span class="o">=</span>date1.replace<span class="o">(</span><span class="nv">day</span><span class="o">=</span><span class="m">19</span><span class="o">)</span>
+&gt;&gt;&gt; print date1
+<span class="m">2018</span>-01-16
+&gt;&gt;&gt; print date2
+<span class="m">2018</span>-01-19
+&gt;&gt;&gt; print type<span class="o">(</span>date1<span class="o">)</span>,type<span class="o">(</span>date2<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;datetime.date&#39;</span>&gt; &lt;<span class="nb">type</span> <span class="s1">&#39;datetime.date&#39;</span>&gt;   <span class="c1"># 两个都是为date类型</span>
+&gt;&gt;&gt; print date2-date1
+<span class="m">3</span> days, <span class="m">0</span>:00:00
+&gt;&gt;&gt; print date1-date2
+-3 days, <span class="m">0</span>:00:00
+&gt;&gt;&gt; print date2+datetime.timedelta<span class="o">(</span><span class="nv">days</span><span class="o">=</span><span class="m">35</span><span class="o">)</span>
+<span class="m">2018</span>-02-23
+&gt;&gt;&gt; print type<span class="o">(</span>date2-date1<span class="o">)</span>
+&lt;<span class="nb">type</span> <span class="s1">&#39;datetime.timedelta&#39;</span>&gt;
+&gt;&gt;&gt;
+</pre></div></p>
+
+
+<p>十一、dateutil模块</p>
+<p>relativedelta模块弥补了timedelte函数推迟提前月，年级别的日期对象</p>
+<p>具体用法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> datetime<br><br><span class="hljs-keyword">from</span> dateutil.relativedelta <span class="hljs-keyword">import</span> relativedelta<br><br>In [<span class="hljs-number">19</span>]: <span class="hljs-keyword">from</span> dateutil.relativedelta <span class="hljs-keyword">import</span> relativedelta<br><br>In [<span class="hljs-number">20</span>]: k = n-relativedelta(months=<span class="hljs-number">3</span>)<br><br>In [<span class="hljs-number">21</span>]: k<br>Out[<span class="hljs-number">21</span>]: datetime.datetime(<span class="hljs-number">2019</span>, <span class="hljs-number">12</span>, <span class="hljs-number">22</span>, <span class="hljs-number">18</span>, <span class="hljs-number">39</span>, <span class="hljs-number">47</span>, <span class="hljs-number">790734</span>)<br><br></code></pre></td></tr></table></figure>
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%97%B6%E9%97%B4%E7%B1%BB%E5%9E%8B/">时间类型</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/03/28/django_admin%E8%AF%A6%E8%A7%A3%EF%BC%882%EF%BC%89/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">django_admin详解(2)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/03/28/django_admin%E8%AF%A6%E8%A7%A3%EF%BC%885%EF%BC%89/">
+                        <span class="hidden-mobile">django_admin详解（5）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

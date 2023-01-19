@@ -1,0 +1,557 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="学习rabbitm今天学习了rabbitmq的持久化和消息分发的简单原理和简单demo.做个笔记记录下  Four —–持久化Durable之前学到了consumer(worker)挂掉了,可以通过消息确认机制实现rabbitmq服务的重新转发.但是如果rabbitmq服务自己也突然挂掉了,怎么办呢?根据以往学过的redis,我们可以很容易想到可以将数据在每次操作指令后将其以RDB或AOF的形式持">
+<meta property="og:type" content="article">
+<meta property="og:title" content="学习RabbitMQ的原理和简单应用(2)">
+<meta property="og:url" content="https://syzzjw.cn/2020/11/25/%E5%AD%A6%E4%B9%A0rabbitmq%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8(2)/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="学习rabbitm今天学习了rabbitmq的持久化和消息分发的简单原理和简单demo.做个笔记记录下  Four —–持久化Durable之前学到了consumer(worker)挂掉了,可以通过消息确认机制实现rabbitmq服务的重新转发.但是如果rabbitmq服务自己也突然挂掉了,怎么办呢?根据以往学过的redis,我们可以很容易想到可以将数据在每次操作指令后将其以RDB或AOF的形式持">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_2.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_3.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_1.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/dispatch_1.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/dispatch_2.png">
+<meta property="article:published_time" content="2020-11-25T12:07:55.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="RabbitMQ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_2.png">
+  
+  <title>学习RabbitMQ的原理和简单应用(2) - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="学习RabbitMQ的原理和简单应用(2)">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-11-25 20:07" pubdate>
+        2020年11月25日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.2k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">学习RabbitMQ的原理和简单应用(2)</h1>
+            
+            <div class="markdown-body">
+              <p>学习rabbitm今天学习了rabbitmq的持久化和消息分发的简单原理和简单demo.做个笔记记录下</p>
+<hr>
+<h3 id="Four-—–持久化Durable"><a href="#Four-—–持久化Durable" class="headerlink" title="Four —–持久化Durable"></a>Four —–持久化Durable</h3><p>之前学到了consumer(worker)挂掉了,可以通过消息确认机制实现rabbitmq服务的重新转发.但是如果rabbitmq服务自己也突然挂掉了,怎么办呢?根据以往学过的redis,我们可以很容易想到可以将数据在每次操作指令后将其以RDB或AOF的形式持久化到磁盘;而rabbitmq也有自己的持久化机制.</p>
+<p>1.通过标记queue和messages为可持久化的来告诉rabbitmq.(注:对于已经存在的同名且未声明持久话的queue,对其重新定义durable无效.)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># durable_consumer.py</span><br><br><span class="hljs-keyword">import</span> pika<br><span class="hljs-comment"># 建立channel通道</span><br>connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="hljs-string">&#x27;localhost&#x27;</span>))<br>channel = connection.channel()<br>channel.queue_declare(queue=<span class="hljs-string">&#x27;task_queue&#x27;</span>, durable=<span class="hljs-literal">True</span>)<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callback</span>(<span class="hljs-params">ch, method, propeties, body</span>):</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Received %r&quot;</span> % body.decode())<br>    ch.basic_ack(delivery_tag=method.delivery_tag)  <span class="hljs-comment"># 消息确认</span><br><br><br>channel.basic_consume(queue=<span class="hljs-string">&#x27;task_queue&#x27;</span>,on_message_callback=callback)<br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># durable_product.py</span><br><span class="hljs-keyword">import</span> pika<br><span class="hljs-comment"># 建立channel通道</span><br>connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="hljs-string">&#x27;localhost&#x27;</span>))<br>channel = connection.channel()<br>channel.queue_declare(queue=<span class="hljs-string">&#x27;task_queue&#x27;</span>, durable=<span class="hljs-literal">True</span>)<br><br><br>channel.basic_publish(exchange=<span class="hljs-string">&#x27;&#x27;</span>,<br>                      routing_key=<span class="hljs-string">&quot;task_queue&quot;</span>,<br>                      body=<span class="hljs-string">&#x27;syz666&#x27;</span>,<br>                      properties=pika.BasicProperties(<br>                         delivery_mode = <span class="hljs-number">2</span>, <span class="hljs-comment"># make message persistent</span><br>                      ))<br><br>channel.close()<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>结果:</strong></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_2.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<p>hello队列不是可持久化的,task_queue和celery是可持久化的</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_3.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<p>重启rabbitmq后</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/durable_1.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<p>重启rabbitmq后,非持久化的队列和消息都被清空了,因为其占用的内存空间被回收.</p>
+<hr>
+<h3 id="Five-—-消息分发-Dispatch"><a href="#Five-—-消息分发-Dispatch" class="headerlink" title="Five —-消息分发 Dispatch"></a>Five —-消息分发 Dispatch</h3><p>Five —- 消息分发公平性</p>
+<p>rabbitmq默认情况下,并不会公平的分发消息到空闲的consumer,因为默认情况下rabbitmq是在消息进入到队列后,才会分发消息,因此此时并不会知道每个consumer还有多少个消息未处理,依然将第N个消息发送给对应的第N个consumer.因此就会产生某个consumer很忙(未处理完当前,又收到消息了),而其他的consumer很闲(当前很闲且还没有接收到消息.</p>
+<p>解决方案:</p>
+<p>1.使用basic.qos协议方法来告诉rabbitmq不要同一时刻给一个工作者超过一条以上的消息.换句话来说,就是不会将消息发送给正在处理的consumer,而是那些不繁忙的consumer.</p>
+<p>2.当然,如果恰巧所有queue都填满了,并且所有的consumer都在忙,那么此时需要增加更多的consumer(可以通过集群方式)来加快处理速度,或者为每个消息设置存活时间TTL,来减缓处理的压力.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># dispatch_consumer.py</span><br><br><span class="hljs-keyword">import</span> pika<br><span class="hljs-keyword">import</span> time<br><br>connection = pika.BlockingConnection(<br>    pika.ConnectionParameters(host=<span class="hljs-string">&#x27;localhost&#x27;</span>))<br>channel = connection.channel()<br><br>channel.queue_declare(queue=<span class="hljs-string">&#x27;task_queue&#x27;</span>, durable=<span class="hljs-literal">True</span>)<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callback</span>(<span class="hljs-params">ch, method, properties, body</span>):</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot; [x] Received %r&quot;</span> % body.decode())<br>    time.sleep(body.count(<span class="hljs-string">b&#x27;.&#x27;</span>))<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot; [x] Done&quot;</span>)<br>    ch.basic_ack(delivery_tag=method.delivery_tag)<br><br><br>channel.basic_qos(prefetch_count=<span class="hljs-number">1</span>)  <span class="hljs-comment"># 设置每个consumer统一时刻接受一个消息</span><br><br>channel.basic_consume(queue=<span class="hljs-string">&#x27;task_queue&#x27;</span>, on_message_callback=callback)<br><br>channel.start_consuming()<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># dispatch_consume.py</span><br><span class="hljs-keyword">import</span> pika<br><br><br>connection = pika.BlockingConnection(<br>pika.ConnectionParameters(host=<span class="hljs-string">&#x27;localhost&#x27;</span>))<br><br>channel = connection.channel()  <span class="hljs-comment"># 声明通道</span><br>channel.queue_declare(queue=<span class="hljs-string">&#x27;task_queue&#x27;</span>, durable=<span class="hljs-literal">True</span>)<br><br>message1 = <span class="hljs-string">&#x27;水人波浪形态&#x27;</span><br>message2 = <span class="hljs-string">&#x27;第一滴血!&#x27;</span><br><br>channel.basic_publish(<br>    exchange=<span class="hljs-string">&#x27;&#x27;</span>,<br>    routing_key=<span class="hljs-string">&#x27;task_queue&#x27;</span>,<br>    body=message1,<br>    properties=pika.BasicProperties(<br>        delivery_mode=<span class="hljs-number">2</span>,  <span class="hljs-comment"># 让消息持久化</span><br>    ))<br><br>channel.basic_publish(<br>    exchange=<span class="hljs-string">&#x27;&#x27;</span>,<br>    routing_key=<span class="hljs-string">&#x27;task_queue&#x27;</span>,<br>    body=message2,<br>    properties=pika.BasicProperties(<br>        delivery_mode=<span class="hljs-number">2</span>,  <span class="hljs-comment"># 让消息持久化</span><br>    ))<br>connection.close()<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/dispatch_1.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/dispatch_2.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<p><strong>说明:</strong></p>
+<p>上图中启动了两个consumer进程,因为设置了prefetch_count=1,即每个consumer统一时刻只接受一个message,因此统一时刻发送两个message到队列中,两个consumer会分别处理其中一个,待处理完再处理其他message.</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/RabbitMQ/">RabbitMQ</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/RabbitMQ/">RabbitMQ</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/01/19/%E4%BD%BF%E7%94%A8Docker%E5%B0%86vue%E8%B7%A8%E5%9F%9F%E7%9A%84%E9%A1%B9%E7%9B%AE%E9%83%A8%E7%BD%B2%E5%88%B0%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">使用Docker将vue跨域的项目部署到云服务器</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/11/15/Mongodb%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%8E%E5%AE%9E%E8%B7%B5(1)/">
+                        <span class="hidden-mobile">Mongodb的学习与实践(1)</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

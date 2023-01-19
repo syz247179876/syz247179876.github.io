@@ -1,0 +1,573 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="深入分析Python全局解释器锁GIL的利与弊 一、GIL的诞生背景在谈GIL之前，先补一波线程的知识，正好最近再复习操作系统： {width&#x3D;100%}  在那个单核盛行的时代，自多线程问世以来，线程成为了处理机调度最基本的单位。很多语言都开始着手处理线程并发的问题。其中python之父Guido在1992年8月4号引入了GIL的概念。那么那时候为什么要引入GIL全局解释器锁呢？ 比方你申请了计">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入探究GIL的利与弊">
+<meta property="og:url" content="https://syzzjw.cn/2020/08/05/%E6%B7%B1%E5%85%A5%E6%8E%A2%E7%A9%B6GIL%E7%9A%84%E5%88%A9%E4%B8%8E%E5%BC%8A/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="深入分析Python全局解释器锁GIL的利与弊 一、GIL的诞生背景在谈GIL之前，先补一波线程的知识，正好最近再复习操作系统： {width&#x3D;100%}  在那个单核盛行的时代，自多线程问世以来，线程成为了处理机调度最基本的单位。很多语言都开始着手处理线程并发的问题。其中python之父Guido在1992年8月4号引入了GIL的概念。那么那时候为什么要引入GIL全局解释器锁呢？ 比方你申请了计">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/thread.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/threads.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E5%8D%95%E7%BA%BF%E7%A8%8B%E5%8D%95%E8%BF%9B%E7%A8%8B.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%8D%95%E8%BF%9B%E7%A8%8B.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E5%A4%9A%E8%BF%9B%E7%A8%8B.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E8%BF%9B%E7%A8%8B%E6%B1%A0.png">
+<meta property="article:published_time" content="2020-08-05T03:16:28.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/thread.png">
+  
+  <title>深入探究GIL的利与弊 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="深入探究GIL的利与弊">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-08-05 11:16" pubdate>
+        2020年8月5日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.8k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      12 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">深入探究GIL的利与弊</h1>
+            
+            <div class="markdown-body">
+              <h3 id="深入分析Python全局解释器锁GIL的利与弊"><a href="#深入分析Python全局解释器锁GIL的利与弊" class="headerlink" title="深入分析Python全局解释器锁GIL的利与弊"></a><strong>深入分析Python全局解释器锁GIL的利与弊</strong></h3><hr>
+<h4 id="一、GIL的诞生背景"><a href="#一、GIL的诞生背景" class="headerlink" title="一、GIL的诞生背景"></a><strong>一、GIL的诞生背景</strong></h4><p>在谈GIL之前，先补一波线程的知识，正好最近再复习操作系统：</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/thread.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<hr>
+<p>在那个单核盛行的时代，自多线程问世以来，线程成为了处理机调度最基本的单位。很多语言都开始着手处理线程并发的问题。其中python之父Guido在1992年8月4号引入了GIL的概念。那么那时候为什么要引入GIL全局解释器锁呢？</p>
+<p>比方你申请了计算机的某些资源，用来创建一些Object，等到你用完了这些资源后，是不是要归还这些资源，这样才能够取之有度，用之不竭。</p>
+<p>在线程引入之前，只有进程的时候，CPU调度每次只能运行一个进程，也就是单核无论如何也不能并行运行多个进程。而线程的出现，则被称之为“微进程”，在进程中进一步划分空间，增加并发度，减小进程切换带来的开销，但随之而来也出现了一些问题，那就是多线程并发的结果的不确定性。</p>
+<hr>
+<p>以下面两个线程回收资源为例进行说明：</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/threads.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<hr>
+<p><strong>分析：</strong></p>
+<p>Python中垃圾回收机制不同于Java，它采用的引用计数的方式，当计数器为0，则表示某资源已不被任何对象引用，因此可以回收该资源。</p>
+<p>如图所示是汇编指令，因为高级语言可能一条语句就会对应很多条汇编指令。我们就看前三条。首先将ax加载到obj_ref，也就是引用技术，然后执行ax-1，最后保存ax。</p>
+<p>假设此时引用计数为2，要回收这两个资源，假设thread1先运行到了2步骤，紧跟着thread2运行了1步骤，因为他们是并发的，同时这些指令也不是原子性的。所以根据并发的不确定性，是有一种可能，让thread2保存了减一后得到的引用计数，剩余引用计数为1时，thread1那里显示的仍然是回收thread2中资源前的引用计数值2。这样就会导致资源回收的问题。</p>
+<p>因此GIL全局解释器锁的出现是为了解决资源回收的引用计数的问题。当然GIL锁在后来与其他语言组合的时候，为了方便的管理资源的分配问题，例如与C语言结合，诞生了科学计算包Numpy等，也有着相应的好处。</p>
+<hr>
+<h4 id="二、GIL的定义及存在的好处"><a href="#二、GIL的定义及存在的好处" class="headerlink" title="二、GIL的定义及存在的好处"></a><strong>二、GIL的定义及存在的好处</strong></h4><p>之前谈到了GIL的出现主要是为了解决多线程中资源回收的引用计数的问题，以及为了方便管理与多语言结合的资源的分配问题。那么这把锁又和现在的一般的锁，例如分布式锁，共享锁等等的区别又在哪？</p>
+<p>经过一番寻找资料，发现GIL锁其实是定义在很底层的位置，它是一把底层的，基于字节码级别的互斥锁，这样确保了同一时刻只有拿到这把唯一的GIL锁的线程才能够上处理机进行调度。GIL存在的好处就是节省了加锁解锁带来的内存性能开销. 同时由于这把字节码级别的锁存在,在Python虚拟机中的每条字节码指令都是线程安全的.举个例子,例如list.append操作,使用dis模块查看字节码执行过程,可以发现append是内建名字空间中的一个名字,其占用了一个字节码,同时其回调了底层了的C语言函数app1,即这个app1函数是线程安全的.因而append操作也是线程安全的.而list,dict的一系列操作都是线程安全的.</p>
+<hr>
+<h4 id="三、GIL的存在的坏处"><a href="#三、GIL的存在的坏处" class="headerlink" title="三、GIL的存在的坏处"></a><strong>三、GIL的存在的坏处</strong></h4><p>GIL基于bytecode定义在底层的位置，早已根深蒂固，我猜想当时guido可能没有意识到多核发展的如此之快，没有完全考虑到多核情况下GIL的巨大局限—–无法充分利用CPU资源。</p>
+<p>Python的线程调度参考了操作系统的时间片调度算法, 只不过Python中的线程调度的时间片以一个字节码为单位,执行了一定数量的字节码就会产生线程调度.</p>
+<p>因为Python中每个线程进入调度都有一个字节码计数器，类似操作系统中的时间片，当执行完一定数量的字节码，将释放GIL锁并唤醒其他线程。而执行CPU密集型的任务的时候，会导致线程调度多次，因此多线程正常情况下会比单线程产生更多的线程调度的时间消耗。如果在多核上跑多线程任务，也会导致CPU利用率很低，接下来我会用代码和CPU资源图来分析。</p>
+<hr>
+<h4 id="四、单线程，多线程，多进程，进程池的CPU密集型任务举例"><a href="#四、单线程，多线程，多进程，进程池的CPU密集型任务举例" class="headerlink" title="四、单线程，多线程，多进程，进程池的CPU密集型任务举例"></a><strong>四、单线程，多线程，多进程，进程池的CPU密集型任务举例</strong></h4><p>下面是一个很简单的比较例子，用了求解质数来模仿cpu密集型，其实求之前刷leetcode的时候，还有一种时间复杂度更小的求解质数的方法(埃拉托色尼筛选法)，不过这里先不谈。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> multiprocessing<br><span class="hljs-keyword">import</span> time<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">cpu_tense</span>(<span class="hljs-params">number</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;计算质数&quot;&quot;&quot;</span><br><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">2</span>, <span class="hljs-built_in">int</span>(number ** <span class="hljs-number">0.5</span>) + <span class="hljs-number">1</span>):<br>        <span class="hljs-keyword">if</span> number % i == <span class="hljs-number">0</span>:<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">0</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span><br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">count_zs</span>(<span class="hljs-params">counts</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;计算固定数量的质数&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># 模拟CPU密集型</span><br>    initial_number = <span class="hljs-number">2</span><br>    total_zs = <span class="hljs-number">0</span><br>    <span class="hljs-keyword">while</span> total_zs &lt;= counts:<br>        total_zs += cpu_tense(initial_number)<br>        initial_number += <span class="hljs-number">1</span><br>    <span class="hljs-keyword">return</span> initial_number<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&#x27;__main__&#x27;</span>:<br>    times = <span class="hljs-number">100000</span><br><br>    <span class="hljs-comment"># 同步</span><br>    t1 = time.time()<br>    count_zs(times)<br>    count_zs(times)<br>    count_zs(times)<br>    count_zs(times)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;CPU密集型下同步所需要的时间：&quot;</span>, time.time() - t1)<br><br>    <span class="hljs-comment"># 多线程</span><br>    t2 = time.time()<br>    threading_list = [threading.Thread(target=count_zs, args=(times,)) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">4</span>)]<br>    <span class="hljs-keyword">for</span> thread <span class="hljs-keyword">in</span> threading_list:<br>        thread.start()<br>    <span class="hljs-keyword">for</span> thread <span class="hljs-keyword">in</span> threading_list:<br>        thread.join()  <span class="hljs-comment"># 阻塞主进程</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;CPU密集型下多线程所需要的时间：&quot;</span>, time.time() - t2)<br><br>    <span class="hljs-comment"># 多进程</span><br>    t3 = time.time()<br>    process_list = [multiprocessing.Process(target=count_zs, args=(times,)) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">4</span>)]<br>    <span class="hljs-keyword">for</span> process <span class="hljs-keyword">in</span> process_list:<br>        process.start()<br>    <span class="hljs-keyword">for</span> process <span class="hljs-keyword">in</span> process_list:<br>        process.join()  <span class="hljs-comment"># 阻塞主进程</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;CPU密集型下多进程所需要的时间：&quot;</span>, time.time() - t3)<br><br>    <span class="hljs-comment"># 进程池</span><br>    t4 = time.time()<br>    pool = multiprocessing.Pool(processes=<span class="hljs-number">4</span>)<br>    pool_output = pool.<span class="hljs-built_in">map</span>(count_zs, [<span class="hljs-number">100000</span> <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">4</span>)])<br>    pool.close()<br>    pool.join()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;CPU密集型下进程池所需要的时间：&quot;</span>, time.time() - t4)<br><br><br></code></pre></td></tr></table></figure>
+
+<h4 id="我的操作系统如下："><a href="#我的操作系统如下：" class="headerlink" title="我的操作系统如下："></a><strong>我的操作系统如下：</strong></h4><p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<hr>
+<h4 id="单进程单线程的CPU运行效果如下："><a href="#单进程单线程的CPU运行效果如下：" class="headerlink" title="单进程单线程的CPU运行效果如下："></a><strong>单进程单线程的CPU运行效果如下：</strong></h4><hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E5%8D%95%E7%BA%BF%E7%A8%8B%E5%8D%95%E8%BF%9B%E7%A8%8B.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<hr>
+<h4 id="多线程单进程的CPU运作如下："><a href="#多线程单进程的CPU运作如下：" class="headerlink" title="多线程单进程的CPU运作如下："></a><strong>多线程单进程的CPU运作如下：</strong></h4><h2 id="width-100"><a href="#width-100" class="headerlink" title="{width=100%}"></a><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%8D%95%E8%BF%9B%E7%A8%8B.png" srcset="/img/loading.gif" lazyload>{width=100%}</h2><h4 id="多进程CPU运作如下："><a href="#多进程CPU运作如下：" class="headerlink" title="多进程CPU运作如下："></a><strong>多进程CPU运作如下：</strong></h4><p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E5%A4%9A%E8%BF%9B%E7%A8%8B.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<hr>
+<h4 id="进程池的CPU运作如下："><a href="#进程池的CPU运作如下：" class="headerlink" title="进程池的CPU运作如下："></a><strong>进程池的CPU运作如下：</strong></h4><p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E8%BF%9B%E7%A8%8B%E6%B1%A0.png" srcset="/img/loading.gif" lazyload>{width=100%}</p>
+<h4 id="消耗时间如下"><a href="#消耗时间如下" class="headerlink" title="消耗时间如下"></a><strong>消耗时间如下</strong></h4><p>CPU密集型下同步所需要的时间： 30.59021615982056</p>
+<p>CPU密集型下多线程所需要的时间： 31.321476459503174</p>
+<p>CPU密集型下多进程所需要的时间： 8.955211162567139</p>
+<p>CPU密集型下进程池所需要的时间： 10.86313271522522</p>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a><strong>结论</strong></h4><p>我测了5次，可以初步判断，CPU密集型下多线程并不一定比单线程所花费的时间少，而采用多进程以及进程池可以有效的减少时间。因此可以认为Python对于CPU密集型的处理使用多进程要比多进程好的多。</p>
+<hr>
+<p><strong>原因分析：</strong></p>
+<p>刚才上面已经谈到了GIL锁，它的存在仅针对线程而不是进程，它在解决了垃圾回收问题的计数问题，但是也带来了额外的性能问题，因为同一时间只有一个线程可以拿到这把GIL全局解释器锁，拿到锁的线程就会进入Pyhon虚拟机执行，但是中每个线程都记录了自己执行了多少个字节码,也可以理解为一个计数器ticks，当ticks达到一定数量之后，就需要进行线程（进程）的调度，调度的过程由操作系统底层完成，修改其状态位，而正式这种CPU密集型的任务（请看多线程的那副图），导致了线程调度的次数大大增加，也并没有完全利用CPU资源，进而带来更多的切换开销。尽管统一个进程间的线程不断的切换，虽然不需要切换进程的。的运行环境，但是切换次数太多，开销仍然很大，并不比单线程效率高，而罪魁祸首正是这把GIL锁！！</p>
+<p>当然对于CPU密集型使用多线程的问题，一般替换成多进程就行了！</p>
+<p>下次做个I/O对比的例子，这次就先到这，不早了，命要紧～</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/%E8%A7%A3%E9%87%8A%E5%99%A8%E9%94%81/">解释器锁</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/08/05/manjaro%E4%B8%AD%E5%AF%B9%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E6%B7%BB%E5%8A%A0Icon/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Manjaro中对可执行文件添加Icon</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/08/02/manjaro%E4%B8%8A%E5%88%9D%E4%BD%93%E9%AA%8C%E4%B9%8B%E9%85%8D%E7%BD%AE%E5%A5%BD%E8%BE%93%E5%85%A5%E6%B3%95%EF%BC%88%E4%BA%B2%E6%B5%8B%E6%9C%89%E6%95%88%EF%BC%89/">
+                        <span class="hidden-mobile">Manjaro上初体验之配置好输入法（亲测有效）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

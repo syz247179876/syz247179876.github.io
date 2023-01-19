@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一、背景网站已经运行有一段时间了，起初采用了nginx的反向代理，在location中设置了expires 30d，当时没有去仔细想如何合适的设计缓存。后来，我美化了网站的一些界面，修改了一些静态文件，更新到云服务器上，再次访问的时候发现，我所修改的静态文件资源并没有发生变化，仍是之前的那些… 设置缓存的好处无非就是在前端和后端之间建立额外的数据副本，用于减小请求后端服务器的压力，减轻了网路的压力">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对Nginx中的缓存设置的深入理解">
+<meta property="og:url" content="https://syzzjw.cn/2020/08/01/%E5%AF%B9Nginx%E4%B8%AD%E7%9A%84%E7%BC%93%E5%AD%98%E8%AE%BE%E7%BD%AE%E7%9A%84%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一、背景网站已经运行有一段时间了，起初采用了nginx的反向代理，在location中设置了expires 30d，当时没有去仔细想如何合适的设计缓存。后来，我美化了网站的一些界面，修改了一些静态文件，更新到云服务器上，再次访问的时候发现，我所修改的静态文件资源并没有发生变化，仍是之前的那些… 设置缓存的好处无非就是在前端和后端之间建立额外的数据副本，用于减小请求后端服务器的压力，减轻了网路的压力">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/nginx_cache.png">
+<meta property="article:published_time" content="2020-08-01T08:02:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Nginx">
+<meta property="article:tag" content="中间件">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/nginx_cache.png">
+  
+  <title>对Nginx中的缓存设置的深入理解 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="对Nginx中的缓存设置的深入理解">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-08-01 16:02" pubdate>
+        2020年8月1日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">对Nginx中的缓存设置的深入理解</h1>
+            
+            <div class="markdown-body">
+              <h4 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a><strong>一、背景</strong></h4><p>网站已经运行有一段时间了，起初采用了nginx的反向代理，在location中设置了expires 30d，当时没有去仔细想如何合适的设计缓存。后来，我美化了网站的一些界面，修改了一些静态文件，更新到云服务器上，再次访问的时候发现，我所修改的静态文件资源并没有发生变化，仍是之前的那些…</p>
+<p>设置缓存的好处无非就是在前端和后端之间建立额外的数据副本，用于减小请求后端服务器的压力，减轻了网路的压力，同时也减少了网络中数据传输的延迟性也便提高用户访问网站的速度。甚至在有时候，后台某台服务器崩了，如果还有缓存存在，则确保了网站短时间的稳定性，方便及时维护。</p>
+<p>因此做此笔记，以便再次深入学习nginx如何设置合理的缓存和删除缓存。</p>
+<hr>
+<h4 id="二、原因分析"><a href="#二、原因分析" class="headerlink" title="二、原因分析"></a><strong>二、原因分析</strong></h4><p>经过google浏览了一些好的博客，学习到了nginx的缓存机制其实有三种，而我之前所使用的expires 30d，其实使用了nginx缓存机制中的基于web的缓存技术，其基本思想利用了客户端访问的时间局部性原理，也就是当客户端访问一次服务器后，将响应的数据生成一份缓存，保存在本地客户端，这样，下次在访问服务器的时候，会首先访问本地浏览器的缓存，如果本地缓存没有过期，则直接从缓存中拿取数据，否则的话，再去访问服务器，生成本地的缓存副本。</p>
+<p>如下图，是访问我的网站中某个js资源的相应头中的信息（我只设置了expires):</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/nginx_cache.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<p><strong>说明：</strong></p>
+<p>1.Cache-Control:表示缓存持续的时间，以服务器时间为基准。</p>
+<p>2.Expires:表示缓存过期时间。</p>
+<p>3.Last-Modified:表示上次缓存过期后，新生成的本地浏览器的副本的日期。</p>
+<p><strong>注：</strong><br>因为我才用的这种方式是基于本地浏览器的缓存，因此想要删除缓存只有通过删除本地浏览器的历史缓存才行，这种方式带来的弊端是，更新缓存的主动权在客户端，而非服务器端，因此基本上要想更新所有用户的历史缓存是很麻烦的。</p>
+<hr>
+<h4 id="三、另外两种基于Nginx服务器端的缓存"><a href="#三、另外两种基于Nginx服务器端的缓存" class="headerlink" title="三、另外两种基于Nginx服务器端的缓存"></a><strong>三、另外两种基于Nginx服务器端的缓存</strong></h4><p>另外还有其他两种缓存机制，这里也简单的介绍下。</p>
+<hr>
+<h5 id="（1）404驱动缓存"><a href="#（1）404驱动缓存" class="headerlink" title="（1）404驱动缓存"></a><strong>（1）404驱动缓存</strong></h5><p>从名字来看，可以大致了解到该缓存基于404找不到资源来进行缓存驱动的，使用了Nginx自身的proxy store对404错误进行转发到内部请求处理服务器，进行响应，然后将缓存保存在服务器中缓存文件里。</p>
+<p>其主要的响应和设置缓存的步骤如下：</p>
+<p>1.首先，nginx接受客户端的请求，比如客户端要请求某个css或者js或者图片等资源。</p>
+<p>2.nginx会先在自己的缓存中查找是否有相应的数据资源，如果有则直接返回给客户端；如果没有，则抛出404资源找不到的异常。然后服务器捕捉到后，向内部服务器发送请求，然后内部服务器处理请求，最后nginx将响应的数据发送给前端，同时在服务器的本地保存缓存的副本。</p>
+<hr>
+<h5 id="（2）资源不存在驱动web缓存"><a href="#（2）资源不存在驱动web缓存" class="headerlink" title="（2）资源不存在驱动web缓存"></a><strong>（2）资源不存在驱动web缓存</strong></h5><p>该方法和404驱动缓存不同的是该缓存机制是需要if判断是否存在资源，而进一步进行重定向。</p>
+<hr>
+<h4 id="四、缓存的配置"><a href="#四、缓存的配置" class="headerlink" title="四、缓存的配置"></a><strong>四、缓存的配置</strong></h4><p><strong>它可以配置在http，server或者location中，基本的配置参数如下：</strong></p>
+<p>首先要在相应的地方创建存放缓存文件的文件夹，我这里是/usr/local/nginx/cache，这个一定要提前设置，否则启动nginx会报错！</p>
+<hr>
+<p>在最顶层http中进行配置</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell"><br>proxy_cache_path /usr/local/nginx/cache levels=1:2 keys_zone=cache_one:100m inactive=1d max_size=10g;<br><span class="hljs-meta">#</span><span class="bash">设置缓存存放的文件路径，levels是可选的，表示目录层级，表示两级子目录，keys_zone表示缓存共享内存区的名称和共享内存区的总的大小，用于多个进程或线程共享访问。keys_zone:表示缓存多长时间失效，max_size表示允许存放在磁盘上缓存数据的最大值</span><br><br></code></pre></td></tr></table></figure>
+
+<hr>
+<p>在server中进行配置：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs shell"><br>proxy_cache_methods GET HEAD;<br><span class="hljs-meta">#</span><span class="bash">设置允许缓存的http方法，默认情况下GET和HEAD请求会缓存,所以如果不是特别需要缓存POST，则可以不用设置</span><br><br>proxy_cache_valid 200 10m;<br>proxy_cache_valid 404 30s;<br><span class="hljs-meta">#</span><span class="bash">可以针对不同的请求响应码设置缓存时间</span><br><br>proxy_cache_valid any 5m;<br><span class="hljs-meta">#</span><span class="bash">如果想为所有的响应码设置相同的缓存时间，用any</span><br><br>proxy_cache_min_uses 2;<br><span class="hljs-meta">#</span><span class="bash">设置为请求设置最少发送2次，才对其数据进行缓存</span><br><br><br></code></pre></td></tr></table></figure>
+
+<hr>
+<p>在location中要选择http中指定的内存共享区，进行缓存的存放，需添加如下指令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><br>proxy_cache cache_one<br><span class="hljs-meta">#</span><span class="bash"> 指定路由匹配中的缓存存放的内存共享区</span><br><span class="hljs-meta">#</span><span class="bash"> proxy_cache机制开启后会检测被服务器的HTTP响应头中的<span class="hljs-string">&quot;Cache-Control&quot;</span>、<span class="hljs-string">&quot;Expire&quot;</span>头域。如，Cache-Control为no-cache时，是不会缓存数据的。</span><br><span class="hljs-meta">#</span><span class="bash"> 需要设置proxy_buffing on;</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>注：除了proxy_cache_path需要配置在http全局中，其他的配置可以配置在server中也可以配置在location中，只不过缓存的范围不同</strong></p>
+<hr>
+<h4 id="五、整体配置下nginx-conf和default-conf"><a href="#五、整体配置下nginx-conf和default-conf" class="headerlink" title="五、整体配置下nginx.conf和default.conf"></a><strong>五、整体配置下nginx.conf和default.conf</strong></h4><p><strong>配置nginx.conf中的http</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell">http &#123;<br><br><span class="hljs-meta">	#</span><span class="bash"><span class="hljs-comment">#</span></span><br><span class="hljs-meta">	#</span><span class="bash"> Basic Settings</span><br><span class="hljs-meta">	#</span><span class="bash"><span class="hljs-comment">#</span></span><br>        <br>        # 默认请求报文的最大限量<br>        client_max_body_size 200M;<br><br>        proxy_cache_path /usr/local/nginx/cache levels=1:2 keys_zone=cache_one:30m inactive=1d max_size=5g;<br>...<br></code></pre></td></tr></table></figure>
+
+<p><strong>配置default中的server和location</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs shell">proxy_buffering on;<br>        proxy_buffer_size 4k;<br><span class="hljs-meta">		#</span><span class="bash"> 代理缓存的大小（通常为服务器端响应的数据）</span><br>        proxy_buffers 2 8k;<br><span class="hljs-meta">		#</span><span class="bash"> 代理缓存的总大小（响应数据报大小+请求报文段大小）</span><br>        proxy_busy_buffers_size 8k;<br><span class="hljs-meta">		#</span><span class="bash"> 请求繁忙时，设置的缓存大小，必须大于等于总buffer大小</span><br>        proxy_temp_path /usr/local/nginx/temp 1 2;<br><span class="hljs-meta">		#</span><span class="bash"> 设置缓存临时存放的文件目录</span><br>        proxy_max_temp_file_size 20M;<br><span class="hljs-meta">		#</span><span class="bash"> 缓存所有临时文件最大的空间</span><br>        proxy_temp_file_write_size 8k;<br><span class="hljs-meta">		#</span><span class="bash"> 单个临时文件的最大空间</span><br><br>	location / &#123;<br><span class="hljs-meta">		#</span><span class="bash"> First attempt to serve request as file, <span class="hljs-keyword">then</span></span><br><span class="hljs-meta">		#</span><span class="bash"> as directory, <span class="hljs-keyword">then</span> fall back to displaying a 404.</span><br><span class="hljs-meta">		#</span><span class="bash"> try_files <span class="hljs-variable">$uri</span> <span class="hljs-variable">$uri</span>/ =404;</span><br>                include uwsgi_params;<br>                # uwsgi_pass 127.0.0.1:8002;<br>                uwsgi_pass SYZ;<br>                proxy_cache cache_one;<br>                #此处的cache_one必须与http中配置的缓存区域名称相同，表示该缓存存放到目标内存共享区中<br>                proxy_cache_valid 200 304 12h;<br>                proxy_cache_valid 301 302 1d;<br>                proxy_cache_valid any 1m;<br>                proxy_cache_key $uri$is_args$args;<br>                # uwsgi_pass e_mall;<br>	&#125;<br><br></code></pre></td></tr></table></figure>
+
+
+<p>做完笔记，还是蛮有成就感的！</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Nginx/">Nginx</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Nginx/">Nginx</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/08/01/%E7%BB%93%E5%90%88%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B8%8Bdefaultdict(type)%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">结合源码分析下defaultdict(type)的执行流程</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/07/30/Vue%E4%B8%ADprops%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BD%BF%E7%94%A8%E5%92%8C%E7%90%86%E8%A7%A3/">
+                        <span class="hidden-mobile">Vue中props属性的使用和理解</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

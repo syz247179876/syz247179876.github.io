@@ -1,0 +1,944 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+<meta property="og:type" content="website">
+<meta property="og:title" content="云中小站">
+<meta property="og:url" content="https://syzzjw.cn/page/10/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="捕捉一只在计算机领域不断努力的程序猿">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="计算机, 后端, 算法, Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 100vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="每个人, 来到&#39;花前&#39;, 都看见不一样的东西, 得到不一样的明白">
+              
+            </span>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      <div class="container nopadding-x-md">
+        <div class="py-5" id="board"
+          style=margin-top:0>
+          
+          <div class="container">
+            <div class="row">
+              <div class="col-12 col-md-10 m-auto">
+                
+
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/05/ajax%E5%BC%82%E6%AD%A5%E5%8A%A8%E6%80%81%E5%A2%9E%E5%8A%A0dom%E5%85%83%E7%B4%A0%EF%BC%8C%E4%B8%BA%E5%85%B6%E7%BB%91%E5%AE%9A%E4%BA%8B%E4%BB%B6%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          ajax异步动态增加dom元素，为其绑定事件的问题（已解决）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/05/ajax%E5%BC%82%E6%AD%A5%E5%8A%A8%E6%80%81%E5%A2%9E%E5%8A%A0dom%E5%85%83%E7%B4%A0%EF%BC%8C%E4%B8%BA%E5%85%B6%E7%BB%91%E5%AE%9A%E4%BA%8B%E4%BB%B6%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          使用ajax异步请求，动态增加dom元素，然后为元素绑定事件失败的小问题
+一、背景采用layui的流加载后，动态添加dom元素，添加元素后，打算为其中的某个元素绑定click事件，一开始采用了普通的click事件进行处理，发现找不到该dom元素，难道是元素在绑定事件前还没有加载？
+
+二、原因分析原因正和我猜的一样，在绑定事件的时候，找不到dom元素，因为它是后添加上去的。因此$(dom).clic
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-05 19:15" pubdate>
+              2020-06-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/%E5%89%8D%E7%AB%AF/">前端</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%89%8D%E7%AB%AF/">前端</a>
+            
+              <a href="/tags/ajax/">ajax</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/03/springmvc%E4%B8%AD%E5%88%A0%E9%99%A4session%E7%9A%84%E5%B0%8F%E9%97%AE%E9%A2%98/" target="_self">
+          SpringMVC中删除session的小问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/03/springmvc%E4%B8%AD%E5%88%A0%E9%99%A4session%E7%9A%84%E5%B0%8F%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          springmvc中使用@SessionAttributes后删除session失效的问题
+一、背景继上篇文章使用@SessionAttributes后，获取相应的session的问题解决后，在项目中出现了登出删除session的需求，我使用了sessionStatus.setComplete();，这样做目的是清除该条记录，因为要删除@SessionAttributes中的session值，必须
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-03 14:13" pubdate>
+              2020-06-03
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/SpringMVC/">SpringMVC</a>
+            
+              <a href="/categories/SpringMVC/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/SpringMVC/">SpringMVC</a>
+            
+              <a href="/tags/Java/">Java</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/03/springmvc%E8%AF%B7%E6%B1%82%E4%B8%AD%E6%96%87%E5%87%BA%E7%8E%B0%E4%B9%B1%E7%A0%81%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3)/" target="_self">
+          SpringMVC请求中文出现乱码的问题（已解决)
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/03/springmvc%E8%AF%B7%E6%B1%82%E4%B8%AD%E6%96%87%E5%87%BA%E7%8E%B0%E4%B9%B1%E7%A0%81%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3)/" target="_self">
+          
+          
+            
+          
+          springmvc接受前端的POST和get请求的时候出现乱码问题
+一、背景springmvc的坑还是蛮多的，项目做着做着一不小心就掉坑里了，这次的坑就是编码的问题。
+首先举个2个栗子吧~
+第一个例子：使用普通的Request接收参数
+12345678910111213141516171819202122232425262728293031// Identity card verification
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-03 14:13" pubdate>
+              2020-06-03
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/SpringMVC/">SpringMVC</a>
+            
+              <a href="/categories/SpringMVC/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/SpringMVC/">SpringMVC</a>
+            
+              <a href="/tags/Java/">Java</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/02/springmvc%E7%9A%84%E8%AF%B7%E6%B1%82%E6%8E%A5%E5%8F%A3%E6%8A%A5HashMap%E4%B8%BAnull%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          SpringMVC的请求接口报HashMap为null的问题（已解决）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/02/springmvc%E7%9A%84%E8%AF%B7%E6%B1%82%E6%8E%A5%E5%8F%A3%E6%8A%A5HashMap%E4%B8%BAnull%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          解决springmvc接收ajax的POST请求，返回HashMap对象时的问题目前刚接触springmvc不久，在做项目的时候，请求接口出现了如下的异常。
+
+错误：No converter for [class java.util.HashMap] with preset Content-Type &#39;null&#39;
+
+代码：123456789101112131415161718192
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-02 19:13" pubdate>
+              2020-06-02
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/SpringMVC/">SpringMVC</a>
+            
+              <a href="/categories/SpringMVC/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/SpringMVC/">SpringMVC</a>
+            
+              <a href="/tags/Java/">Java</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/02/Python%E4%B8%AD@classmethod%E5%92%8C@staticmethod%E7%9A%84%E5%8C%BA%E5%88%AB/" target="_self">
+          Python中@classmethod和@staticmethod的区别
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/02/Python%E4%B8%AD@classmethod%E5%92%8C@staticmethod%E7%9A%84%E5%8C%BA%E5%88%AB/" target="_self">
+          
+          
+            
+          
+          浅谈自己对@classmethod和@staticmethod区别的理解一、@staticmethod的理解staticmethod是一个类级别的装饰器，用于修饰类体内的函数，让实例方法编程静态方法，它和普通函数的调用作用一样，不同的是，他不需要self实例关键字，直接通过类名来进行调用。
+一个简单的小例子：
+1234567891011121314class test:    @staticmet
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-02 14:13" pubdate>
+              2020-06-02
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/01/ajax%E8%AF%B7%E6%B1%82%E6%8A%A5415%E9%94%99%E8%AF%AF%EF%BC%8C%E4%B8%8D%E6%94%AF%E6%8C%81%E5%AA%92%E4%BD%93%E7%B1%BB%E5%9E%8B%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          ajax请求报415错误，不支持媒体类型（已解决）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/01/ajax%E8%AF%B7%E6%B1%82%E6%8A%A5415%E9%94%99%E8%AF%AF%EF%BC%8C%E4%B8%8D%E6%94%AF%E6%8C%81%E5%AA%92%E4%BD%93%E7%B1%BB%E5%9E%8B%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          HTTP请求415错误 – 不支持的媒体类型(Unsupported media type)报415的错误往往出现在ajax传输数据的时候，只要在头部添加req.setRequestHeader(&#39;Content-Type&#39;, &#39;application/json&#39;);
+说明：
+在响应中，Content-Type标头告诉客户端实际返回的内容的内容类型，我当时是用spr
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-01 17:13" pubdate>
+              2020-06-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Jquery/">Jquery</a>
+            
+              <a href="/categories/Jquery/%E5%89%8D%E7%AB%AF/">前端</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%89%8D%E7%AB%AF/">前端</a>
+            
+              <a href="/tags/ajax/">ajax</a>
+            
+              <a href="/tags/Jquery/">Jquery</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/06/01/springmvc%E4%B8%AD%E4%BD%BF%E7%94%A8@SessionAttributes%E8%8E%B7%E5%8F%96session%E7%9A%84%E5%B0%8F%E9%97%AE%E9%A2%98/" target="_self">
+          SpringMVC中使用@SessionAttributes获取session的小问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/01/springmvc%E4%B8%AD%E4%BD%BF%E7%94%A8@SessionAttributes%E8%8E%B7%E5%8F%96session%E7%9A%84%E5%B0%8F%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          Srpingmvc使用@SessionAttributes获取session的问题一、背景：Springmvc中有很多中方式获取设置Session，有原始的HttpSession，有通过HttpServletRequest间接设置获取session，也有Springmvc独有的注解方式@SessionAttributes(value = &quot;resident&quot;)方式设置sessi
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-01 14:13" pubdate>
+              2020-06-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/SpringMVC/">SpringMVC</a>
+            
+              <a href="/categories/SpringMVC/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/SpringMVC/">SpringMVC</a>
+            
+              <a href="/tags/Java/">Java</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/30/django%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8COCR%E8%BA%AB%E4%BB%BD%E8%AF%86%E5%88%AB%E9%AA%8C%E8%AF%81%E7%9A%84Image%E7%BC%96%E7%A0%81%E5%B0%8F%E9%97%AE%E9%A2%98/" target="_self">
+          Django调用阿里OCR身份识别验证的Image编码小问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/30/django%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8COCR%E8%BA%AB%E4%BB%BD%E8%AF%86%E5%88%AB%E9%AA%8C%E8%AF%81%E7%9A%84Image%E7%BC%96%E7%A0%81%E5%B0%8F%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          Django调用阿里OCR身份识别验证中Image编码的小问题目前正在做的一个项目，打算在里面添加身份证图像识别，直接获取用户的姓名，生日，性别这些基本信息。所以采用了阿里的OCR的API,阿里的API要求传入的image必须为base64编码过得数值，要通过base64编码，首先要转为二进制。而我通过前端传进来的FILE对象为InMemoryUploadedFile对象。它无法直接通过bytes
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-30 13:42" pubdate>
+              2020-05-30
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/OCR/">OCR</a>
+            
+              <a href="/tags/OpenAPI/">OpenAPI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/29/request.POST%E4%B8%8D%E8%83%BD%E4%BF%AE%E6%94%B9%E5%B1%9E%E6%80%A7%E5%80%BC%E7%9A%84%E9%97%AE%E9%A2%98/" target="_self">
+          Django中request.POST不能修改属性值的问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/29/request.POST%E4%B8%8D%E8%83%BD%E4%BF%AE%E6%94%B9%E5%B1%9E%E6%80%A7%E5%80%BC%E7%9A%84%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          ####** 对于提示不能修改request.POST,request.GET的错误**
+最近，在玩drf开发，想要根据不同的需求对request.POST中添加user，发现报了错This QueryDict instance is immutable，发现这个QueryDict实例不能够修改。
+经过查阅了官方文档和网上的博客，解决了问题。
+解决方法：
+法一：使用request.POST.cop
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-29 14:13" pubdate>
+              2020-05-29
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/drf/">drf</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/28/python%20%E8%A3%85%E9%A5%B0%E5%99%A8%E9%97%AD%E5%8C%85%E8%AF%A6%E8%A7%A3%EF%BC%88%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%89/" target="_self">
+          Python 装饰器闭包详解（看这一篇就够了）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/28/python%20%E8%A3%85%E9%A5%B0%E5%99%A8%E9%97%AD%E5%8C%85%E8%AF%A6%E8%A7%A3%EF%BC%88%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          python装饰器与闭包详解（看着一篇就够了）什么是闭包？闭包简单来说就是函数中嵌套函数。复杂点讲其实是指延伸了作用于的函数，具备自由变量，在第一层函数中定义自由变量，在深入的函数中就可以调用该自由变量
+
+关于闭包的核心关键点—-自由变量什么是自由变量？
+自由变量：指未在本地作用于中绑定的变量，可以将超函数中的本地作用域中的局部变量作为自由变量。
+对于可变序列类型（不可散列对象）：闭包中，可变序列
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-28 21:13" pubdate>
+              2020-05-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+
+
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <a class="extend prev" rel="prev" href="/page/9/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/#board">8</a><a class="page-number" href="/page/9/#board">9</a><span class="page-number current">10</span><a class="page-number" href="/page/11/#board">11</a><a class="page-number" href="/page/12/#board">12</a><span class="space">&hellip;</span><a class="page-number" href="/page/20/#board">20</a><a class="extend next" rel="next" href="/page/11/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
+
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

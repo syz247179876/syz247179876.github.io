@@ -1,0 +1,565 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="nginx+uwsgi 实现简易负载均衡之前使用django+nginx+uwsgi开发部署的博客，只使用了一台uwsgi内部服务器，对于博客网站访问量不是特别大的时候其实够用了。但是，如果对于高并发的应用来说，一台服务器肯定不够，这样不仅会导致一台服务器压力过大，严重的话，会产生单点故障，唯一的一台服务器挂了，那么整个应用也就game over了，这是就需要多台服务器实现负载均衡，一台挂了，另一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nginx 和 uwsgi 实现简易负载均衡">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/12/nginx%20%E5%92%8C%20uwsgi%20%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="nginx+uwsgi 实现简易负载均衡之前使用django+nginx+uwsgi开发部署的博客，只使用了一台uwsgi内部服务器，对于博客网站访问量不是特别大的时候其实够用了。但是，如果对于高并发的应用来说，一台服务器肯定不够，这样不仅会导致一台服务器压力过大，严重的话，会产生单点故障，唯一的一台服务器挂了，那么整个应用也就game over了，这是就需要多台服务器实现负载均衡，一台挂了，另一">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-12T04:11:23.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.444Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Nginx">
+<meta property="article:tag" content="uwsgi">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>nginx 和 uwsgi 实现简易负载均衡 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="nginx 和 uwsgi 实现简易负载均衡">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-12 12:11" pubdate>
+        2020年5月12日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      8 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">nginx 和 uwsgi 实现简易负载均衡</h1>
+            
+            <div class="markdown-body">
+              <h4 id="nginx-uwsgi-实现简易负载均衡"><a href="#nginx-uwsgi-实现简易负载均衡" class="headerlink" title="nginx+uwsgi 实现简易负载均衡"></a><strong>nginx+uwsgi 实现简易负载均衡</strong></h4><p>之前使用django+nginx+uwsgi开发部署的博客，只使用了一台uwsgi内部服务器，对于博客网站访问量不是特别大的时候其实够用了。但是，如果对于高并发的应用来说，一台服务器肯定不够，这样不仅会导致一台服务器压力过大，严重的话，会产生单点故障，唯一的一台服务器挂了，那么整个应用也就game over了，这是就需要多台服务器实现负载均衡，一台挂了，另一台接着顶上去，这样几乎使用户察觉不到有台服务器挂了。</p>
+<hr>
+<h4 id="简单介绍下nginx和uwsgi"><a href="#简单介绍下nginx和uwsgi" class="headerlink" title="简单介绍下nginx和uwsgi"></a><strong>简单介绍下nginx和uwsgi</strong></h4><p><strong>nginx</strong>:是一个反向代理服务器。反向代理的好处是外网客户端如果要访问内部服务器（uwsgi,tomcat，文件服务器等）,客户端是不知道真正的内部服务器是谁，在哪，它只知道用来做反向代理的服务器—nginx，通过向nginx发出请求，nginx再将请求分发给内部服务器，内部服务器处理请求，再将响应返回给nginx，nginx最后将响应结果返回给客户端。</p>
+<p>或许看到这里，你可能有点迷糊，为什么需要nginx作为中间人呢？</p>
+<p><strong>原因如下：</strong></p>
+<p>① nginx自身具备一定的缓存能力。它对静态资源的处理性能特别高，因此当某个用户发送多次同样的请求，如果nginx中存了之前相应的结果缓存，就直接将响应的缓存发送给客户端。减少了访问服务器的次数，降低服务器处理的压力。</p>
+<p>注：nginx对静态资源处理性能很高，但是对于动态资源，很难处理，还是要发送给内部服务器进行处理响应返回结果。</p>
+<p>② 有了nginx，就可以对不同的请求分发到不同的内部服务器中，因而内部服务器就可以组件一个集群。至于讲请求转发到集群中的哪个服务器，就需要看<code>nginx.conf</code>中配置的各个内部服务器权重了。</p>
+<p><strong>我用nginx，uwsgi，client举个例子：</strong></p>
+<p>1.client发送给nginx一个请求：”hey boy~,what’s your name?”</p>
+<p>2.nginx收到请求，思考：”i have a mass of sons? who is client asking?”,（如果内部服务器是集群的话），就会按照各个服务器的<code>weigth</code>来发送给<code>weight</code>最高的服务器。</p>
+<p>3.某个uwsgi收到了请求，回答道：”my name is syz”，并将它响应给nginx，nginx接收到响应，将响应发送给client。</p>
+<p>4.紧接着，client又来发送请求了”hey boy~,what’s your name?”</p>
+<p>5.此时nginx收到请求，哟嚯，我知道答案（缓存数据尚未过期），于是将缓存数据发送个client，而不用去请求内部服务器，使得内部服务器性能更加稳定。</p>
+<p><strong>注：</strong>实现负载均衡可以有效的增加并发量，假如一台uwsgi服务器1000个并发，那么5个uwsgi组成的集群，就可以达到5000个并发量。</p>
+<hr>
+<h4 id="nginx-uwsgi实现负载均衡"><a href="#nginx-uwsgi实现负载均衡" class="headerlink" title="nginx+uwsgi实现负载均衡"></a><strong>nginx+uwsgi实现负载均衡</strong></h4><p>之前我是用了nginx+1个uwsgi部署项目，现在我多增加1个uwsgi，实现负载均衡。</p>
+<hr>
+<h4 id="具体步骤如下："><a href="#具体步骤如下：" class="headerlink" title="具体步骤如下："></a><strong>具体步骤如下：</strong></h4><p>1.配置第二个uwsgi服务器的配置文件uwsgi2.ini</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python">[uwsgi]<br>chdir = /home/admin/mblog<br><span class="hljs-comment"># wsgi应用</span><br>module = mblog.wsgi:application<br><span class="hljs-comment">#使用nginx做反向代理的服务器地址</span><br>socket = <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">8004</span><br><span class="hljs-comment"># 使用主线程</span><br>master = true<br><span class="hljs-comment"># 分4条进程</span><br>processes = <span class="hljs-number">4</span><br>threads = <span class="hljs-number">2</span><br><span class="hljs-comment"># 运行日志</span><br>daemonize = /home/admin/mblog/run2.log<br><span class="hljs-comment"># 只记录发生错误的日志</span><br>disable-logging = true<br>wsgi-file = /home/admin/mblog/mblog/wsgi.py<br><span class="hljs-comment"># 记录进程pid</span><br>pidfile = /home/admin/mblog/uwsgi2.pid<br></code></pre></td></tr></table></figure>
+
+<p><strong>注：</strong></p>
+<p>① 指令前后不能有空格</p>
+<p>② 不同uwsgi服务器之间只需要修改<code>socket</code>,<code>daemonize</code>,<code>pidfile</code>就可以了，还有一些配置我没有使用。</p>
+<p>配置完后，<code>sudo uwsgi --ini uwsgi.ini</code>启动服务器。</p>
+<p>到此为止，2个服务器组件的集群就创建好并启动好了，接下来是配置nginx，使得进入nginx的请求进行反向代理到集群中的不同服务器上。</p>
+<hr>
+<h4 id="配置nginx反向代理"><a href="#配置nginx反向代理" class="headerlink" title="配置nginx反向代理"></a>配置nginx反向代理</h4><hr>
+<h4 id="具体步骤如下：-1"><a href="#具体步骤如下：-1" class="headerlink" title="具体步骤如下："></a>具体步骤如下：</h4><p>1.进入<code>etc/nginx/nginx.conf</code>,增加内部服务器集群。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">include /etc/nginx/conf.d/*.conf;<br>include /etc/nginx/sites-enabled/*;<br><span class="hljs-comment"># 在这里添加 服务器集群，集群名字叫做SYZ,weight表示每个服务器的接收请求所占的权重，权重高的一般为主服务器。</span><br>               upstream SYZ&#123;<br>                     server <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">8002</span> weight=<span class="hljs-number">10</span>;<br>                     server <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">8004</span> weight=<span class="hljs-number">10</span>;<br>               &#125;<br></code></pre></td></tr></table></figure>
+
+<p>2.进入<code>sites-available</code>的<code>default</code>配置文件中，</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">location / &#123;<br> <span class="hljs-comment"># First attempt to serve request as file, then</span><br> <span class="hljs-comment"># as directory, then fall back to displaying a 404.</span><br> <span class="hljs-comment"># try_files $uri $uri/ =404;</span><br>               <span class="hljs-comment"># 包含uwsgi的参数</span><br>               include uwsgi_params; <span class="hljs-comment">#</span><br>               <span class="hljs-comment"># uwsgi_pass 127.0.0.1:8002;</span><br>			<span class="hljs-comment"># 反向代理到uwsgi的集群上</span><br>               uwsgi_pass SYZ;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>配置完毕后，重启nginx服务器，<code>sudo service nginx restart</code>。</p>
+<hr>
+<h4 id="说个题外话"><a href="#说个题外话" class="headerlink" title="说个题外话"></a><strong>说个题外话</strong></h4><p>阿里的学生机其实是带不动2个uwsgi组成的集群的，我用我的博客做实验，2G的云服务器上跑了redis，nginx，supervisord管理的celery，mysql，2个uwsgi，会导致mysql被挤掉。</p>
+<p>跑mysql所占的内存至少在512M（官网给出的解释），1个uwsgi占了600+M内存，2个就是1200+M内存，nginx估摸着也要500+M，redis+celery估摸着300+M，这样算来已经超过了2G。</p>
+<p>我跑了一个uwsgi+redis+celery+mysql+nginx，就花费了约1.8G。所以要想玩集群有两种建议：</p>
+<p>① 买一个内存大点的服务器。</p>
+<p>② 将mysql分出去，单独买一个云数据库。</p>
+<p>这样就可以开心的玩集群了。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Nginx/">Nginx</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Nginx/uwsgi/">uwsgi</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Nginx/">Nginx</a>
+                    
+                      <a class="hover-with-bg" href="/tags/uwsgi/">uwsgi</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/13/pip%E9%95%9C%E5%83%8F%E6%BA%90/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">pip镜像源</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/11/python%E4%B8%AD%E7%9A%84%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B%EF%BC%8C%E5%8D%8F%E8%AE%AE%E5%92%8C%E6%8E%A5%E5%8F%A3/">
+                        <span class="hidden-mobile">python中的鸭子类型，协议和接口</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

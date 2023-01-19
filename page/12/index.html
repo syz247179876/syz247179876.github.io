@@ -1,0 +1,951 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+<meta property="og:type" content="website">
+<meta property="og:title" content="云中小站">
+<meta property="og:url" content="https://syzzjw.cn/page/12/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="捕捉一只在计算机领域不断努力的程序猿">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="计算机, 后端, 算法, Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 100vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="每个人, 来到&#39;花前&#39;, 都看见不一样的东西, 得到不一样的明白">
+              
+            </span>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      <div class="container nopadding-x-md">
+        <div class="py-5" id="board"
+          style=margin-top:0>
+          
+          <div class="container">
+            <div class="row">
+              <div class="col-12 col-md-10 m-auto">
+                
+
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/15/python%20%E5%A6%82%E4%BD%95%E5%8E%BB%E6%8E%89redis%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E4%B8%AD%E7%9A%84&#39;b&#39;/" target="_self">
+          Python 如何去掉redis返回结果中的&#39;b&#39;
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/15/python%20%E5%A6%82%E4%BD%95%E5%8E%BB%E6%8E%89redis%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E4%B8%AD%E7%9A%84&#39;b&#39;/" target="_self">
+          
+          
+            
+          
+          python 去掉redis返回结果中的’b’的三种方法众所周知，redis是以二进制存储数据对象的，那么当我们要取出值的时候，是二进制形式的，因此是需要解码的。
+法一：123_code = _redis.get(key).decode()
+
+使用decode()进行解码
+法二：12345_code = _redis.get(key)_code = str(_code,encoding=&#x27
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-15 14:13" pubdate>
+              2020-05-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+              <a href="/categories/Python/Redis/">Redis</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/Redis/">Redis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/15/python%20%E5%AE%9E%E7%8E%B0redis%E6%93%8D%E4%BD%9C%E7%B1%BB%E7%9A%84%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" target="_self">
+          Python 实现Redis操作类的单例模式
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/15/python%20%E5%AE%9E%E7%8E%B0redis%E6%93%8D%E4%BD%9C%E7%B1%BB%E7%9A%84%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" target="_self">
+          
+          
+            
+          
+          Python实现单例模式的使用—-redis和logging前几天刚学习了几个基本的设计模式，今天来实践下单例模式。
+简单介绍一下单例模式：单例模式属于创建型模式，只能创建一个实例，而且只能存在一个实例，其他，其他对象调用该实例的话，也只能调用唯一的这个实例。
+下面结合具体的例子来分析：
+reids实现单例模式：
+123456789101112131415161718192021222324252
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-15 13:40" pubdate>
+              2020-05-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+              <a href="/categories/Python/Redis/">Redis</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/Redis/">Redis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/15/python%E7%9A%84json.dumps%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BA%8F%E5%88%97%E5%8C%96%E6%93%8D%E4%BD%9C/" target="_self">
+          python的json.dumps自定义序列化操作
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/15/python%E7%9A%84json.dumps%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BA%8F%E5%88%97%E5%8C%96%E6%93%8D%E4%BD%9C/" target="_self">
+          
+          
+            
+          
+          Python继承JSONEncoder类，重写default，实现自定义序列化操作json支持python的类型转化对象类型如下：
+12345678910111213141516171819Supports the following objects and types by default:    +-------------------+---------------+    | Python
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-15 13:23" pubdate>
+              2020-05-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/Json/">Json</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/14/%E9%98%BF%E9%87%8C%E4%BA%91%E9%83%A8%E7%BD%B2Django%E9%A1%B9%E7%9B%AE/" target="_self">
+          阿里云部署Django项目
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/14/%E9%98%BF%E9%87%8C%E4%BA%91%E9%83%A8%E7%BD%B2Django%E9%A1%B9%E7%9B%AE/" target="_self">
+          
+          
+            
+          
+          环境
+基于Ubuntu16.04 + Python3（虚拟环境） + nginx + mysql + Django
+一、安装必要的软件，配置python环境
+1.安装python：阿里云Ubuntu 16.04服务器自带python版本是2.7的，PIP版本也非常落户，到手后一定要升级Python和PIP， 命令如下。
+sudo apt-get install python3.5sudo apt-
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-14 09:27" pubdate>
+              2020-05-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+              <a href="/categories/Django/%E9%83%A8%E7%BD%B2/">部署</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/%E9%83%A8%E7%BD%B2/">部署</a>
+            
+              <a href="/tags/%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8/">云服务器</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/13/python%20%E4%BD%BF%E7%94%A8channels%E5%AE%9E%E7%8E%B0websocket%E4%BB%8E%E7%BC%96%E7%A0%81%E5%88%B0%E9%83%A8%E7%BD%B2%E8%AF%A6%E8%A7%A3/" target="_self">
+          Python 使用channels实现websocket从编码到部署详解
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/13/python%20%E4%BD%BF%E7%94%A8channels%E5%AE%9E%E7%8E%B0websocket%E4%BB%8E%E7%BC%96%E7%A0%81%E5%88%B0%E9%83%A8%E7%BD%B2%E8%AF%A6%E8%A7%A3/" target="_self">
+          
+          
+            
+          
+          python使用channels实现websocket的推送信息功能想法来源：
+之前刷Leetcode的时候嘛，右上角都会有全服的刷题消息推送以及个人的收到的回复和关注消息推送。
+因此就去查了查如何实现这种消息推送的功能。
+在阅读了一番官方文档后，有了大致的一个理解和思路，毕竟阅读纯英文文档还是没有读中文文档那么直观（哈哈哈，就当考研锻炼英语阅读了，好了接下来进入正题！）
+以下是我使用channe
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-13 22:11" pubdate>
+              2020-05-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+              <a href="/categories/Python/websocket/">websocket</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/websocket/">websocket</a>
+            
+              <a href="/tags/%E9%83%A8%E7%BD%B2/">部署</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/13/pip%E9%95%9C%E5%83%8F%E6%BA%90/" target="_self">
+          pip镜像源
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/13/pip%E9%95%9C%E5%83%8F%E6%BA%90/" target="_self">
+          
+          
+            
+          
+          好东西当然要分享出来呀pip高速镜像源（默认源太low）好东西啊~~~~~~~~
+阿里云 http://mirrors.aliyun.com/pypi/simple/
+中国科技大学 https://pypi.mirrors.ustc.edu.cn/simple/
+豆瓣(douban) http://pypi.douban.com/simple/
+清华大学 https://pypi.tuna.tsi
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-13 11:26" pubdate>
+              2020-05-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/pip/">pip</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/pip/">pip</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/12/nginx%20%E5%92%8C%20uwsgi%20%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" target="_self">
+          nginx 和 uwsgi 实现简易负载均衡
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/12/nginx%20%E5%92%8C%20uwsgi%20%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" target="_self">
+          
+          
+            
+          
+          nginx+uwsgi 实现简易负载均衡之前使用django+nginx+uwsgi开发部署的博客，只使用了一台uwsgi内部服务器，对于博客网站访问量不是特别大的时候其实够用了。但是，如果对于高并发的应用来说，一台服务器肯定不够，这样不仅会导致一台服务器压力过大，严重的话，会产生单点故障，唯一的一台服务器挂了，那么整个应用也就game over了，这是就需要多台服务器实现负载均衡，一台挂了，另一
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-12 12:11" pubdate>
+              2020-05-12
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Nginx/">Nginx</a>
+            
+              <a href="/categories/Nginx/uwsgi/">uwsgi</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Nginx/">Nginx</a>
+            
+              <a href="/tags/uwsgi/">uwsgi</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/11/python%E4%B8%AD%E7%9A%84%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B%EF%BC%8C%E5%8D%8F%E8%AE%AE%E5%92%8C%E6%8E%A5%E5%8F%A3/" target="_self">
+          python中的鸭子类型，协议和接口
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/11/python%E4%B8%AD%E7%9A%84%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B%EF%BC%8C%E5%8D%8F%E8%AE%AE%E5%92%8C%E6%8E%A5%E5%8F%A3/" target="_self">
+          
+          
+            
+          
+          详谈Python中的鸭子类型，协议（不正式的接口）这些天在搞javaweb，面向接口编程嘛，尤其玩spring的时候，在写接口的时候，脑海中总是浮现python，一想起还没有好好总结一下python中的鸭子类型，于是乎有了这边笔记。
+一、python中协议和接口的区别协议：被称作为“不正式的接口”，因为协议不像java的接口那样施加严格的规范
+（java中的接口规范：关键要看子类是否是抽象类。
+如
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-11 11:22" pubdate>
+              2020-05-11
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/09/Linux%E4%B8%AD%20python%E7%89%88%E6%9C%AC%E6%9B%B4%E6%9B%BF/" target="_self">
+          Linux中 python版本更替
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/09/Linux%E4%B8%AD%20python%E7%89%88%E6%9C%AC%E6%9B%B4%E6%9B%BF/" target="_self">
+          
+          
+            
+          
+          python版本优先级设置很多情况下，一个操作系统中可能会存在多个不同版本的软件，针对不同的情况，我们可能需要使用不同的软件版本，因此如果当需要时候进行替换，是很麻烦的，而且还不是持久存在的。debian推出了一个软件版本管理的工具update-alternatives，下面我用它来管理我的python版本（这样的做的原因是我的云服务器重启后，每次都要进行版本替换，至于为什么会这样，目前还没有去弄
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-09 13:02" pubdate>
+              2020-05-09
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Linux/">Linux</a>
+            
+              <a href="/categories/Linux/Python/">Python</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/Linux/">Linux</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/05/08/Django%E7%9A%84%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" target="_self">
+          Django的缓存机制
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/08/Django%E7%9A%84%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" target="_self">
+          
+          
+            
+          
+          Django中的缓存机制django中的缓存机制一共分为4中类型：
+① 视图缓存装饰器
+② 模板中使用缓存
+③ urls中添加缓存
+④ 使用自定义缓存，如redis（单核），mysql，memcache（支持多核）
+模板层面上的缓存1234&#123;% load cache %&#125;&#123;% cache 500 sidebar request.user.username%&#125;
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-08 22:00" pubdate>
+              2020-05-08
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/%E7%BC%93%E5%AD%98/">缓存</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+
+
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <a class="extend prev" rel="prev" href="/page/11/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/#board">10</a><a class="page-number" href="/page/11/#board">11</a><span class="page-number current">12</span><a class="page-number" href="/page/13/#board">13</a><a class="page-number" href="/page/14/#board">14</a><span class="space">&hellip;</span><a class="page-number" href="/page/20/#board">20</a><a class="extend next" rel="next" href="/page/13/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
+
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

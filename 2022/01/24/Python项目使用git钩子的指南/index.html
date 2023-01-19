@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="Python项目使用git钩子的指南：一、钩子介绍：目前我已为当前项目增加三个git钩子，以Python + shell形式实现。分别为format_check.py + pre-commit.sh检验代码风格的钩子,inspect_modules + post-commit.sh模块增量检查钩子, message_check + commit-msg.sh commit的message规则校验钩">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python项目中Git的hook的使用指南">
+<meta property="og:url" content="https://syzzjw.cn/2022/01/24/Python%E9%A1%B9%E7%9B%AE%E4%BD%BF%E7%94%A8git%E9%92%A9%E5%AD%90%E7%9A%84%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="Python项目使用git钩子的指南：一、钩子介绍：目前我已为当前项目增加三个git钩子，以Python + shell形式实现。分别为format_check.py + pre-commit.sh检验代码风格的钩子,inspect_modules + post-commit.sh模块增量检查钩子, message_check + commit-msg.sh commit的message规则校验钩">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126110658922.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126111022788.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126112448593.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126112514250.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/emobile_2022-01-29_14-29-26.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126111213057.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126111230619.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/emobile_2022-01-29_14-30-21.png">
+<meta property="article:published_time" content="2022-01-24T10:08:00.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.433Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Git">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126110658922.png">
+  
+  <title>Python项目中Git的hook的使用指南 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Python项目中Git的hook的使用指南">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-24 18:08" pubdate>
+        2022年1月24日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      5 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Python项目中Git的hook的使用指南</h1>
+            
+            <div class="markdown-body">
+              <h3 id="Python项目使用git钩子的指南："><a href="#Python项目使用git钩子的指南：" class="headerlink" title="Python项目使用git钩子的指南："></a>Python项目使用git钩子的指南：</h3><h4 id="一、钩子介绍："><a href="#一、钩子介绍：" class="headerlink" title="一、钩子介绍："></a>一、钩子介绍：</h4><p>目前我已为当前项目增加三个git钩子，以Python + shell形式实现。分别为format_check.py + pre-commit.sh检验代码风格的钩子,inspect_modules + post-commit.sh模块增量检查钩子, message_check + commit-msg.sh commit的message规则校验钩子。</p>
+<ul>
+<li>代码风格校验钩子：通用钩子，目的规整统一项目开发过程中代码风格，遵循标准的pep8风格校验，会在每次git commit 前进行校验，符合规则的将commit成功，反之取消这次commit。</li>
+<li>模块增量检查钩子： 用于Python项目的钩子，专为检测Python依赖包在开发过程中的迭代变化，会在每次git commit 完成后进行依赖包的增量检测，若当前新增包或者包的版本发生改变，则为当前的开发者在根目录下的package生成专门的文件夹，其中包含所有增量依赖包的源码文件，依赖包树形结构JSON文件，依赖包扁平化结构JSON文件。生成之后会自动git add 该文件夹,  而后git commit 和 git push 该文件夹需要自行执行。</li>
+<li>message规则校验钩子： 通用钩子，遵循Angular提交规范，目的是规范项目合作开发中commit提交的信息，书写良好的commit message可以提高代码维护的效率，同时方便的阅读历史提交记录，能够自动生成change Log。</li>
+</ul>
+<h4 id="二、-钩子使用："><a href="#二、-钩子使用：" class="headerlink" title="二、 钩子使用："></a>二、 钩子使用：</h4><p>钩子文件存储位置位于项目根目录下的git_hook文件夹和.git/hooks文件夹下。</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126110658922.png" srcset="/img/loading.gif" lazyload alt="钩子实现库"></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126111022788.png" srcset="/img/loading.gif" lazyload alt="git钩子存放位置"></p>
+<p>1.使用前需修改几处代码：</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126112448593.png" srcset="/img/loading.gif" lazyload alt="代码风格校验钩子"></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126112514250.png" srcset="/img/loading.gif" lazyload alt="模块增量检查钩子"></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/emobile_2022-01-29_14-29-26.png" srcset="/img/loading.gif" lazyload alt="message规则校验钩子"></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126111213057.png" srcset="/img/loading.gif" lazyload alt="post-commit"></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/image-20220126111230619.png" srcset="/img/loading.gif" lazyload alt="pre-commit"></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/emobile_2022-01-29_14-30-21.png" srcset="/img/loading.gif" lazyload alt="commit-msg"></p>
+<p>2.修改完成后，将post-commit、pre-commit和commit-msg复制到.git/hooks文件夹下，方可。</p>
+<h4 id="三、注意事项："><a href="#三、注意事项：" class="headerlink" title="三、注意事项："></a>三、注意事项：</h4><p>1.钩子函数的编写默认认为开发者使用的是虚拟环境，若开发者未使用虚拟环境，则需分别将post-commit和pre-commit中<code>source $VIRTUAL_PATH</code>代码注释掉。</p>
+<p>2.对于代码风格校验钩子，如果想要跳过钩子检测，则执行git commit指令 后追加 <code>--no-verify</code>即可。</p>
+<p>3.commit的message信息例子：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">type</span>&gt;</span>(<span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>): <span class="hljs-tag">&lt;<span class="hljs-name">short</span> <span class="hljs-attr">summary</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">BLANK</span> <span class="hljs-attr">LINE</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">BLANK</span> <span class="hljs-attr">LINE</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">footer</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">feat(<span class="hljs-keyword">function</span> module): <span class="hljs-keyword">add</span> multiple <span class="hljs-built_in">new</span> <span class="hljs-keyword">functions</span> <span class="hljs-keyword">to</span> the <span class="hljs-keyword">function</span> library<br><br><span class="hljs-number">1.</span><span class="hljs-keyword">add</span> <span class="hljs-built_in">new</span> <span class="hljs-keyword">function</span> <span class="hljs-keyword">of</span> obtaining the specified region according <span class="hljs-keyword">to</span> the specific region.<br><span class="hljs-number">2.</span><span class="hljs-keyword">add</span> <span class="hljs-built_in">new</span> <span class="hljs-keyword">function</span> <span class="hljs-keyword">of</span> clearing variable <span class="hljs-keyword">within</span> robot operation.<br><span class="hljs-number">3.</span>optimize code <span class="hljs-keyword">of</span> <span class="hljs-keyword">function</span> <span class="hljs-keyword">of</span> `vague_match`<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>注：</strong><br>type的类型为以下之一</p>
+<ul>
+<li>feat：一项新功能</li>
+<li>fix：一个错误修复</li>
+<li>docs：仅文档更改</li>
+<li>style：不会影响代码含义的更改（空格，格式，缺少分号等）</li>
+<li>refactor：既不修正错误也不增加功能的代码更改</li>
+<li>perf：代码更改可提高性能</li>
+<li>test：添加缺失的测试或更正现有的测试</li>
+<li>build：影响构建系统，CI 配置或外部依赖项的更改（比如：gulp，npm）</li>
+<li>chore：其他不会修改 src 或测试文件的更改（比如文档修改，构建流程）</li>
+<li>release：发布版本提交</li>
+</ul>
+<p>Angular的message规范文档:<a target="_blank" rel="noopener" href="https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit">https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit</a></p>
+<p>GitHub仓库：<a target="_blank" rel="noopener" href="https://github.com/syz247179876/git-hooks">https://github.com/syz247179876/git-hooks</a>**</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Git/">Git</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Git/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Git/">Git</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/08/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B9%8BSDS/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">源码分析Redis数据结构之SDS</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/21/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B9%8B%E5%AD%97%E5%85%B8/">
+                        <span class="hidden-mobile">源码分析Redis数据结构之字典</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

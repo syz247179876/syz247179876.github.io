@@ -1,0 +1,538 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一、 源码分析123456789101112131415161718192021222324252627282930313233343536373839404142434445class LocalProxy:    __slots__ &#x3D; (&quot;__local&quot;, &quot;__name&quot;, &quot;__wrapped__&quot;)        def _">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LocalProxy代理对象的源码分析">
+<meta property="og:url" content="https://syzzjw.cn/2021/08/04/LocalProxy%E4%BB%A3%E7%90%86%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一、 源码分析123456789101112131415161718192021222324252627282930313233343536373839404142434445class LocalProxy:    __slots__ &#x3D; (&quot;__local&quot;, &quot;__name&quot;, &quot;__wrapped__&quot;)        def _">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-08-04T09:05:40.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.426Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Flask">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>LocalProxy代理对象的源码分析 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="LocalProxy代理对象的源码分析">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-08-04 17:05" pubdate>
+        2021年8月4日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">LocalProxy代理对象的源码分析</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一、-源码分析"><a href="#一、-源码分析" class="headerlink" title="一、 源码分析"></a>一、 源码分析</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">LocalProxy</span>:</span><br>    __slots__ = (<span class="hljs-string">&quot;__local&quot;</span>, <span class="hljs-string">&quot;__name&quot;</span>, <span class="hljs-string">&quot;__wrapped__&quot;</span>)<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params"></span></span><br><span class="hljs-function"><span class="hljs-params">        self,</span></span><br><span class="hljs-function"><span class="hljs-params">        local: t.<span class="hljs-type">Union</span>[<span class="hljs-string">&quot;Local&quot;</span>, t.<span class="hljs-type">Callable</span>[[], t.<span class="hljs-type">Any</span>]],</span></span><br><span class="hljs-function"><span class="hljs-params">        name: t.<span class="hljs-type">Optional</span>[<span class="hljs-built_in">str</span>] = <span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    </span>) -&gt; <span class="hljs-literal">None</span>:</span><br>        <span class="hljs-built_in">object</span>.__setattr__(self, <span class="hljs-string">&quot;_LocalProxy__local&quot;</span>, local)<br>        <span class="hljs-built_in">object</span>.__setattr__(self, <span class="hljs-string">&quot;_LocalProxy__name&quot;</span>, name)<br><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">callable</span>(local) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(local, <span class="hljs-string">&quot;__release_local__&quot;</span>):<br><br>            <span class="hljs-built_in">object</span>.__setattr__(self, <span class="hljs-string">&quot;__wrapped__&quot;</span>, local)<br>            <br> 	<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_get_current_object</span>(<span class="hljs-params">self</span>) -&gt; t.<span class="hljs-type">Any</span>:</span><br>        <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        获取在代理背后的真实属性，同样从对应线程id处进行获取</span><br><span class="hljs-string">        可以通过</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(self.__local, <span class="hljs-string">&quot;__release_local__&quot;</span>):  <br>            <span class="hljs-keyword">return</span> self.__local() <br><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">return</span> <span class="hljs-built_in">getattr</span>(self.__local, self.__name) <br>        <span class="hljs-keyword">except</span> AttributeError:<br>            <span class="hljs-keyword">raise</span> RuntimeError(<span class="hljs-string">f&quot;no object bound to <span class="hljs-subst">&#123;self.__name&#125;</span>&quot;</span>) <br>            <br>            <br>            <br>    __doc__ = _ProxyLookup(  <span class="hljs-comment"># type: ignore</span><br>        class_value=__doc__, fallback=<span class="hljs-keyword">lambda</span> self: <span class="hljs-built_in">type</span>(self).__doc__<br>    )<br>    <span class="hljs-comment"># __del__ should only delete the proxy</span><br>    __repr__ = _ProxyLookup(  <span class="hljs-comment"># type: ignore</span><br>        <span class="hljs-built_in">repr</span>, fallback=<span class="hljs-keyword">lambda</span> self: <span class="hljs-string">f&quot;&lt;<span class="hljs-subst">&#123;<span class="hljs-built_in">type</span>(self).__name__&#125;</span> unbound&gt;&quot;</span><br>    )<br>    __str__ = _ProxyLookup(<span class="hljs-built_in">str</span>)  <span class="hljs-comment"># type: ignore</span><br>    __bytes__ = _ProxyLookup(<span class="hljs-built_in">bytes</span>)<br>    __format__ = _ProxyLookup()  <span class="hljs-comment"># type: ignore</span><br>    __lt__ = _ProxyLookup(operator.lt)<br>    __le__ = _ProxyLookup(operator.le)<br>    __eq__ = _ProxyLookup(operator.eq)  <span class="hljs-comment"># type: ignore</span><br>    __ne__ = _ProxyLookup(operator.ne)  <span class="hljs-comment"># type: ignore</span><br>    __gt__ = _ProxyLookup(operator.gt)<br></code></pre></td></tr></table></figure>
+
+
+
+<p>1.使用<code>__slots__</code>机制，实例化对象时，不为对象生成<code>__dict__</code>的属性空间，将<code>__slots__</code>中指定的元素构建成一个元组。减少创建对象产生的内存空间，固定对象中的属性值，使之在运行过程中不能被修改，不能添加新的属性。</p>
+<p>2.<code>__init__</code>函数中可以接受local和name，local可以Local的实例，也可以是函数；作为函数，例如在globals.py中定义的partial”冰冻”函数（其目的是从stack获取栈顶元素—AppContext或RequestContext，返回Local实例中的某个属性)。</p>
+<p>3.Python中的双前导下划线是为了避免与子类定义的名称冲突。</p>
+<p>4._get_current_object方法，通过反射读取<code>__local</code>中是否有释放Local实例中资源的属性或方法，如果没有，则说明<code>__local</code>并不是Local实例，而是一个可回调的对象；反之，从<code>__local</code>中获取对应当前线程属性空间下的属性值。</p>
+<p>5._ProxyLookup类是一个描述器，根据类名，可以大致推测用于搜寻被代理对象中的属性的，接下来通过源码来学习它是如何搜寻被代理对象中的属性的。源码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">_ProxyLookup</span>:</span><br>    <span class="hljs-string">&quot;&quot;&quot;Descriptor that handles proxied attribute lookup for</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    __slots__ = (<span class="hljs-string">&quot;bind_f&quot;</span>, <span class="hljs-string">&quot;fallback&quot;</span>, <span class="hljs-string">&quot;class_value&quot;</span>, <span class="hljs-string">&quot;name&quot;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params"></span></span><br><span class="hljs-function"><span class="hljs-params">        self,</span></span><br><span class="hljs-function"><span class="hljs-params">        f: t.<span class="hljs-type">Optional</span>[t.<span class="hljs-type">Callable</span>] = <span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">        fallback: t.<span class="hljs-type">Optional</span>[t.<span class="hljs-type">Callable</span>] = <span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">        class_value: t.<span class="hljs-type">Optional</span>[t.<span class="hljs-type">Any</span>] = <span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">    </span>) -&gt; <span class="hljs-literal">None</span>:</span><br>        bind_f: t.<span class="hljs-type">Optional</span>[t.<span class="hljs-type">Callable</span>[[<span class="hljs-string">&quot;LocalProxy&quot;</span>, t.<span class="hljs-type">Any</span>], t.<span class="hljs-type">Callable</span>]]<br><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(f, <span class="hljs-string">&quot;__get__&quot;</span>):<br>            <span class="hljs-comment"># A Python function, can be turned into a bound method.</span><br><br>            <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bind_f</span>(<span class="hljs-params">instance: <span class="hljs-string">&quot;LocalProxy&quot;</span>, obj: t.<span class="hljs-type">Any</span></span>) -&gt; t.<span class="hljs-type">Callable</span>:</span><br>                <span class="hljs-keyword">return</span> f.__get__(obj, <span class="hljs-built_in">type</span>(obj))  <span class="hljs-comment"># type: ignore</span><br><br>        <span class="hljs-keyword">elif</span> f <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-comment"># A C function, use partial to bind the first argument.</span><br><br>            <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bind_f</span>(<span class="hljs-params">instance: <span class="hljs-string">&quot;LocalProxy&quot;</span>, obj: t.<span class="hljs-type">Any</span></span>) -&gt; t.<span class="hljs-type">Callable</span>:</span><br>                <span class="hljs-keyword">return</span> partial(f, obj)  <span class="hljs-comment"># type: ignore</span><br><br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-comment"># Use getattr, which will produce a bound method.</span><br>            bind_f = <span class="hljs-literal">None</span><br><br>        self.bind_f = bind_f<br>        self.fallback = fallback<br>        self.class_value = class_value<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__set_name__</span>(<span class="hljs-params">self, owner: <span class="hljs-string">&quot;LocalProxy&quot;</span>, name: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-literal">None</span>:</span><br>        self.name = name<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get__</span>(<span class="hljs-params">self, instance: <span class="hljs-string">&quot;LocalProxy&quot;</span>, owner: t.<span class="hljs-type">Optional</span>[<span class="hljs-built_in">type</span>] = <span class="hljs-literal">None</span></span>) -&gt; t.<span class="hljs-type">Any</span>:</span><br>        <span class="hljs-keyword">if</span> instance <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-keyword">if</span> self.class_value <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>                <span class="hljs-keyword">return</span> self.class_value<br><br>            <span class="hljs-keyword">return</span> self<br><br>        <span class="hljs-keyword">try</span>:<br>            obj = instance._get_current_object()<br>        <span class="hljs-keyword">except</span> RuntimeError:<br>            <span class="hljs-keyword">if</span> self.fallback <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>                <span class="hljs-keyword">raise</span><br><br>            <span class="hljs-keyword">return</span> self.fallback.__get__(instance, owner)  <span class="hljs-comment"># type: ignore</span><br><br>        <span class="hljs-keyword">if</span> self.bind_f <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-keyword">return</span> self.bind_f(instance, obj)<br><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">getattr</span>(obj, self.name)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__repr__</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">str</span>:</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-string">f&quot;proxy <span class="hljs-subst">&#123;self.name&#125;</span>&quot;</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span>(<span class="hljs-params">self, instance: <span class="hljs-string">&quot;LocalProxy&quot;</span>, *args: t.<span class="hljs-type">Any</span>, **kwargs: t.<span class="hljs-type">Any</span></span>) -&gt; t.<span class="hljs-type">Any</span>:</span><br>        <span class="hljs-string">&quot;&quot;&quot;Support calling unbound methods from the class. For example,</span><br><span class="hljs-string">        this happens with ``copy.copy``, which does</span><br><span class="hljs-string">        ``type(x).__copy__(x)``. ``type(x)`` can&#x27;t be proxied, so it</span><br><span class="hljs-string">        returns the proxy type and descriptor.</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.__get__(instance, <span class="hljs-built_in">type</span>(instance))(*args, **kwargs)<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>分析：</strong></p>
+<p>由于类中存在<code>__get__</code>和<code>__set_name</code>方法，我们可以很快推断出这是一个描述器，描述器所要做的事情是控制我们访问方法和实例的属性。而这个类的作用为我们提供了访问被代理对象Local实例中当前线程属性字典中的相关属性。</p>
+<hr>
+<p>以<code>__str__ = _ProxyLookup(str) </code>为例具体说明下执行逻辑。</p>
+<p>当我们要打印一个属性值时<code>print(attribute)</code>,如果定义了<code>__str__</code>方法时，会先调用该方法，然后就会调用<code>_ProxyLookup</code>中的<code>__call__</code>方法。在<code>__call__</code>方法中会调用了<code>__get__</code>方法，其中传入<code>__get__</code>方法的instance为<code>self</code>，即<code>LocalProxy</code>的实例对象。进而进入<code>__get__</code>代码段中，通过<code>instance._get_current_object()</code>获取到对象，然后利用反射机制，获取Local实例中当前线程属性字典中相对应(self.name)的属性。</p>
+<hr>
+<h3 id="二、-总结"><a href="#二、-总结" class="headerlink" title="二、 总结"></a>二、 总结</h3><p>1.从LocalProxy角度来看，代理模式带来的好处是简化属性访问的复杂性，原本Local对象的数据结构很复杂，包含了多层字典嵌套。使用了代理模式提供了统一的数据访问接口去访问底层的复杂数据。<br>2.之前跟女朋友一起学习时，看过Vue3.0的响应式原理，以computed为例，computed的函数中就使用了代理对象做了一层拦截，实现依赖收集和派发通知操作，实现函数延迟调用和访问缓存旧数据，当新数据更新了，重新执行runner方法并派发通知，通知watcher去触发组件的重新渲染。<br>3.代理模式总的来说在调用和被调用方之间做了一层拦截，拦截到后做额外的操作，是不是非常的方便呢？</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Flask/">Flask</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Flask/">Flask</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/08/05/Python%E4%B8%AD%E7%B1%BB%E5%9E%8B%E6%A3%80%E6%9F%A5%E6%B1%87%E6%80%BB/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python中类型检查汇总</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/07/12/Git%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8/">
+                        <span class="hidden-mobile">Git命令的使用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

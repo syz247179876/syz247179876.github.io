@@ -1,0 +1,565 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="python中的async&#x2F;await and yield 以及yield from 的概念首先说明以下： ① yield from 诞生于python3.3版本 ② async&#x2F;await 关键字 诞生于python3.5版本 以上两种都可以称为协程，也就是异步的实现方式之一。 我的版本为python3.6  一、yield from首先最简单最原始的一种协程关键字 1.yield：等价于ret">
+<meta property="og:type" content="article">
+<meta property="og:title" content="python 的 async, await（协程）理解">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/05/python%20%E7%9A%84%20async,%20await%EF%BC%88%E5%8D%8F%E7%A8%8B%EF%BC%89%E7%90%86%E8%A7%A3/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="python中的async&#x2F;await and yield 以及yield from 的概念首先说明以下： ① yield from 诞生于python3.3版本 ② async&#x2F;await 关键字 诞生于python3.5版本 以上两种都可以称为协程，也就是异步的实现方式之一。 我的版本为python3.6  一、yield from首先最简单最原始的一种协程关键字 1.yield：等价于ret">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/yield_from_20200422151945816806.png">
+<meta property="article:published_time" content="2020-05-05T04:15:32.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.451Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="异步">
+<meta property="article:tag" content="协程">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://syzzjw.cn/media/editor/yield_from_20200422151945816806.png">
+  
+  <title>python 的 async, await（协程）理解 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="python 的 async, await（协程）理解">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-05 12:15" pubdate>
+        2020年5月5日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      7 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">python 的 async, await（协程）理解</h1>
+            
+            <div class="markdown-body">
+              <h3 id="python中的async-await-and-yield-以及yield-from-的概念"><a href="#python中的async-await-and-yield-以及yield-from-的概念" class="headerlink" title="python中的async/await and yield 以及yield from 的概念"></a><strong>python中的async/await and yield 以及yield from 的概念</strong></h3><p>首先说明以下：</p>
+<p>① yield from 诞生于python3.3版本</p>
+<p>② async/await 关键字 诞生于python3.5版本</p>
+<p>以上两种都可以称为协程，也就是异步的实现方式之一。</p>
+<p>我的版本为python3.6</p>
+<hr>
+<h4 id="一、yield-from"><a href="#一、yield-from" class="headerlink" title="一、yield from"></a><strong>一、yield from</strong></h4><p>首先最简单最原始的一种协程关键字</p>
+<p>1.<code>yield</code>：等价于return，只不过yield具备惰性特性，惰性特性，有效的节省内存控件，当需要输出的时候才会输出。存在yield关键字的函数，被称作生成器函数。</p>
+<p>2.<code>yield from </code>：yield关键字的升级版，<strong>后面可以接任何的可迭代对象(和下面的await有区别哦，下面会讲）</strong>，表示要从哪里generate 元素出来，<code>yield from generate</code>,返回一个生成器。</p>
+<p>例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">func</span>():</span><br>    <span class="hljs-comment"># 通过循环产出i</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>        <span class="hljs-keyword">if</span> i &gt;<span class="hljs-number">8</span>:       <span class="hljs-comment"># 当i=8，就不在产出值了，此时会抛出StopIteration异常，如果用next(obj)产值的话，StopIteration后面会接&#x27;stop`</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;stop&#x27;</span><br>        <span class="hljs-keyword">yield</span> i<br><br><span class="hljs-built_in">print</span>(func())<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> func():<br>    <span class="hljs-built_in">print</span>(i)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test</span>():</span><br>    <span class="hljs-comment"># 相当对可迭代对象m的循环产出值</span><br>	m = [<span class="hljs-number">9</span>,<span class="hljs-number">8</span>,<span class="hljs-number">7</span>,<span class="hljs-number">6</span>,<span class="hljs-number">5</span>,<span class="hljs-number">4</span>,<span class="hljs-number">3</span>,<span class="hljs-number">2</span>,<span class="hljs-number">1</span>]<br>    <span class="hljs-keyword">yield</span> <span class="hljs-keyword">from</span> m<br><br><span class="hljs-built_in">print</span>(test())<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> test():<br>    <span class="hljs-built_in">print</span>(i)<br></code></pre></td></tr></table></figure>
+
+<p><strong>结果：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;generator <span class="hljs-built_in">object</span> func at <span class="hljs-number">0x000001EFAD21CF10</span>&gt;  <span class="hljs-comment"># 拥有yield关键字的生成器函数</span><br><span class="hljs-number">0</span><br><span class="hljs-number">1</span><br><span class="hljs-number">2</span><br><span class="hljs-number">3</span><br><span class="hljs-number">4</span><br><span class="hljs-number">5</span><br><span class="hljs-number">6</span><br><span class="hljs-number">7</span><br><span class="hljs-number">8</span><br>&lt;generator <span class="hljs-built_in">object</span> test at <span class="hljs-number">0x000001EFAD21CF10</span>&gt;  <span class="hljs-comment"># yield from 的生成器函数</span><br><span class="hljs-number">9</span><br><span class="hljs-number">8</span><br><span class="hljs-number">7</span><br><span class="hljs-number">6</span><br><span class="hljs-number">5</span><br><span class="hljs-number">4</span><br><span class="hljs-number">3</span><br><span class="hljs-number">2</span><br><span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+<p>注：<code>yield from</code>相当于一层for循环，它会处理最后的异常<code>StopIteration</code>,如果函数中有return返回的话（需要next()显示抛出异常），通过yield from 会隐式处理该异常，因此并不会输出return 后的内容。因此如果要输入return 后的内容，则需要手动不断next()了~</p>
+<p>最后for循环print(i),会内部循环调用<code>next()</code>方法，同时最后处理StopIteration异常。</p>
+<p><strong>在《流畅的python》一书中这样介绍了yield from：</strong></p>
+<p>选择书中的一幅图<br><img src="/media/editor/yield_from_20200422151945816806.png" srcset="/img/loading.gif" lazyload>{width=”100%”}</p>
+<p><strong>解释：</strong></p>
+<p>1.委派生成器在 yield from 表达式处暂停时，调用方可以直接把数据发给子生成器。</p>
+<p>2.子生成器再把产出的值发给调用方。</p>
+<p>3.子生成器返回之后，解释器会抛出 StopIteration 异常，并把返回值附加到异常对象上，此时委派生成器会恢复。</p>
+<p><strong>yield from 的主要作用：</strong></p>
+<p>是打开双向通道，把最外层的调用方与最内层的子生成器连接起来，这样二者可以直接发送和产出值，还可以直接传入异常，而不用在位于中间的协程中添加大量处理异常的样板代码。</p>
+<hr>
+<h4 id="二、async-await"><a href="#二、async-await" class="headerlink" title="二、async/await"></a><strong>二、async/await</strong></h4><p>async/await是一套的关键字，也就是他们俩一般一起使用。</p>
+<p>async：用来声明一个函数为异步函数的关键字。</p>
+<p>await：用来对程序进行挂起，转到其他异步程序中执行。然后执行完（也可能另外的异步程序也需要挂起）</p>
+<p>简单的做菜小案例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> time<br><span class="hljs-keyword">import</span> asyncio<br><br><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">clean_vegetable</span>():</span><br>    <span class="hljs-keyword">await</span> asyncio.sleep(<span class="hljs-number">10</span>)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;我洗好了菜&quot;</span>)<br><br><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_rice</span>():</span><br>    <span class="hljs-keyword">await</span> asyncio.sleep(<span class="hljs-number">8</span>)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;我做好了米饭&quot;</span>)<br><br><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">cook</span>():</span><br>    <span class="hljs-keyword">await</span> asyncio.sleep(<span class="hljs-number">11</span>)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;我炖好了肉&quot;</span>)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">async_eat</span>():</span><br>    start_time = time.clock()<br>    loop = asyncio.get_event_loop()<br>    tasks = [<br>        clean_vegetable(),<br>        make_rice(),<br>        cook(),<br>    ]<br>    loop.run_until_complete(asyncio.wait(tasks))<br>    loop.close()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;我花了%s时间做好了一顿饭,可以吃饭了~&#x27;</span>%(time.clock()-start_time))<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果：</strong></p>
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs dns">异步执行：<br><br>我做好了米饭<br>我洗好了菜<br>我炖好了肉<br>我花了<span class="hljs-number">11.0029621</span>时间做好了一顿饭<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong><br>上述例子可以发现，采用异步执行只花了11s就做好了一顿饭，而如果我们采用同步执行，我们需要花费10+8+11=29s，快了一倍多。因为，我在做淘完米后，我就可以去洗菜，而不是在那一直等米饭熟。</p>
+<p><strong>注：</strong></p>
+<p>① 使用async关键字修饰的函数为指明为异步函数，执行到await将当前执行的程序挂起来，不经过系统调用切换到其他函数进行执行（这是与线程区别不同之一）。</p>
+<p>② 这里使用了<code>async.sleep()</code>，而不是<code>time.sleep()</code>,因为<code>async.sleep()</code>的时间是可等待的，也就是”假睡眠”,可以进行函数间的切换而<code>time.sleep()</code>是真睡眠。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%BC%82%E6%AD%A5/">异步</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%8D%8F%E7%A8%8B/">协程</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/05/python%E4%B8%AD%E4%B8%8D%E5%90%8C%E4%B8%8B%E5%88%92%E7%BA%BF%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%90%AB%E4%B9%89/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">python中不同下划线类型的含义</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/04/jquery%E5%AE%9E%E7%8E%B0%E5%8F%91%E9%80%81%E9%AA%8C%E8%AF%81%E7%A0%81%E5%AE%9A%E6%97%B6%E5%99%A8/">
+                        <span class="hidden-mobile">Jquery实现发送验证码定时器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

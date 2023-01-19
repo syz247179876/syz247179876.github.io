@@ -1,0 +1,660 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="ubuntu上安装svn1.查看是否有旧版本的svn： svn --version 2.如果没有，则安装：sudo apt-get install subversion 注： sudo apt-get install update ,更新软件列表，会访问源列表里的每个网址，并读取软件列表 sudo aot-get install upgrade ,更新软件包 3.在&#x2F;opt目录下创建svn仓库。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux上安装svn与使用">
+<meta property="og:url" content="https://syzzjw.cn/2020/03/16/linux%E4%B8%8A%E5%AE%89%E8%A3%85svn/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="ubuntu上安装svn1.查看是否有旧版本的svn： svn --version 2.如果没有，则安装：sudo apt-get install subversion 注： sudo apt-get install update ,更新软件列表，会访问源列表里的每个网址，并读取软件列表 sudo aot-get install upgrade ,更新软件包 3.在&#x2F;opt目录下创建svn仓库。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/linux_svn.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/svn_password_20200316184601942639.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/svn_group_20200316184648901389.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/svn_auth_20200316184855417984.png">
+<meta property="article:published_time" content="2020-03-16T02:00:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.444Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="svn">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/linux_svn.png">
+  
+  <title>linux上安装svn与使用 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="linux上安装svn与使用">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-03-16 10:00" pubdate>
+        2020年3月16日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.9k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      12 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">linux上安装svn与使用</h1>
+            
+            <div class="markdown-body">
+              <h2 id="ubuntu上安装svn"><a href="#ubuntu上安装svn" class="headerlink" title="ubuntu上安装svn"></a><strong>ubuntu上安装svn</strong></h2><p>1.查看是否有旧版本的svn： <code>svn --version</code></p>
+<p>2.如果没有，则安装：<code>sudo apt-get install subversion</code></p>
+<p><strong>注：</strong></p>
+<p><code>sudo apt-get install update</code> ,更新软件列表，会访问源列表里的每个网址，并读取软件列表</p>
+<p><code>sudo aot-get install upgrade</code> ,更新软件包</p>
+<p>3.在/opt目录下创建svn仓库。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs cmd"><span class="hljs-built_in">cd</span> /opt<br>sudo <span class="hljs-built_in">mkdir</span> svn<br><span class="hljs-built_in">cd</span> svn<br>sudo <span class="hljs-built_in">mkdir</span> repository<br></code></pre></td></tr></table></figure>
+
+<p><strong>注： /opt目录用来安装附加软件包,是用户级的程序目录,可以理解为D:/Software。</strong></p>
+<p>4.修改文件夹的权限（升级为最高权限）：</p>
+<p><code>sudo chmod -R 777 /opt/svn/repository</code></p>
+<p><strong>注：在linux系统中,文件或目录的权限可以分为3种:</strong></p>
+<p>r:4 读<br>w:2 写<br>x:1  执行(运行)<br>－：对应数值0<br>数字 4 、2 和 1表示读、写、执行权限<br>rwx = 4 + 2 + 1 = 7 (可读写运行）<br>rw = 4 + 2 = 6 （可读写不可运行）<br>rx = 4 +1 = 5 （可读可运行不可写）  </p>
+<p><strong>例子：</strong></p>
+<p>最高权限777:(4+2+1) (4+2+1)  (4+2+1)<br>第一个7:表示当前文件的拥有者的权限,7=4+2+1 可读可写可执行权限<br>第二个7:表示当前文件的所属组（同组用户）权限,7=4+2+1 可读可写可执行权限<br>第三个7:表示当前文件的组外权限,7=4+2+1 可读可写可执行权限  </p>
+<p>5.将刚才创建的目录 <code>/opt/svn/repository</code>，指定为版本库：</p>
+<p><code>sudo svnadmin create /opt/svn/repository</code></p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/linux_svn.png" srcset="/img/loading.gif" lazyload></p>
+<p>注：ll 指令查看详细文件</p>
+<p>6.修改配置：</p>
+<p>①首先修改db文件夹的权限，改为777。db文件夹是存储svn文件的地方</p>
+<p><code>sudo chmod -R 777 /opt/svn/repository/db</code></p>
+<p>②其次修改conf文件夹下面的svnserve.conf文件</p>
+<p>匿名用户可读</p>
+<p>anon-access = read（可改成none，即不可读）</p>
+<p>权限用户可写</p>
+<p>auth-access = write</p>
+<p>密码文件为passwd</p>
+<p>password-db = passwd</p>
+<p>权限文件为authz</p>
+<p>authz-db = authz</p>
+<p>③ 增加用户名和密码</p>
+<p> 修改con文件夹下面的passwd文件，增加用户和用户密码  </p>
+<p>格式：用户名 = 密码  </p>
+<p>sudo vim passwd（增加用户）  </p>
+<p><img src="/media/editor/svn_password_20200316184601942639.png" srcset="/img/loading.gif" lazyload></p>
+<p>注：这里用户名为admin，密码为admin  </p>
+<p> 修改con文件夹下面的authz文件，增加用户组，目录认证，组权限 </p>
+<p>sudo vim authz（增加用户权限）  </p>
+<p><img src="/media/editor/svn_group_20200316184648901389.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="/media/editor/svn_auth_20200316184855417984.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>注： 单库模式则设置为：[/] 本例子为单库模式</strong></p>
+<p>如果组内有多个人可以逗号分隔如：组名owner，组员user1,user2则：owner=user1,user2</p>
+<p>对组的访问权限设置：rw，r，w。组名前面加@</p>
+<p><code>@owner=rw</code></p>
+<p>如果单用户设置则一个用户一行:</p>
+<p><code>user1=rw</code></p>
+<p>7.配置防火墙</p>
+<p><strong>关键划重点！！！要添加3690的规则，我当初在这步上卡了很久</strong></p>
+<p>由于LInux原始的防火墙工具iptables过于繁琐，所以ubuntu默认提供了一个基于iptable之上的防火墙工具ufw。</p>
+<p>①启用ufw:  <code>sudo ufw enable</code></p>
+<p>②查看防火墙状态：<code>sudo ufw status</code></p>
+<p>③开启/关闭防火墙 (默认设置是’disable’)：<code>sudo  ufw enable|disable</code></p>
+<p>④转换日志状态：<code>sudo  ufw logging on|off</code></p>
+<p>⑤允许 53 端口: <code>sudo ufw allow 53</code></p>
+<p>禁用 53 端口: <code>sudo ufw delete allow 53</code></p>
+<p>⑥删除以前定义的”允许/拒绝访问20端口”的规则：<code>sudo ufw delete allow/deny 20</code></p>
+<p>8.启动svn仓库</p>
+<p><code>svnserve -d -r /opt/svn/repository</code></p>
+<p><strong>注：-d：表示在后台运行 ，-r：指定服务器的根目录</strong></p>
+<p>8.查看是否安装启动成功</p>
+<p><code>ps -ef|grep svnserve</code></p>
+<p><code>sudo netstat -ntlp</code></p>
+<p>查看端口号，svn的默认端口3690</p>
+<p>9.访问：通过 svn://服务器ip/文件夹名字  从svn客户端访问服务器。默认svn协议。如果要配置http或者https则需要安装apache。</p>
+<p>本例因为是设置的[/]单列模式，则svn://ip地址/  就可以访问</p>
+<h4 id="总结：如果要从本地访问服务器的话，要在服务器端开放3690端口号，命令："><a href="#总结：如果要从本地访问服务器的话，要在服务器端开放3690端口号，命令：" class="headerlink" title="总结：如果要从本地访问服务器的话，要在服务器端开放3690端口号，命令："></a><strong>总结：</strong>如果要从本地访问服务器的话，要在服务器端开放3690端口号，命令：</h4><p><code>sudo ufw allow 3690</code></p>
+<p><strong>注：为什么在目录中看不见自己的上传的项目，因为svn将项目处理成数据库文件，存入道数据版本库中了，只用通过Repo-browser检索式能够在/etc下找到</strong></p>
+<p><strong>1．SVN优缺点</strong></p>
+<p>优点：<br>1、 管理方便，逻辑明确，符合一般人思维习惯。<br>2、 易于管理，集中式服务器更能保证安全性。<br>3、 代码一致性非常高，会从服务器下载所有源码<br>4、 适合开发人数不多的项目开发。<br>缺点：<br>1、 服务器压力太大，数据库容量暴增。<br>2、 如果不能连接到服务器上，基本上不可以工作，看上面第二步，如果服务器不能连接上，就不能提交，还原，对比等等。<br>3、 不适合开源开发（开发人数非常非常多，但是Google app engine就是用svn的）。但是一般集中式管理的有非常明确的权限管理机制（例如分支访问限制），可以实现分层管理，从而很好的解决开发人数众多的问题。  </p>
+<p><strong>2．Git优缺点</strong></p>
+<p>优点：<br>1、适合分布式开发，强调个体。<br>2、公共服务器压力和数据量都不会太大。<br>3、速度快、灵活。<br>4、任意两个开发者之间可以很容易的解决冲突。<br>5、离线工作。<br>缺点：<br>1、学习周期相对而言比较长。<br>2、不符合常规思维。<br>3、代码保密性差，一旦开发者把整个库克隆下来就可以完全公开所有代码和版本信息。  </p>
+<p><strong>一、SVN常用的命令行操作：</strong></p>
+<p>把文件上传到SVN版本库后,上传的文件不再以文件原来的格式存储,而是被svn以它自定义的格式压缩成版本库数据,存放在版本库中。是不透明的，是原子提交</p>
+<p>一、 SVN常用命令<br>1、将文件checkout到本地目录</p>
+<p>svn co http://路径(目录或文件的全路径)　[本地目录全路径]  –username 用户名 –password 密码</p>
+<p>例子：<code>svn co svn://192.168.0.3/测试工具 /home/testtools --username luke</code></p>
+<p>简写：<code>svn co</code></p>
+<p>2、往版本库中添加新的文件</p>
+<p><code>svn add file</code></p>
+<p>3、将改动的文件提交到版本库</p>
+<p>svn commit -m “LogMessage” [-N] [–no-unlock] PATH(如果选择了保持锁，就使用–no-unlock开关)<br>简写：<code>svn ci</code></p>
+<p>4、加锁/解锁</p>
+<p><code>svn lock -m “LockMessage” [--force] PATH</code></p>
+<p><code>svn unlock PATH</code></p>
+<p>5、更新到某个版本</p>
+<p><code>svn update -r m path</code></p>
+<p>简写：<code>svn up</code></p>
+<p>6、查看文件或者目录状态</p>
+<p>1）<code>svn status path</code>（目录下的文件和子目录的状态，正常状态不显示）</p>
+<p>2）<code>svn status -v path</code>(显示文件和子目录状态)</p>
+<p>简写：<code>svn st</code></p>
+<p>7、删除文件</p>
+<p><code>svn delete path -m “delete test fle”</code></p>
+<p>后面的引号内容为注释</p>
+<p>简写：<code>svn (del, remove, rm)</code></p>
+<p>8、查看日志</p>
+<p><code>svn log path</code></p>
+<p>9、查看文件详细信息</p>
+<p><code>svn info path</code></p>
+<p>10、比较差异</p>
+<p><code>svn diff path</code>(将修改的文件与基础版本比较)</p>
+<p><code>svn diff -r m:n path</code>(对版本m和版本n比较差异)</p>
+<p>简写：<code>svn di</code></p>
+<p>11、将两个版本之间的差异合并到当前文件</p>
+<p><code>svn merge -r m:n path</code></p>
+<p>12、SVN 帮助</p>
+<p><code>svn help</code><br><code>svn help ci</code></p>
+<p>13、创建纳入版本控制下的新目录</p>
+<p><code>svn　mkdir</code>　目录名</p>
+<p>svn　mkdir　-m　“新增目录备注文本注释”　http://目录全路径</p>
+<p><strong>例子：</strong></p>
+<p><code>svn mkdir newdir</code><br><code>svn mkdir -m &quot;Making a new dir.&quot;  svn://localhost/test/newdir</code></p>
+<p><code>14.svn cleanup PATH</code></p>
+<p>清理</p>
+<p><strong>二、 SVN不常用命令</strong></p>
+<p>1、版本库下的文件和目录列表</p>
+<p>  <code>svn list path</code>    显示path目录下的所有属于版本库的文件和目录简写：``svn ls`</p>
+<p>2、恢复本地修改</p>
+<p><code>svn revert</code>: 恢复原始未改变的工作副本文件 (恢复大部份的本地修改)。</p>
+<p>用法: revert PATH… 注意: 本子命令不会存取网络，并且会解除冲突的状况。但是它不会恢复被删除的目录</p>
+<p>3、代码库URL变更</p>
+<p><code>svn switch (sw)</code>: 更新工作副本至不同的URL。</p>
+<p>**用法: **</p>
+<p>(1)、switch URL [PATH]</p>
+<p>更新你的工作副本，映射到一个新的URL，其行为跟“svn update”很像，也会将服务器上文件与本地文件合并。这是将工作副本对应到同一仓库中某个分支或者标记的方法。 </p>
+<p>(2)、switch –relocate FROM TO [PATH…]</p>
+<p>改写工作副本的URL元数据，以反映单纯的URL上的改变。当仓库的根URL变动 (比如方案名或是主机名称变动)，但是工作副本仍旧对映到同一仓库的同一目录时使用这个命令更新工作副本与仓库的对应关系。</p>
+<p>4、解决冲突</p>
+<p>svn resolved: 移除工作副本的目录或文件的“冲突”状态。</p>
+<p>用法: resolved PATH… 注意: 本子命令不会依语法来解决冲突或是移除冲突标记；它只是移除冲突的相关文件，然后让 PATH 可以再次提交。</p>
+<p>5、输出指定文件或URL的内容。</p>
+<p>svn cat 目标[@版本]…如果指定了版本，将从指定的版本开始查找。 svn cat -r PREV filename &gt; filename (PREV 是上一版本,也可以写具体版本号,这样输出结果是可以提交的）</p>
+<p>更详细的指令参考“：<a target="_blank" rel="noopener" href="https://blog.csdn.net/gsg8709/article/details/79435741">https://blog.csdn.net/gsg8709/article/details/79435741</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Linux/">Linux</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Linux/">Linux</a>
+                    
+                      <a class="hover-with-bg" href="/tags/svn/">svn</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/03/16/Leetcode%2036%20.%20%E6%9C%89%E6%95%88%E7%9A%84%E6%95%B0%E7%8B%AC/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Leetcode 36 . 有效的数独</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/03/16/Leetcode%20225.%E7%94%A8%E9%98%9F%E5%88%97%E5%AE%9E%E7%8E%B0%E6%A0%88/">
+                        <span class="hidden-mobile">Leetcode 225.用队列实现栈</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

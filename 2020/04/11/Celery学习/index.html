@@ -1,0 +1,563 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="Celery实现异步执行任务，拥有分布式的任务队列！！！  灵活且高效，不用担心高并发量导致过重的系统负担，有效处理复杂的逻辑任务，提高性能。 celery架构由三部分组成，消息中间件，任务执行单元和任务执行结果存储组成。 {:width&#x3D;”100%” align&#x3D;”center”} celery任务队列是一种跨线程、跨机器工作的一种机制.任务队列中包含称作任务的工作单元。有专门的工作进程持续不断">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Celery学习">
+<meta property="og:url" content="https://syzzjw.cn/2020/04/11/Celery%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="Celery实现异步执行任务，拥有分布式的任务队列！！！  灵活且高效，不用担心高并发量导致过重的系统负担，有效处理复杂的逻辑任务，提高性能。 celery架构由三部分组成，消息中间件，任务执行单元和任务执行结果存储组成。 {:width&#x3D;”100%” align&#x3D;”center”} celery任务队列是一种跨线程、跨机器工作的一种机制.任务队列中包含称作任务的工作单元。有专门的工作进程持续不断">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/celery_2.png">
+<meta property="article:published_time" content="2020-04-11T01:17:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.420Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Celery">
+<meta property="article:tag" content="分布式任务队列">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/celery_2.png">
+  
+  <title>Celery学习 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Celery学习">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-04-11 09:17" pubdate>
+        2020年4月11日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      9 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Celery学习</h1>
+            
+            <div class="markdown-body">
+              <p>Celery实现异步执行任务，拥有分布式的任务队列！！！</p>
+<hr>
+<p>灵活且高效，不用担心高并发量导致过重的系统负担，有效处理复杂的逻辑任务，提高性能。</p>
+<p>celery架构由三部分组成，消息中间件，任务执行单元和任务执行结果存储组成。</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/celery_2.png" srcset="/img/loading.gif" lazyload alt="celery2">{:width=”100%” align=”center”}</p>
+<p>celery任务队列是一种跨线程、跨机器工作的一种机制.任务队列中包含称作任务的工作单元。有专门的工作进程持续不断的监视任务队列，并从中获得新的任务并处理.celery通过消息进行通信，通常使用一个叫Broker(中间人)来协client(任务的发出者)和worker(任务的处理者). clients发出消息到队列中，broker将队列中的信息派发给worker来处理。一个celery系统可以包含很多的worker和broker，可增强横向扩展性和高可用性能。</p>
+<p>我们将耗时任务放到后台异步执行。不会影响用户其他操作。除了注册功能，例如上传，图形处理等等耗时的任务，都可以按照这种思路来解决。 如何实现异步执行任务呢？我们可使用celery. celery除了刚才所涉及到的异步执行任务之外，还可以实现定时处理某些任务。</p>
+<p>Celery是一个功能完备即插即用的任务队列。它使得我们不需要考虑复杂的问题，使用非常简单。celery看起来似乎很庞大，本章节我们先对其进行简单的了解，然后再去学习其他一些高级特性。 celery适用异步处理问题，当发送邮件、或者文件上传, 图像处理等等一些比较耗时的操作，我们可将其异步执行，这样用户不需要等待很久，提高用户体验。 celery的特点是：</p>
+<p>简单，易于使用和维护，有丰富的文档。</p>
+<p>高效，单个celery进程每分钟可以处理数百万个任务。</p>
+<p>灵活，celery中几乎每个部分都可以自定义扩展。</p>
+<h4 id="1-普通方式启动Celery-Worker"><a href="#1-普通方式启动Celery-Worker" class="headerlink" title="1.普通方式启动Celery Worker"></a><strong>1.普通方式启动Celery Worker</strong></h4><p>在当前目录，使用如下方式启动Celery Worker:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">celery worker -A tasks --loglevel=info   <span class="hljs-comment"># 以默认方式prefork多进程启动celery</span><br></code></pre></td></tr></table></figure>
+<p>其中：</p>
+<p>①参数 -A 指定了 Celery 实例的位置，本例是在 tasks.py 中，Celery 会自动在该文件中寻找 Celery 对象实例，当然，我们也可以自己指定，在本例，使用-A tasks.app；</p>
+<p>②参数 –loglevel 指定了日志级别，默认为 warning，也可以使用 -l info 来表示；</p>
+<p>③在生产环境中，我们通常会使用 Supervisor 来控制 Celery Worker 进程。</p>
+<hr>
+<h4 id="2-绿色协程启动celery："><a href="#2-绿色协程启动celery：" class="headerlink" title="2.绿色协程启动celery："></a><strong>2.绿色协程启动celery：</strong></h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">celery -A mblog.celery worker -l info (-P eventlet) <span class="hljs-comment">#最后是启动绿色协程</span><br></code></pre></td></tr></table></figure>
+<p>分析：添加了eventlet可能会导致django的db对数据库操作在关闭数据库时，会对创建这个连接进行验证是否是同一个线程所做的，如果不是同一个线程，则会报错。eventlet是支持wsgi的异步框架</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/giotto95827/p/8761055.html">https://www.cnblogs.com/giotto95827/p/8761055.html</a></p>
+<p><strong>注：而就是因为eventlet会对Python原生模块（os，thread）进行修改，也就是运行时打上猴子不定，使得原生的get_ident（）取得的值和猴子补丁后的get_ident()取得的值不同。产生错误！为此，可以再Monkey_patch（thread=False）来取消其打补丁。但是有可能会影响eventlet带来的效果！</strong></p>
+<hr>
+<h4 id="3-单进程启动celery："><a href="#3-单进程启动celery：" class="headerlink" title="3.单进程启动celery："></a><strong>3.单进程启动celery：</strong></h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">celery -A mblog.celery worker --pool=solo -l info  <span class="hljs-comment"># --pool=solo规定的单进程模式，以串行的方式执行任务队列</span><br></code></pre></td></tr></table></figure>
+<p><strong>注：其中-A后面指定的是含有celery实例的py文件</strong></p>
+<hr>
+<h4 id="4-django中使用celery"><a href="#4-django中使用celery" class="headerlink" title="4.django中使用celery"></a><strong>4.django中使用celery</strong></h4><p>（1）单独配置一个py文件，用来配置celery</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> __future__ <span class="hljs-keyword">import</span> absolute_import, unicode_literals  <span class="hljs-comment"># 绝对导入，把下一个新版本的特性导入到当前版本，例如python3取消了python2.u前缀</span><br><br><span class="hljs-keyword">from</span> celery <span class="hljs-keyword">import</span> Celery<br><span class="hljs-keyword">from</span> django.conf <span class="hljs-keyword">import</span> settings<br><span class="hljs-keyword">from</span> os <span class="hljs-keyword">import</span> path, environ<br><br>project_name = path.split(path.dirname(__file__))[-<span class="hljs-number">1</span>]  <span class="hljs-comment"># 当前目录的上一级==去掉文件名，返回目录</span><br>project_settings = <span class="hljs-string">&quot;&#123;&#125;.settings&quot;</span>.<span class="hljs-built_in">format</span>(project_name)<br><br><span class="hljs-comment"># 设置环境变量，让django能够识别启动celery.py这个文件</span><br>environ.setdefault(<span class="hljs-string">&quot;DJANGO_SETTINGS_MODULE&quot;</span>, project_settings)<br><br><span class="hljs-comment"># 实例化Celery</span><br>app = Celery(project_name)<br><br><span class="hljs-comment"># 使用django的settings文件配置celery，一些基础参数，比如任务队列存放的位置redis中，执行返回的结果保存的位置，BROKER_URL，CELERY_RESULT_BACKEND等</span><br>app.config_from_object(<span class="hljs-string">&quot;django.conf:settings&quot;</span>, namespace=<span class="hljs-string">&#x27;CELERY&#x27;</span>)<br><br><span class="hljs-comment"># Celery加载所有注册的应用</span><br>app.autodiscover_tasks(settings.INSTALLED_APPS)<br></code></pre></td></tr></table></figure>
+
+<hr>
+<p>（2）在setting.py文件中配置celery所需的属性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># celery 设置,用于实例化</span><br><span class="hljs-comment"># celery 中间人 redis://redis服务所在的ip地址:端口号/数据库号</span><br>BROKER_URL = <span class="hljs-string">&#x27;redis://:&lt;password&gt;@127.0.0.1:6379/0&#x27;</span><br><br><span class="hljs-comment"># celery结果返回，可用于跟踪结果</span><br>CELERY_RESULT_BACKEND = <span class="hljs-string">&#x27;redis://:&lt;password&gt;@127.0.0.1:6379/1&#x27;</span><br>CELERY_TASK_SERIALIZER = <span class="hljs-string">&#x27;json&#x27;</span><br>CELERY_RESULT_SERIALIZER = <span class="hljs-string">&#x27;json&#x27;</span><br><br><span class="hljs-comment"># celery时区设置，使用settings中TIME_ZONE同样的时区</span><br>CELERY_TIME_ZONE = TIME_ZONE<br></code></pre></td></tr></table></figure>
+
+<p><strong>注：其中的<password>为你的redis的密码</strong></p>
+<p>task任务函数返回值参考</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wanghong1994/p/12144548.html">https://www.cnblogs.com/wanghong1994/p/12144548.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/66707b1e7787">https://www.jianshu.com/p/66707b1e7787</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhaopanpan/p/10032853.html">https://www.cnblogs.com/zhaopanpan/p/10032853.html</a></p>
+<p><strong>注：中间人broker采用json格式保存任务通过保存其任务函数标识，任务函数名，调用参数。</strong></p>
+<p><strong>执行任务函数的返回值必须是序列化的对象！！！</strong></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Celery/">Celery</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Celery/">Celery</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97/">分布式任务队列</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/04/11/%E4%BD%BF%E7%94%A8git%E4%B8%8A%E4%BC%A0%E9%A1%B9%E7%9B%AE%E5%88%B0GitHub/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">使用git上传项目到GitHub</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/04/10/206.%20%E5%8F%8D%E8%BD%AC%E9%93%BE%E8%A1%A8/">
+                        <span class="hidden-mobile">206. 反转链表</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

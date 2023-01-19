@@ -1,0 +1,603 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="python使用channels实现websocket的推送信息功能想法来源： 之前刷Leetcode的时候嘛，右上角都会有全服的刷题消息推送以及个人的收到的回复和关注消息推送。 因此就去查了查如何实现这种消息推送的功能。 在阅读了一番官方文档后，有了大致的一个理解和思路，毕竟阅读纯英文文档还是没有读中文文档那么直观（哈哈哈，就当考研锻炼英语阅读了，好了接下来进入正题！） 以下是我使用channe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 使用channels实现websocket从编码到部署详解">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/13/python%20%E4%BD%BF%E7%94%A8channels%E5%AE%9E%E7%8E%B0websocket%E4%BB%8E%E7%BC%96%E7%A0%81%E5%88%B0%E9%83%A8%E7%BD%B2%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="python使用channels实现websocket的推送信息功能想法来源： 之前刷Leetcode的时候嘛，右上角都会有全服的刷题消息推送以及个人的收到的回复和关注消息推送。 因此就去查了查如何实现这种消息推送的功能。 在阅读了一番官方文档后，有了大致的一个理解和思路，毕竟阅读纯英文文档还是没有读中文文档那么直观（哈哈哈，就当考研锻炼英语阅读了，好了接下来进入正题！） 以下是我使用channe">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/websocket1_20200424220929811581.png">
+<meta property="article:published_time" content="2020-05-13T14:11:29.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.444Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="websocket">
+<meta property="article:tag" content="部署">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://syzzjw.cn/media/editor/websocket1_20200424220929811581.png">
+  
+  <title>Python 使用channels实现websocket从编码到部署详解 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Python 使用channels实现websocket从编码到部署详解">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-13 22:11" pubdate>
+        2020年5月13日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      8k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      25 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Python 使用channels实现websocket从编码到部署详解</h1>
+            
+            <div class="markdown-body">
+              <h3 id="python使用channels实现websocket的推送信息功能"><a href="#python使用channels实现websocket的推送信息功能" class="headerlink" title="python使用channels实现websocket的推送信息功能"></a>python使用channels实现websocket的推送信息功能</h3><p><strong>想法来源：</strong></p>
+<p>之前刷Leetcode的时候嘛，右上角都会有全服的刷题消息推送以及个人的收到的回复和关注消息推送。</p>
+<p>因此就去查了查如何实现这种消息推送的功能。</p>
+<p>在阅读了一番官方文档后，有了大致的一个理解和思路，毕竟阅读纯英文文档还是没有读中文文档那么直观（哈哈哈，就当考研锻炼英语阅读了，好了接下来进入正题！）</p>
+<p>以下是我使用channels从消息推送功能实现到云服务器部署daphne（asgi服务器）的全过程，以及中间遇到的一些BUG.</p>
+<hr>
+<h3 id="一、什么是websocket"><a href="#一、什么是websocket" class="headerlink" title="一、什么是websocket"></a><strong>一、什么是websocket</strong></h3><p>websocket是一个全双工的通信协议，它和HTTP协议存在交集，但不完全相同，可以用“对HTTP协议的一种升级”来解释websocket。它的诞生主要用于弥补AJAX段轮询，HTTP长轮询的不足，它可以有效的减小带宽资源的浪费。</p>
+<hr>
+<h3 id="二、AJAX短轮询和HTTP长轮询，websocket的区别"><a href="#二、AJAX短轮询和HTTP长轮询，websocket的区别" class="headerlink" title="二、AJAX短轮询和HTTP长轮询，websocket的区别"></a><strong>二、AJAX短轮询和HTTP长轮询，websocket的区别</strong></h3><p>1.AJAX短轮询：使用ajax技术，http协议，采用poll方式进行轮询，其轮询时间间隔较短，可以缩小到1s，但是细想，这种方法，每次都要建立TCP连接，而且HTTP协议有着无连接，无状态的特性，那么每次建立TCP连接，发送HTTP请求，所传输的数据报会非常多，这样很占用带宽资源。</p>
+<p>2.HTTP长轮询:long poll指的是通过ajax发送请求，服务器在相应头中会包含Connection：keep-alive。这样会客户端发起请求后，服务器端保持一段时间，直到有数据了，再将数据发送给客户端。期间，客户端和服务端的连接会一直保持。这种方法，虽然后请求的次数可能减少，但是还是会占用很多带宽，同时，因为还是基于HTTP的，所以还是会不断建立连接，断开连接，建立连接，每次建立连接都会进行3次握手，断开连接进行4次握手。</p>
+<p><strong>注：</strong>对于HTTP请求的缺点，我们可以看出，服务端只能被动的处理客户端发来的信息，而不能主动的向客户端发送数据。当然可以通过ajax长短轮询实现，但是弊端还是很明显的：浪费带宽。因此就诞生了基于全双工协议通信的websocket。</p>
+<p>3.websocket协议:websocket协议很大程度上解决了HTTP协议中服务端无法主动发送数据给客户端的问题。websocket好处在于只需要依赖一次HTTP的握手，就可以建立websocket通信，这样服务端和客户端就可以创建持久性的连接，并可以相互发送消息。</p>
+<h3 id="三、F12分析协议的升级过程"><a href="#三、F12分析协议的升级过程" class="headerlink" title="三、F12分析协议的升级过程"></a><strong>三、F12分析协议的升级过程</strong></h3><p><img src="/media/editor/websocket1_20200424220929811581.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<p><strong>分析：</strong></p>
+<p>这是我博客建立websocket的一张图，我所用红箭头指的地方都跟websocket协议有关，接下来依次分析。</p>
+<p>① 请求URL:以ws开头表示采用websocket协议，当然这是一种协议规定，我在nginx中还需要反向代理到相应能够支持处理websocket协议的异步框架的服务器上。</p>
+<p>② 状态码为101表示切换协议成功。</p>
+<p>③ upgrade：表示我要从HTTP协议升级到Websocket协议。</p>
+<p>④ sec-WebSocket-Key:在Request中请求头中添加该行，表示对websocket协议的一种加密，服务端接收请求信息后，会对其进行再次加密，然后放到Response的Sec-webScoket-Accept，最后客户端对sec-WebSocket-Key加密和Sec-webScoket-Accept比较，相同的话表示建立websocket协议成功。</p>
+<p>⑤ sec-WebSocket-Version:这个表示websocket的版本，固定为13。</p>
+<h3 id="四、python使用channels实现websocket协议"><a href="#四、python使用channels实现websocket协议" class="headerlink" title="四、python使用channels实现websocket协议"></a><strong>四、python使用channels实现websocket协议</strong></h3><p>首先附上channels的官方文档（虽然都是英文）</p>
+<p><a target="_blank" rel="noopener" href="https://channels.readthedocs.io/en/latest">https://channels.readthedocs.io/en/latest</a></p>
+<p>以我的例子作为讲解：</p>
+<h4 id="1-首先安装channels和channels-redis"><a href="#1-首先安装channels和channels-redis" class="headerlink" title="1.首先安装channels和channels_redis"></a><strong>1.首先安装channels和channels_redis</strong></h4><p><code>pip install channels</code></p>
+<p><code>pip install channels_redis</code></p>
+<h4 id="2-配置asgi应用程序，方便云服务器部署使用"><a href="#2-配置asgi应用程序，方便云服务器部署使用" class="headerlink" title="2.配置asgi应用程序，方便云服务器部署使用"></a><strong>2.配置asgi应用程序，方便云服务器部署使用</strong></h4><p>因为我是的django3.0降级下来的。所以会自带<code>asgi.py</code>,没有的话可以在根目录创建一个文件。</p>
+<p>在其中加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> django<br><span class="hljs-keyword">from</span> channels.routing <span class="hljs-keyword">import</span> get_default_application<br><br>os.environ.setdefault(<span class="hljs-string">&quot;DJANGO_SETTINGS_MODULE&quot;</span>, <span class="hljs-string">&quot;mblog.settings&quot;</span>)<br><br>django.setup()   <span class="hljs-comment"># 加载异步application</span><br><br>application = get_default_application()<br></code></pre></td></tr></table></figure>
+
+<p><strong>注：</strong>主要作用就是启动django时候，同时创建asgi的application。</p>
+<h4 id="3-配置项目总routing"><a href="#3-配置项目总routing" class="headerlink" title="3.配置项目总routing"></a><strong>3.配置项目总routing</strong></h4><p>项目总routing，官方推荐放在根目录中，跟urls.py靠在一起，其实他们俩的用处类似，同样是经过中间件，然后匹配路由进入相应的处理函数。只不过遵守的是不同的协议，各自的叫法也不一样。</p>
+<p>我这里：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-keyword">from</span> channels.routing <span class="hljs-keyword">import</span> ProtocolTypeRouter,URLRouter<br><span class="hljs-keyword">from</span> channels.auth <span class="hljs-keyword">import</span> AuthMiddlewareStack,AuthMiddleware<br><span class="hljs-keyword">from</span> chat <span class="hljs-keyword">import</span> routing <span class="hljs-keyword">as</span> chat_routing<br><span class="hljs-keyword">from</span> mainsite <span class="hljs-keyword">import</span> routing <span class="hljs-keyword">as</span> inform_routing<br><br>application = ProtocolTypeRouter(&#123;<br>    <span class="hljs-comment"># (http-&gt;django views is added by default)</span><br>    <span class="hljs-comment"># 下面跟着不同协议路由,可以支持多个协议</span><br>    <span class="hljs-string">&#x27;websocket&#x27;</span>: AuthMiddlewareStack(<br>        URLRouter(<br>            <span class="hljs-comment"># chat_routing.websocket_urlpatterns,</span><br>			<span class="hljs-comment"># 这里的路由路径只能有一个</span><br>            inform_routing.websocket_urlpatterns,<br>        )<br>    ),<br>&#125;)<br><br><br></code></pre></td></tr></table></figure>
+
+<p><strong>注：</strong>如果里面没有，它会默认自动添加django视图所支持HTTP的协议。</p>
+<h4 id="4-配置具体app中的子路由"><a href="#4-配置具体app中的子路由" class="headerlink" title="4.配置具体app中的子路由"></a><strong>4.配置具体app中的子路由</strong></h4><p>子路由是分布在不同的app中，如上所示，我的子routing添加在<code>inform_routing.websocket_urlpatterns</code>中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> django.urls <span class="hljs-keyword">import</span> path, re_path<br><span class="hljs-keyword">from</span> mainsite <span class="hljs-keyword">import</span> consumers<br><br>websocket_urlpatterns = [<br>    <span class="hljs-comment"># 官方解释path可能存在某种bug，用re_path既可以支持正则，也可以支持path路由匹配规则</span><br>    re_path(<span class="hljs-string">r&#x27;inform/&#x27;</span>,consumers.InformConsumer),<br>]<br><br></code></pre></td></tr></table></figure>
+
+<h4 id="5-编写Consumer"><a href="#5-编写Consumer" class="headerlink" title="5.编写Consumer"></a><strong>5.编写Consumer</strong></h4><p>Consumer的主要作用类似django的视图，不过可以运行编写异步代码或者多线程。</p>
+<p>以往使用async/await的时候，通常会将他们放到<code>asyncio.get_event_loop()</code>建立的循环事件队列中，然后调用<code>loop.run_until_complete(asyncio.wait(tasks))</code>循环执行异步程序。</p>
+<p>而Consumer提供了一种一种机制，可以在其中编写任何异步函数，当事件发生时，这些函数将会被回调。</p>
+<p>我的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-keyword">import</span> json<br><br><span class="hljs-keyword">from</span> asgiref.sync <span class="hljs-keyword">import</span> async_to_sync<br><span class="hljs-keyword">from</span> channels.generic.websocket <span class="hljs-keyword">import</span> AsyncWebsocketConsumer<br><span class="hljs-keyword">from</span> channels.layers <span class="hljs-keyword">import</span> get_channel_layer<br><br><span class="hljs-keyword">import</span> logging<br><br>common_log = logging.getLogger(<span class="hljs-string">&#x27;django&#x27;</span>) <span class="hljs-comment"># 自制的logging系统</span><br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">InformConsumer</span>(<span class="hljs-params">AsyncWebsocketConsumer</span>):</span><br>    <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">connect</span>(<span class="hljs-params">self</span>):</span><br>        self.group_name = <span class="hljs-string">&#x27;yunbo_inform&#x27;</span><br><br>        <span class="hljs-comment"># 将用户加进组里</span><br>        <span class="hljs-keyword">await</span> self.channel_layer.group_add(  <span class="hljs-comment"># 所用的通道方法都必须是异步方法</span><br>            self.group_name,<br>            self.channel_name<br>        )<br><br>        <span class="hljs-keyword">await</span> self.accept()<br><br>    <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">disconnect</span>(<span class="hljs-params">self, code</span>):</span><br>        <span class="hljs-comment"># 将用户移除组</span><br>        <span class="hljs-keyword">await</span> self.channel_layer.group_discard(<br>            self.group_name,<br>            self.channel_name<br>        )<br><br>    <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">receive</span>(<span class="hljs-params">self, text_data=<span class="hljs-literal">None</span>, bytes_data=<span class="hljs-literal">None</span>, **kwargs</span>):</span><br>        <span class="hljs-comment"># 用于接收客户端的消息，可以保存到redis中</span><br>        text_data_json = json.loads(text_data)<br>        message = text_data_json[<span class="hljs-string">&#x27;message&#x27;</span>]<br><br>        <span class="hljs-comment"># 群发笔记相关消息</span><br>        <span class="hljs-keyword">await</span> self.channel_layer.group_send(<br>            self.group_name,<br>            <span class="hljs-comment"># 事件</span><br>            &#123;<br>                <span class="hljs-string">&#x27;type&#x27;</span>: <span class="hljs-string">&#x27;web_update_inform&#x27;</span>,  <span class="hljs-comment"># 事件名</span><br>                <span class="hljs-string">&#x27;message&#x27;</span>: message  <span class="hljs-comment"># 参数</span><br>            &#125;<br>        )<br><br>    <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">web_update_inform</span>(<span class="hljs-params">self, event</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;网站更新消息发送&quot;&quot;&quot;</span><br>        func = event[<span class="hljs-string">&#x27;func&#x27;</span>]<br>        username = event[<span class="hljs-string">&#x27;username&#x27;</span>]<br>        article = event[<span class="hljs-string">&#x27;article&#x27;</span>]<br>        head_image = event[<span class="hljs-string">&#x27;head_image&#x27;</span>]<br>        trigger_username = event[<span class="hljs-string">&#x27;trigger_username&#x27;</span>]<br>        message = &#123;<br>            <span class="hljs-string">&#x27;func&#x27;</span>: func,<br>            <span class="hljs-string">&#x27;username&#x27;</span>: username,<br>            <span class="hljs-string">&#x27;article&#x27;</span>: article,<br>            <span class="hljs-string">&#x27;head_image&#x27;</span>: head_image,<br>            <span class="hljs-string">&#x27;trigger_username&#x27;</span>:trigger_username<br>        &#125;<br>        <span class="hljs-keyword">await</span> self.send(text_data=json.dumps(message))<br><br><br><span class="hljs-comment"># 外部发送消息到channels</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">send_inform</span>(<span class="hljs-params">func, username, article, head_image, trigger_username=<span class="hljs-literal">None</span>, group_name=<span class="hljs-literal">None</span></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;从外部发送消息到channels&quot;&quot;&quot;</span><br><br>    <span class="hljs-keyword">if</span> group_name == <span class="hljs-literal">None</span>:<br>        group_name = <span class="hljs-string">&#x27;yunbo_inform&#x27;</span><br><br>    channel_layer = get_channel_layer()<br>    async_to_sync(channel_layer.group_send)(<br>        group_name,<br>        &#123;<br>            <span class="hljs-comment"># 事件跟随组名</span><br>            <span class="hljs-string">&#x27;type&#x27;</span>: <span class="hljs-string">&#x27;web_update_inform&#x27;</span>,<br>            <span class="hljs-string">&#x27;func&#x27;</span>: func,<br>            <span class="hljs-string">&#x27;username&#x27;</span>: username,<br>            <span class="hljs-string">&#x27;article&#x27;</span>: article,<br>            <span class="hljs-string">&#x27;head_image&#x27;</span>: head_image,<br>            <span class="hljs-string">&#x27;trigger_username&#x27;</span>:trigger_username<br>        &#125;<br>    )<br><br><br></code></pre></td></tr></table></figure>
+
+<p><strong>分析：</strong></p>
+<p>群发消息的实现原理：receive消息 –&gt;发送到group中 –&gt;通过group广播出去</p>
+<p>关于单独两个consumer互相发送消息的，我还没有用到，用到了我会做相关笔记。</p>
+<p><code>AsyncWebsocketConsumer</code>表示继承了异步<code>AsyncConsumer</code>。还有些其他的例如<code>WebsocketConsumer</code>，<code>JsonWebsocketConsumer</code>（自动解码和解码成json格式的同步Consumer）<code>AsyncJsonWebsocketConsume</code>,<code>AsyncHttpConsumer</code>,具体的方法可以参考官方文档。</p>
+<h4 id="前端创建websocket对象"><a href="#前端创建websocket对象" class="headerlink" title="前端创建websocket对象"></a><strong>前端创建websocket对象</strong></h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><br><span class="hljs-comment">//创建websocket对象</span><br>  <span class="hljs-keyword">const</span> informSocket = <span class="hljs-keyword">new</span> WebSocket(<span class="hljs-string">&#x27;ws://&#x27;</span> + <span class="hljs-built_in">window</span>.location.host + <span class="hljs-string">&#x27;/inform/&#x27;</span>);<br>        <span class="hljs-comment">// 第一次建立websocket连接成功执行</span><br>        informSocket.onopen = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>&#123;<br>            <span class="hljs-keyword">var</span> data_get_inform = &#123;<br>                <span class="hljs-string">&#x27;username&#x27;</span>: username<br>            &#125;<br>            $.ajax(&#123;<br>                url: notes_add_url,<br>                type: <span class="hljs-string">&#x27;POST&#x27;</span>,<br>                headers: &#123;<br>                    <span class="hljs-string">&quot;X-CSRFToken&quot;</span>: csrftoken,<br>                &#125;,<br>           ....<br><span class="hljs-comment">//当服务器端推送数据过来的时候执行</span><br>        informSocket.onmessage = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">e</span>) </span>&#123;<br>            <span class="hljs-keyword">let</span> message_ = <span class="hljs-built_in">JSON</span>.parse(e.data);<br>            <span class="hljs-keyword">var</span> head_image = message_.head_image;<br>            cur_notice = $(<span class="hljs-string">&quot;.badge&quot;</span>).text();<br>            cur_notice = <span class="hljs-built_in">parseInt</span>(cur_notice) + <span class="hljs-number">1</span>;<br>            $(<span class="hljs-string">&quot;.badge&quot;</span>).text(cur_notice);<br>            <span class="hljs-keyword">var</span> data_get_inform = &#123;<br>                <span class="hljs-string">&#x27;username&#x27;</span>: username<br>            &#125;<br>            $.ajax(&#123;<br>                url: notes_add_url,<br>                type: <span class="hljs-string">&#x27;POST&#x27;</span>,<br>                headers: &#123;<br>                    <span class="hljs-string">&quot;X-CSRFToken&quot;</span>: csrftoken,<br>                &#125;,<br>                data: data_get_inform,<br>				...<br></code></pre></td></tr></table></figure>
+
+<p>以上是部分Js代码。</p>
+<p>其他主要方法：</p>
+<p>websocket四大事件：</p>
+<p>open    <code>Socket.onopen</code>    连接建立时触发</p>
+<p>message    <code>Socket.onmessage</code>    客户端接收服务端数据时触发</p>
+<p>error    <code>Socket.onerror</code>    通信发生错误时触发</p>
+<p>close    <code>Socket.onclose</code>    连接关闭时触发</p>
+<p>websocket两大方法：</p>
+<p><code>Socket.send()</code>        使用连接发送数据</p>
+<p><code>Socket.close()</code>    关闭连接</p>
+<h3 id="五、Ubuntu16-supervisor-daphne-nginx部署asgi"><a href="#五、Ubuntu16-supervisor-daphne-nginx部署asgi" class="headerlink" title="五、Ubuntu16+supervisor+daphne+nginx部署asgi"></a><strong>五、Ubuntu16+supervisor+daphne+nginx部署asgi</strong></h3><p>在云服务器上安装daphne<br><code>pip install daphne</code></p>
+<p>我安装的daphne默认在<code>/home/admin/.local/bin/</code>下了，会提示<code>script daphne ... not on path</code>,意思是你不能直接在中断输入<code>daphne</code>，运行command，我试了网上的一些方法，什么<code>export PATH=/home/admin/.local/bin:$PATH</code>作用只能是暂时的。因此我直接写了绝对路径。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs cmd">[program:daphne]<br>directory=/home/admin/mblog<br># 这里的<span class="hljs-number">8006</span>要和nginx中代理的服务器端口一致<br>command=/home/admin/.local/bin/daphne -b <span class="hljs-number">127</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span> -p <span class="hljs-number">8006</span> --proxy-headers mblog.asgi:application<br>user=admin<br>autostart=true<br>autorestart=true<br>startsecs=<span class="hljs-number">10</span><br>stdout_logfile=/var/log/websockets.log<br>stdout_logfile_maxbytes=<span class="hljs-number">10</span>MB<br>stdout_logfile_backups=<span class="hljs-number">10</span><br>redirect_stderr=True<br>stderr_logfile=/var/log/websocket_worker_err.log<br>stderr_logfile_maxbytes=<span class="hljs-number">10</span>MB<br>stderr_logfile_backups=<span class="hljs-number">10</span><br></code></pre></td></tr></table></figure>
+
+<p>配置完毕后，通过supervisorctl启动，<code>sudo supervisorcd -c /etc/supervisor/supervisord.conf</code></p>
+<p><code>sudo supervisorctl start dephna</code></p>
+<p><strong>注意：注释要单独一行，不要有拼写错误</strong></p>
+<hr>
+<p>配置好了daphne后，接下来配置nginx</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 首先配置在nginx.conf中配置代理节点，配置在upstream好处是，以后如果想要部署集群的话，就很方便了</span><br>  upstream websockets&#123;<br>        server <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">8006</span>;<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 然后进入到default.conf中配置具体的server，设置具体的location路由匹配</span><br> <span class="hljs-comment"># 这里的/表示从根路径起的匹配，这里要配置正确，不然前端就算建立websocket通信，还是会返回404错误</span><br> location /inform &#123;<br>                          proxy_pass http://websockets;<br>                          <span class="hljs-comment"># proxy_connect_timeout 2s</span><br>                          proxy_http_version <span class="hljs-number">1.1</span>;<br>                          proxy_set_header Upgrade $http_upgrade;<br>                          proxy_set_header Connection <span class="hljs-string">&#x27;upgrade&#x27;</span>;<br>                          proxy_redirect off;<br>                          proxy_set_header Host $host;<br>                         <span class="hljs-comment"># proxy_set_header X-Real_IP $remote_addr_IP;   </span><br>                          proxy_set_header X-Real_IP $remote_addr;   <br>                          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;<br>                          proxy_set_header X-Forwarded-Host $server_name;<br>                          <span class="hljs-comment"># proxy_read_timeout 60s;#默认为60s</span><br>                          <span class="hljs-comment"># proxy_send_timeout 60s;#默认为60s</span><br>      &#125;<br></code></pre></td></tr></table></figure>
+
+
+<p>配置完后，重启nginx就可以了，<code>sudo service nginx restart</code></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/websocket/">websocket</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/websocket/">websocket</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E9%83%A8%E7%BD%B2/">部署</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/14/%E9%98%BF%E9%87%8C%E4%BA%91%E9%83%A8%E7%BD%B2Django%E9%A1%B9%E7%9B%AE/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">阿里云部署Django项目</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/13/pip%E9%95%9C%E5%83%8F%E6%BA%90/">
+                        <span class="hidden-mobile">pip镜像源</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,579 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="serializer序列化器的嵌套组成新的序列器—–遵循适配器模式 一、个人对适配器模式的理解假如当前有一个接口，比如浏览记录的序列化器，序列化model后形成的json格式的数据为这样： 1234567891011121314151617181920[        &amp;#123;            &quot;commodity_name&quot;: &quot;旺仔牛奶&quot;,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="serializer序列化器的源码分析与分析序列化嵌套的问题">
+<meta property="og:url" content="https://syzzjw.cn/2020/06/18/serializer%E5%BA%8F%E5%88%97%E5%8C%96%E5%99%A8%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B8%8E%E5%88%86%E6%9E%90%E5%BA%8F%E5%88%97%E5%8C%96%E5%B5%8C%E5%A5%97%E7%9A%84%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="serializer序列化器的嵌套组成新的序列器—–遵循适配器模式 一、个人对适配器模式的理解假如当前有一个接口，比如浏览记录的序列化器，序列化model后形成的json格式的数据为这样： 1234567891011121314151617181920[        &amp;#123;            &quot;commodity_name&quot;: &quot;旺仔牛奶&quot;,">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-06-18T05:15:17.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.453Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="drf">
+<meta property="article:tag" content="序列化">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>serializer序列化器的源码分析与分析序列化嵌套的问题 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="serializer序列化器的源码分析与分析序列化嵌套的问题">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-06-18 13:15" pubdate>
+        2020年6月18日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      8.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      27 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">serializer序列化器的源码分析与分析序列化嵌套的问题</h1>
+            
+            <div class="markdown-body">
+              <h3 id="serializer序列化器的嵌套组成新的序列器—–遵循适配器模式"><a href="#serializer序列化器的嵌套组成新的序列器—–遵循适配器模式" class="headerlink" title="serializer序列化器的嵌套组成新的序列器—–遵循适配器模式"></a><strong>serializer序列化器的嵌套组成新的序列器—–遵循适配器模式</strong></h3><hr>
+<h4 id="一、个人对适配器模式的理解"><a href="#一、个人对适配器模式的理解" class="headerlink" title="一、个人对适配器模式的理解"></a><strong>一、个人对适配器模式的理解</strong></h4><p>假如当前有一个接口，比如浏览记录的序列化器，序列化model后形成的json格式的数据为这样：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs JSON">[<br>        &#123;<br>            <span class="hljs-attr">&quot;commodity_name&quot;</span>: <span class="hljs-string">&quot;旺仔牛奶&quot;</span>,<br>            <span class="hljs-attr">&quot;grade&quot;</span>: <span class="hljs-string">&quot;四星好评&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_content&quot;</span>: <span class="hljs-string">&quot;宝贝非常好，质量不错，下次继续买你家的，不过物流太慢了，好几天才到！&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_time&quot;</span>: <span class="hljs-string">&quot;2020-05-29T15:20:53&quot;</span>,<br>            <span class="hljs-attr">&quot;price&quot;</span>: <span class="hljs-number">5</span>,<br>            <span class="hljs-attr">&quot;category&quot;</span>: <span class="hljs-string">&quot;食品&quot;</span>,<br>            <span class="hljs-attr">&quot;image&quot;</span>: <span class="hljs-literal">null</span><br>        &#125;,<br>        &#123;<br>            <span class="hljs-attr">&quot;commodity_name&quot;</span>: <span class="hljs-string">&quot;鹿皮棉袄&quot;</span>,<br>            <span class="hljs-attr">&quot;grade&quot;</span>: <span class="hljs-string">&quot;四星好评&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_content&quot;</span>: <span class="hljs-string">&quot;宝贝非常好，质量不错，下次继续买你家的，不过物流太慢了，好几天才到！&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_time&quot;</span>: <span class="hljs-string">&quot;2020-05-28T15:20:53&quot;</span>,<br>            <span class="hljs-attr">&quot;price&quot;</span>: <span class="hljs-number">300</span>,<br>            <span class="hljs-attr">&quot;category&quot;</span>: <span class="hljs-string">&quot;衣服&quot;</span>,<br>            <span class="hljs-attr">&quot;image&quot;</span>: <span class="hljs-literal">null</span><br>        &#125;,<br>]<br></code></pre></td></tr></table></figure>
+<p>随便举个例子。</p>
+<p>但是现在，我前端采用了流加载，通过触发临界点，再次发送请求，此时我是不是需要知道，我到底一共要发送多少次请求，才能完全加载完数据，因此我还需要知道最大页数，也将其序列化，然后前端获取进行解析。</p>
+<hr>
+<p>所以我原来的浏览记录的序列器就满足不了了，因为我是继承的<code>serializer.ModelSerializer</code>,因此我需要重新generate一个新的序列器，既包含了原来的浏览记录的序列器，也具备最大pages的可序列化，因此我就需要将浏览记录的序列器适配到这个新的序列器中。使之满足我的最新的需求。</p>
+<p>这样一来，新的序列器的数据就可以是这样：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs JSON">&#123;<br>    <span class="hljs-attr">&quot;page&quot;</span>: <span class="hljs-number">2</span>,<br>    <span class="hljs-attr">&quot;data&quot;</span>: [<br>        &#123;<br>            <span class="hljs-attr">&quot;commodity_name&quot;</span>: <span class="hljs-string">&quot;旺仔牛奶&quot;</span>,<br>            <span class="hljs-attr">&quot;grade&quot;</span>: <span class="hljs-string">&quot;四星好评&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_content&quot;</span>: <span class="hljs-string">&quot;宝贝非常好，质量不错，下次继续买你家的，不过物流太慢了，好几天才到！&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_time&quot;</span>: <span class="hljs-string">&quot;2020-05-29T15:20:53&quot;</span>,<br>            <span class="hljs-attr">&quot;price&quot;</span>: <span class="hljs-number">5</span>,<br>            <span class="hljs-attr">&quot;category&quot;</span>: <span class="hljs-string">&quot;食品&quot;</span>,<br>            <span class="hljs-attr">&quot;image&quot;</span>: <span class="hljs-literal">null</span><br>        &#125;,<br>        &#123;<br>            <span class="hljs-attr">&quot;commodity_name&quot;</span>: <span class="hljs-string">&quot;鹿皮棉袄&quot;</span>,<br>            <span class="hljs-attr">&quot;grade&quot;</span>: <span class="hljs-string">&quot;四星好评&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_content&quot;</span>: <span class="hljs-string">&quot;宝贝非常好，质量不错，下次继续买你家的，不过物流太慢了，好几天才到！&quot;</span>,<br>            <span class="hljs-attr">&quot;reward_time&quot;</span>: <span class="hljs-string">&quot;2020-05-28T15:20:53&quot;</span>,<br>            <span class="hljs-attr">&quot;price&quot;</span>: <span class="hljs-number">300</span>,<br>            <span class="hljs-attr">&quot;category&quot;</span>: <span class="hljs-string">&quot;衣服&quot;</span>,<br>            <span class="hljs-attr">&quot;image&quot;</span>: <span class="hljs-literal">null</span><br>        &#125;,<br>	]<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>这样的序列化嵌套其实就是一个适配器的设计模式，将两个或多个不相关的序列化器接口进行包装，使之满足用户所期待的形式。</p>
+<hr>
+<h4 id="二、如何实现这种嵌套的序列器"><a href="#二、如何实现这种嵌套的序列器" class="headerlink" title="二、如何实现这种嵌套的序列器"></a><strong>二、如何实现这种嵌套的序列器</strong></h4><p>我想要实现这种model和自定义序列器进行组合的效果。一开始的做法是，通过序列化器类的<code>context</code>属性（<strong>注：ModelSerializer不存在context属性，因为它直接继承与Field类</strong>），将我所需要的数据以额外参数的形式传递进去，类似这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python">serializer = PageSerializer(context=&#123;<span class="hljs-string">&#x27;serializer&#x27;</span>: self.get_serializer_class,<br>                                                                 <span class="hljs-string">&#x27;instances&#x27;</span>: instances,<span class="hljs-string">&#x27;page&#x27;</span>:page&#125;)<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PageSerializer</span>(<span class="hljs-params">serializers.Serializer</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;页数序列器&quot;&quot;&quot;</span><br><br>    page = serializers.SerializerMethodField()<br><br>    data = serializers.SerializerMethodField()<br><br><span class="hljs-meta">    @property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">serializer_class</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;data serializer&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.context.get(<span class="hljs-string">&#x27;serializer&#x27;</span>)<br>	<br>	<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_page</span>(<span class="hljs-params">self, obj</span>):</span><br>	    page = self.context.get(<span class="hljs-string">&#x27;page&#x27;</span>)<br>		<span class="hljs-keyword">return</span> page<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_data</span>(<span class="hljs-params">self, obj</span>):</span><br>        instances = self.context.get(<span class="hljs-string">&#x27;instances&#x27;</span>)<br>        <span class="hljs-keyword">return</span> self.serializer_class(instances, many=<span class="hljs-literal">True</span>).data<br></code></pre></td></tr></table></figure>
+
+<p>但是后来使用了只传入context，而不传入instances和data参数的这种序列化器方式，根本产生不了相应的任何数据，也就是调用序列化器对象的data获取不到序列化结果。可是理论上这样做是不会有问题的呀，我决定去源码探索一番。</p>
+<hr>
+<h4 id="三、serializer的源码分析"><a href="#三、serializer的源码分析" class="headerlink" title="三、serializer的源码分析"></a><strong>三、serializer的源码分析</strong></h4><hr>
+<h5 id="①、我们首先来看BaseSerilaizer的构造函数："><a href="#①、我们首先来看BaseSerilaizer的构造函数：" class="headerlink" title="①、我们首先来看BaseSerilaizer的构造函数："></a><strong>①、我们首先来看<code>BaseSerilaizer</code>的构造函数：</strong></h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, instance=<span class="hljs-literal">None</span>, data=empty, **kwargs</span>):</span><br>    self.instance = instance  <span class="hljs-comment"># model实例或普通的python对象</span><br>    <span class="hljs-keyword">if</span> data <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> empty:<br>        self.initial_data = data   <span class="hljs-comment"># 可以是HttpRequest的POST,DELETE,PUT,GET请求传进来的参数。</span><br>    self.partial = kwargs.pop(<span class="hljs-string">&#x27;partial&#x27;</span>, <span class="hljs-literal">False</span>)<br>    self._context = kwargs.pop(<span class="hljs-string">&#x27;context&#x27;</span>, &#123;&#125;)   <span class="hljs-comment"># 额外字段</span><br>    kwargs.pop(<span class="hljs-string">&#x27;many&#x27;</span>, <span class="hljs-literal">None</span>)<br>    <span class="hljs-built_in">super</span>().__init__(**kwargs)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__new__</span>(<span class="hljs-params">cls, *args, **kwargs</span>):</span><br>    <span class="hljs-comment"># We override this method in order to automagically create</span><br>    <span class="hljs-comment"># `ListSerializer` classes instead when `many=True` is set.</span><br>    <span class="hljs-keyword">if</span> kwargs.pop(<span class="hljs-string">&#x27;many&#x27;</span>, <span class="hljs-literal">False</span>):<br>        <span class="hljs-keyword">return</span> cls.many_init(*args, **kwargs)<br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">super</span>().__new__(cls, *args, **kwargs)<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>产生序列化的实例，首先会调用<code>__new__</code>内置方法，用来根据不同的参数选择我要如何实例化，这里会根据传进来的<code>many</code>参数进行选择，<code>many</code>参数表示我要序列化的对象是否是存在多个，以便创建<code>ListSerializer</code>序列化然后返回实例化对象。接下来调用<code>__init__</code>方法进行初始化，取出这些参数保存下来，但这些参数都不是必填的，拓展性很好，最后调用基类<code>Field</code>的<code>__init__</code>方法。</p>
+<hr>
+<h5 id="②、接下来，我们来看一些序列化器的结果是如何产生的"><a href="#②、接下来，我们来看一些序列化器的结果是如何产生的" class="headerlink" title="②、接下来，我们来看一些序列化器的结果是如何产生的"></a><strong>②、接下来，我们来看一些序列化器的结果是如何产生的</strong></h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">data</span>(<span class="hljs-params">self</span>):</span><br>	    <span class="hljs-comment"># 如果传过来data数据，就会赋值给initial_data,但是需要经过is_valid()方法根据校验器验证后，才会将验证后的值赋给_validated_data,也就是说，传进来data参数，必须调用is_valid方法进行校验</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;initial_data&#x27;</span>) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;_validated_data&#x27;</span>):<br>            msg = (<br>                <span class="hljs-string">&#x27;When a serializer is passed a `data` keyword argument you &#x27;</span><br>                <span class="hljs-string">&#x27;must call `.is_valid()` before attempting to access the &#x27;</span><br>                <span class="hljs-string">&#x27;serialized `.data` representation.\n&#x27;</span><br>                <span class="hljs-string">&#x27;You should either call `.is_valid()` first, &#x27;</span><br>                <span class="hljs-string">&#x27;or access `.initial_data` instead.&#x27;</span><br>            )<br>            <span class="hljs-keyword">raise</span> AssertionError(msg)<br>        <span class="hljs-comment"># 如果一开始没有_data属性，而且我没有找到类中定义了_data属性，所以它总是会调用这个方法，生成新的序列化器结果</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;_data&#x27;</span>):<br>		    <span class="hljs-comment"># 如果传入instances,以及没有错误产生，就对instances进行序列化，将结果发返回给_data</span><br>            <span class="hljs-keyword">if</span> self.instance <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">getattr</span>(self, <span class="hljs-string">&#x27;_errors&#x27;</span>, <span class="hljs-literal">None</span>):<br>                self._data = self.to_representation(self.instance)<br>			<span class="hljs-comment"># 如果传入data，以及没有错误提示，就将已经验证后的validated_data进行序列化，，将结果返回给_data</span><br>            <span class="hljs-keyword">elif</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;_validated_data&#x27;</span>) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">getattr</span>(self, <span class="hljs-string">&#x27;_errors&#x27;</span>, <span class="hljs-literal">None</span>):<br>                self._data = self.to_representation(self.validated_data)<br>			<span class="hljs-comment"># 其他情况，调用self.get_initial（）方法进行_data构造</span><br>            <span class="hljs-keyword">else</span>:<br>                self._data = self.get_initial()<br>        <span class="hljs-keyword">return</span> self._data<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>很明显，data是个只读特性，通过访问self.data来获取序列化后的数据，此时回到刚才的问题，我既没有传入instances和data，只是传入了context的字典，那么可以看到我会调用<code>self._data = self.get_initial()</code>来获取数据，那么这个<code>self.get_initial()</code>又是什么呢？我们点进去看看。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs python"><br>  initial = <span class="hljs-literal">None</span><br>  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, read_only=<span class="hljs-literal">False</span>, write_only=<span class="hljs-literal">False</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">               required=<span class="hljs-literal">None</span>, default=empty, initial=empty, source=<span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">               label=<span class="hljs-literal">None</span>, help_text=<span class="hljs-literal">None</span>, style=<span class="hljs-literal">None</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">               error_messages=<span class="hljs-literal">None</span>, validators=<span class="hljs-literal">None</span>, allow_null=<span class="hljs-literal">False</span></span>):</span><br>      self._creation_counter = Field._creation_counter<br>      Field._creation_counter += <span class="hljs-number">1</span><br><br>      <span class="hljs-comment"># If `required` is unset, then use `True` unless a default is provided.</span><br>      <span class="hljs-keyword">if</span> required <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>          required = default <span class="hljs-keyword">is</span> empty <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> read_only<br><br>      <span class="hljs-comment"># Some combinations of keyword arguments do not make sense.</span><br>      <span class="hljs-keyword">assert</span> <span class="hljs-keyword">not</span> (read_only <span class="hljs-keyword">and</span> write_only), NOT_READ_ONLY_WRITE_ONLY<br>      <span class="hljs-keyword">assert</span> <span class="hljs-keyword">not</span> (read_only <span class="hljs-keyword">and</span> required), NOT_READ_ONLY_REQUIRED<br>      <span class="hljs-keyword">assert</span> <span class="hljs-keyword">not</span> (required <span class="hljs-keyword">and</span> default <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> empty), NOT_REQUIRED_DEFAULT<br>      <span class="hljs-keyword">assert</span> <span class="hljs-keyword">not</span> (read_only <span class="hljs-keyword">and</span> self.__class__ == Field), USE_READONLYFIELD<br><br>      self.read_only = read_only<br>      self.write_only = write_only<br>      self.required = required<br>      self.default = default<br>      self.source = source<br><span class="hljs-comment"># 如果initial有值传进来则赋值，没有赋值为empty则赋值为None，因为类属性定义了initail为None</span><br>      self.initial = self.initial <span class="hljs-keyword">if</span> (initial <span class="hljs-keyword">is</span> empty) <span class="hljs-keyword">else</span> initial<br>      self.label = label<br>      self.help_text = help_text<br>      self.style = &#123;&#125; <span class="hljs-keyword">if</span> style <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> style<br>      self.allow_null = allow_null<br><br>  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_initial</span>(<span class="hljs-params">self</span>):</span><br>      <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">      Return a value to use when the field is being returned as a primitive</span><br><span class="hljs-string">      value, without any object instance.</span><br><span class="hljs-string">      &quot;&quot;&quot;</span><br><span class="hljs-comment"># 完全自定义的参数，回调函数的结果为原始python数据对象</span><br>      <span class="hljs-keyword">if</span> <span class="hljs-built_in">callable</span>(self.initial):<br>          <span class="hljs-keyword">return</span> self.initial()<br>      <span class="hljs-keyword">return</span> self.initial<br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">empty</span>:</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    This class is used to represent no data being provided for a given input</span><br><span class="hljs-string">    or output value.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    It is required because `None` may be a valid input or output value.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">pass</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>分析：</strong></p>
+<p>上述代码是最顶层基类<code>Field</code>的源码，首先看下它的<code>__init__</code>方法很多，这里我下先只讲下<code>initial</code>，仔细的看可以发现<code>initial</code>默认参数为empty，它是一个空类，用来消除<code>None</code>可能作为一个参数值的冲突，表示不提供任何的数据进来，其实也是赋值为None，只是None可能作为空值，也可能作为有效的值。</p>
+<p>然后看<code>get_initial</code>获取值，我们可以很容易的发现，这个返回的值，完全就是由我们自己传进来的值进行决定的，必须是python原始数据，同时传入<code>initial</code>参数的时候，不能够传入<code>instances</code>否则，<code>initial</code>会无效。这下我豁然开朗，终于明白为什么只传入<code>context</code>根本不会产生任何的data了，因为还需要传入自定义的<code>initial</code>参数。</p>
+<hr>
+<h4 id="使用另外一种方法进行序列化嵌套"><a href="#使用另外一种方法进行序列化嵌套" class="headerlink" title="使用另外一种方法进行序列化嵌套"></a><strong>使用另外一种方法进行序列化嵌套</strong></h4><p>知道了上述原理后，觉得完全自定义序列化格式确实比较灵活，但是总觉得不够解耦合。所以我最终还是使用了另外一种方式。</p>
+<p>话不多说，上代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PageSerializer</span>(<span class="hljs-params">serializers.Serializer</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;页数序列器&quot;&quot;&quot;</span><br><br>    page = serializers.IntegerField()<br><br>    data = serializers.SerializerMethodField()<br><br><span class="hljs-meta">    @property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">serializer_class</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;data serializer&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.context.get(<span class="hljs-string">&#x27;serializer&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_data</span>(<span class="hljs-params">self, obj</span>):</span><br>        instances = self.context.get(<span class="hljs-string">&#x27;instances&#x27;</span>)<br>        <span class="hljs-keyword">return</span> self.serializer_class(instances, many=<span class="hljs-literal">True</span>).data<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Page</span>:</span><br>    <span class="hljs-string">&quot;&quot;&quot;the instance of page&quot;&quot;&quot;</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, page</span>):</span><br>        self.page = page<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>我采用适配器设计模式，将不同的序列化器接口融合在一起，使之满足我的需求。在这里我创建了最基本的<code>PageSerializer</code>序列化器，但是我还想添加其他的序列化器，因此采用<code>SerializerMethodField()</code>自定义序列化方法，通过<code>context</code>传入instances和serializer，针对某个serializer和它所需要的instances进行序列化。</p>
+<p><strong>调用方法：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><br>instances, pages = self.get_object(user, **data)<br>page = Page(page=pages)<br>serializer = self.get_ultimate_serializer(page, context=&#123;<span class="hljs-string">&#x27;serializer&#x27;</span>: self.get_serializer_class,<br>                                                         <span class="hljs-string">&#x27;instances&#x27;</span>: instances&#125;)<br>								 <br></code></pre></td></tr></table></figure>
+
+<p>这样我既传入了instance，确保对page进行序列化，然后又对context中的序列器进行序列化，这样就形成了最终我所需要的序列化格式。</p>
+<hr>
+<h4 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a><strong>四、总结</strong></h4><p><strong>总之通常来说是要传入instance或者data参数的，不然就必须传入initial参数，一个可以回调的自定义对象。</strong></p>
+<p><strong>看一看源码还是可以学到很多的</strong></p>
+<p>好啦，最后再来分析下这个具体序列化的方法：<code>to_representation</code></p>
+<p>选自Serializer类的源码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">to_representation</span>(<span class="hljs-params">self, instance</span>):</span><br> <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string"> Object instance -&gt; Dict of primitive datatypes.</span><br><span class="hljs-string"> &quot;&quot;&quot;</span><br> ret = OrderedDict()  <span class="hljs-comment"># 有序的字典对象</span><br> fields = self._readable_fields<br><br> <span class="hljs-keyword">for</span> field <span class="hljs-keyword">in</span> fields:<br>     <span class="hljs-keyword">try</span>:<br>         attribute = field.get_attribute(instance)  <span class="hljs-comment"># 返回该字段的原始属性值</span><br>     <span class="hljs-keyword">except</span> SkipField:<br>         <span class="hljs-keyword">continue</span><br><br>     <span class="hljs-comment"># We skip `to_representation` for `None` values so that fields do</span><br>     <span class="hljs-comment"># not have to explicitly deal with that case.</span><br>     <span class="hljs-comment">#</span><br>     <span class="hljs-comment"># For related fields with `use_pk_only_optimization` we need to</span><br>     <span class="hljs-comment"># resolve the pk value.</span><br>     check_for_none = attribute.pk <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(attribute, PKOnlyObject) <span class="hljs-keyword">else</span> attribute<br>     <span class="hljs-comment"># 检查该属性值是否为None，如果为None，设置None，否则将该字段值调用field基类的to_representation进行序列化</span><br>     <span class="hljs-keyword">if</span> check_for_none <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>         ret[field.field_name] = <span class="hljs-literal">None</span><br>     <span class="hljs-keyword">else</span>:<br>         ret[field.field_name] = field.to_representation(attribute)<br><br> <span class="hljs-keyword">return</span> ret<br></code></pre></td></tr></table></figure>
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/tags/drf/">drf</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%BA%8F%E5%88%97%E5%8C%96/">序列化</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/06/19/Javascript%E8%8E%B7%E5%8F%96url%E7%9A%84%E5%90%84%E6%96%B9%E6%B3%95%E6%B1%87%E6%80%BB/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">JavaScript获取url的各方法汇总</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/06/15/%E8%AE%B0%E5%AF%B9DRF%E8%B0%83%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                        <span class="hidden-mobile">记对DRF调用配置文件的源码分析</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

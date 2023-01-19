@@ -1,0 +1,592 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一、 背景最近入手了一本书，《Redis的设计与实现》，在工作的闲暇之际，不断学习，持续给自己充能。在阅读前，拉了GitHub上的源码，准备结合这源码进行阅读。在阅读到字典的实现这一章节，回想起之前分析Python字典实现的源码过程，字典的数据结构存在着些许相似和不同。特此做一篇笔记分析下Redis字典涉及的数据结构及使用场景，对比Python的字典，有哪些不同的地方。 注：1.本篇文章分析的Re">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析Redis数据结构之字典">
+<meta property="og:url" content="https://syzzjw.cn/2022/01/21/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B9%8B%E5%AD%97%E5%85%B8/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一、 背景最近入手了一本书，《Redis的设计与实现》，在工作的闲暇之际，不断学习，持续给自己充能。在阅读前，拉了GitHub上的源码，准备结合这源码进行阅读。在阅读到字典的实现这一章节，回想起之前分析Python字典实现的源码过程，字典的数据结构存在着些许相似和不同。特此做一篇笔记分析下Redis字典涉及的数据结构及使用场景，对比Python的字典，有哪些不同的地方。 注：1.本篇文章分析的Re">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/redis_dict.png">
+<meta property="article:published_time" content="2022-01-21T03:24:00.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.468Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="数据结构">
+<meta property="article:tag" content="C">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/redis_dict.png">
+  
+  <title>源码分析Redis数据结构之字典 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="源码分析Redis数据结构之字典">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-21 11:24" pubdate>
+        2022年1月21日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">源码分析Redis数据结构之字典</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一、-背景"><a href="#一、-背景" class="headerlink" title="一、 背景"></a>一、 背景</h3><p>最近入手了一本书，《Redis的设计与实现》，在工作的闲暇之际，不断学习，持续给自己充能。在阅读前，拉了GitHub上的源码，准备结合这源码进行阅读。在阅读到字典的实现这一章节，回想起之前分析Python字典实现的源码过程，字典的数据结构存在着些许相似和不同。特此做一篇笔记分析下Redis字典涉及的数据结构及使用场景，对比Python的字典，有哪些不同的地方。</p>
+<p>注：<br>1.本篇文章分析的Redis源码基于6.2.6 stable版本<br>2.<a target="_blank" rel="noopener" href="https://hexo-syz247179876.vercel.app/2021/11/02/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84Dict%E5%85%B3%E8%81%94%E5%BC%8F%E5%AE%B9%E5%99%A8/">源码分析Python的Dict关联式容器</a></p>
+<h3 id="二、-Redis字典的数据结构"><a href="#二、-Redis字典的数据结构" class="headerlink" title="二、 Redis字典的数据结构"></a>二、 Redis字典的数据结构</h3><p>源码位于/src/dict.h头文件中，从最顶层的数据结构逐层往里分析，涉及有三个重要的数据结构。首先使dict结构体，源码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dict</span> &#123;</span><br><br>    <span class="hljs-comment">// 类型特定函数，方便实现多态</span><br>    dictType *type;<br><br>    <span class="hljs-comment">// 私有数据，传递给特定类型的函数可选参数</span><br>    <span class="hljs-keyword">void</span> *privdata;<br><br>    <span class="hljs-comment">// hash表，包含两个项的数组, 一般用ht[0]hash表，ht[1]只会在对ht[0]哈希表进行rehash的时候。</span><br>    dictht ht[<span class="hljs-number">2</span>];<br><br>    <span class="hljs-comment">// rehash索引, 当进行rehash时 &gt; 0</span><br>    <span class="hljs-keyword">long</span> rehashidx; <span class="hljs-comment">/* rehashing not in progress if rehashidx == -1 */</span><br><br>    <span class="hljs-comment">// 暂停rehash</span><br>    <span class="hljs-keyword">int16_t</span> pauserehash; <span class="hljs-comment">/* If &gt;0 rehashing is paused (&lt;0 indicates coding error) */</span><br>&#125; dict;<br><br></code></pre></td></tr></table></figure>
+
+
+
+<p>然后来看下具体hash表的结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dictht</span> &#123;</span><br>    <span class="hljs-comment">// hash表是一个数组，里面每个元素为指向dictEntry对象的指针</span><br>    dictEntry **table;<br>    <span class="hljs-comment">// hash表的大小</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> size;<br>    <span class="hljs-comment">// hash表的掩码,用于计算索引值,索引值 = hash &amp; 掩码</span><br>    <span class="hljs-comment">// 总是等于size - 1</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> sizemask;<br>    <span class="hljs-comment">// hash表中已有的节点的数量</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> used;<br>&#125; dictht;<br></code></pre></td></tr></table></figure>
+
+
+
+<p>最后来看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dictEntry</span> &#123;</span><br>    <span class="hljs-comment">// 保存着键</span><br>    <span class="hljs-keyword">void</span> *key;<br>    <span class="hljs-comment">// 保存着值, 支持有无符号的int和double</span><br>    <span class="hljs-class"><span class="hljs-keyword">union</span> &#123;</span><br>        <span class="hljs-keyword">void</span> *val;<br>        <span class="hljs-keyword">uint64_t</span> u64;<br>        <span class="hljs-keyword">int64_t</span> s64;<br>        <span class="hljs-keyword">double</span> d;<br>    &#125; v;<br>    <span class="hljs-comment">// 指向下一个同槽位的键值对节点，形成链表, 使用链地址法解决hash冲突</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dictEntry</span> *<span class="hljs-title">next</span>;</span><br>&#125; dictEntry;<br></code></pre></td></tr></table></figure>
+
+
+
+<p>根据如上的数据结构，可绘制如下的数据结构图：</p>
+<p><img src="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/redis_dict.png" srcset="/img/loading.gif" lazyload alt="redis-dict结构图"></p>
+<h3 id="三、Redis的Rehash操作"><a href="#三、Redis的Rehash操作" class="headerlink" title="三、Redis的Rehash操作"></a>三、Redis的Rehash操作</h3><p>看完了redis基本的数据结构, 接下来解读下redis rehash的源码。<code>dictRehash</code>函数源码位于/src/dict.c中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// rehash过程中如果rehash数量过大会阻塞服务器一段时间</span><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">dictRehash</span><span class="hljs-params">(dict *d, <span class="hljs-keyword">int</span> n)</span> </span>&#123;<br>    <span class="hljs-comment">// 最大扩容数量</span><br>    <span class="hljs-keyword">int</span> empty_visits = n*<span class="hljs-number">10</span>; <span class="hljs-comment">/* Max number of empty buckets to visit. */</span><br>    <span class="hljs-keyword">if</span> (!dictIsRehashing(d)) <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; <span class="hljs-comment">// 是否正在进行rehash</span><br><br>    <span class="hljs-keyword">while</span>(n-- &amp;&amp; d-&gt;ht[<span class="hljs-number">0</span>].used != <span class="hljs-number">0</span>) &#123;<br>        dictEntry *de, *nextde;<br><br>        <span class="hljs-comment">/* Note that rehashidx can&#x27;t overflow as we are sure there are more</span><br><span class="hljs-comment">         * elements because ht[0].used != 0 */</span><br>        assert(d-&gt;ht[<span class="hljs-number">0</span>].size &gt; (<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span>)d-&gt;rehashidx);<br>        <span class="hljs-comment">// 找到需要进行rehash的槽位</span><br>        <span class="hljs-keyword">while</span>(d-&gt;ht[<span class="hljs-number">0</span>].table[d-&gt;rehashidx] == <span class="hljs-literal">NULL</span>) &#123;<br>            d-&gt;rehashidx++;<br>            <span class="hljs-keyword">if</span> (--empty_visits == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>        &#125;<br><br>        <span class="hljs-comment">// 获取对应的dictEntry</span><br>        de = d-&gt;ht[<span class="hljs-number">0</span>].table[d-&gt;rehashidx];<br><br>        <span class="hljs-comment">// 遍历同槽位的链表,(redis的dict采用链地址法处理hash冲突)</span><br>        <span class="hljs-keyword">while</span>(de) &#123;<br>            <span class="hljs-keyword">uint64_t</span> h;<br>        <br>            nextde = de-&gt;next;<br>            <span class="hljs-comment">// 通过hash地址与第二个hash table项的地址掩码计算索引</span><br>            h = dictHashKey(d, de-&gt;key) &amp; d-&gt;ht[<span class="hljs-number">1</span>].sizemask;<br>            <br>            <span class="hljs-comment">// 采用头插法插入到第二个hash table的对应槽位上</span><br>            de-&gt;next = d-&gt;ht[<span class="hljs-number">1</span>].table[h];<br>            d-&gt;ht[<span class="hljs-number">1</span>].table[h] = de;<br><br>            <span class="hljs-comment">// 修改第一个和第二个hash table的used</span><br>            d-&gt;ht[<span class="hljs-number">0</span>].used--;<br>            d-&gt;ht[<span class="hljs-number">1</span>].used++;<br>            de = nextde;<br>        &#125;<br>        <span class="hljs-comment">// 将ht[0]对应槽位指针置空</span><br>        d-&gt;ht[<span class="hljs-number">0</span>].table[d-&gt;rehashidx] = <span class="hljs-literal">NULL</span>;<br>        d-&gt;rehashidx++;<br>    &#125;<br><br>    <span class="hljs-comment">/* Check if we already rehashed the whole table... */</span><br><br>    <span class="hljs-comment">// 如果hash table已经rehash完, 释放ht[0]的空间</span><br>    <span class="hljs-keyword">if</span> (d-&gt;ht[<span class="hljs-number">0</span>].used == <span class="hljs-number">0</span>) &#123;<br>        zfree(d-&gt;ht[<span class="hljs-number">0</span>].table);<br>        d-&gt;ht[<span class="hljs-number">0</span>] = d-&gt;ht[<span class="hljs-number">1</span>];<br>        _dictReset(&amp;d-&gt;ht[<span class="hljs-number">1</span>]);<br>        d-&gt;rehashidx = <span class="hljs-number">-1</span>;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br><br>    <span class="hljs-comment">/* More to rehash... */</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>说明：</p>
+<p>1.redis rehash的过程发生在ht[0]和ht[1]两个hash表项上,通过<code>rehashidx</code>值确定ht[0]上需要进行rehash的槽位。redis rehash的过程中实际是节点对象的指针迁移的过程。由于redis使用链地址法解决hash冲突,因此需要遍历每个槽位上的单链表, 重新计算节点在ht[1]上的槽位, 并采用头插法的方式重构冲突链。</p>
+<p>2.在rehash完后,需要检查是否所有节点都已经rehash完，如果rehash完毕，则释放ht[0]中的哈希表内存资源。</p>
+<p>3.我在看《Redis的设计与实现》一书中渐进式rehash章节时, 根据源码重新梳理了一下渐进式rehash的过程。</p>
+<p>详细过程如下：</p>
+<ol>
+<li>首先根据<code>dictRehash</code>函数在dict.c中搜索调用者, 在<code>dictAddRaw</code>,<code>dictGenericDelete</code>, <code>dictFind</code>, <code>dictGetRandomKey</code>,<code>dictGetSomeKeys</code>这些函数中会执行渐进式rehash过程,即在对字典执行插入、删除、查找、随机获取等操作方法时, 会进行rehash。</li>
+<li>dict-&gt;rehashidx属性会记录当前ht[0]中正在执行rehash的索引槽位, 并伴随整个rehash始终。当dict-&gt;rehashidx == -1时, 标志rehash完成或未开始。</li>
+<li>redis的渐进式rehash过程中采用分治的思想，每当执行一次字典的相关操作时, 会首先将ht[0]哈希表在rehashidx槽位上的所有键值对rehash到ht[1]上,重新构成冲突链, 然后执行正常操作, 这样避免集中式rehash带来的大量计算以及短暂性阻塞服务器。</li>
+<li>当在未来的某个时间点, ht[0]哈希表上所有的键值对都已经rehash到ht[1], 此时回收ht[0]上哈希表的资源, 将ht[1]作为ht[0], 将rehashidx属性重设置为-1。</li>
+</ol>
+<h3 id="四、Python字典和Redis字典在数据结构上的异同点"><a href="#四、Python字典和Redis字典在数据结构上的异同点" class="headerlink" title="四、Python字典和Redis字典在数据结构上的异同点"></a>四、Python字典和Redis字典在数据结构上的异同点</h3><p>不同点：</p>
+<p>1.键对象和值对象的基本类型：</p>
+<ul>
+<li>在Python中，万物皆对象，每个对象都是基于PyObject结构体上进行实例化，因此键对象和值对象都是PyObject类型。</li>
+<li>在Redis中，大部分对象, 例如dict的key和val都是基于C语言中的数据类型。</li>
+<li>因此字典对象在内存上占用的空间也不同。</li>
+</ul>
+<p>2.处理hash冲突的方式：</p>
+<ul>
+<li>在Python中，采用的是直接定址法，计算下一个槽位的地址采用线性探测+对象的hash值结合计算，使得发生冲突的可能性减小。</li>
+<li>在Redis中，采用拉链法，将同一槽位的键值体对象以链式结构，存储在同一槽位上。相比于直接定址法，hash冲突发生的可能性更小，但由于每个键值对实体之间由指针链接起来，因此需要额外的内存空间存放指针。</li>
+</ul>
+<p>3.扩缩容方式：</p>
+<ul>
+<li>Python中的扩缩容并不会基于原对象实现，而是申请一块合适大小的新对象。并将原对象上的键值对对象依次拷贝过去, 均摊后时间复杂度为O(1),但当发生扩容时,时间复杂度增长到O(N), 因此当扩容容量较大时, 会消耗更多的CPU资源。扩容机制往往是翻倍扩容。</li>
+<li>Redis中的扩缩容基于原对象实现, 发生在ht[0]和ht[1]两个哈希表上, 允许渐进式rehash, 当开始rehash后, 每次dict操作都会触发ht[0]哈希表上指定rehashidx值对应的槽位上的所有键值对进行rehash, 像增加操作会添加到在ht[1]哈希表上。时间复杂度为O(1)。由于渐进式rehash将扩缩容操作均分到每个dict操作上, 因此rehash过程不会明显占用CPU资源, 不会短暂性阻塞服务器。</li>
+</ul>
+<p>4.垃圾回收机制：</p>
+<ul>
+<li>语言的垃圾回收机制往往较复杂, 在Python中存在三种垃圾回收机制, 以引用计数为主, 标记清除和分代回收为辅。</li>
+<li>Redis的垃圾回收机制主要通过引用计数的方式进行资源回收, 当引用计数为0时, 标记对象不被任何其他对象引用, 可安全回收。引用计数字段为<code>refcount</code>, 在<code>redisObject</code>结构体中定义。例如<code>HSET game name Wizard3</code>, <code>game</code>为hash表对象, 其最终会封装为redisObject对象, ptr指向字典对象的地址空间, type和encoding决定dict采用ziplist还是hashtable编码实现, refcount记录着该对象被多少其他对象引用。</li>
+</ul>
+<p>相同点：未完待续~</p>
+<h3 id="五、总结Redis的dict"><a href="#五、总结Redis的dict" class="headerlink" title="五、总结Redis的dict"></a>五、总结Redis的dict</h3><p>1.Redis字典的使用场景很广泛, 在阅读Redis db的数据结构中, 发现Redis的数据库其实是由字典组成, 主要由dict和expires两个字典组成, 前者负责保存存储在某db空间上的所有键值对,后者保存某db空间上所有键的过期时间戳, 因此对数据库的相关操作都是建立在字典操作之上的。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/C/">C</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Redis/">Redis</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Redis/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Redis/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Redis/">Redis</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                      <a class="hover-with-bg" href="/tags/C/">C</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/24/Python%E9%A1%B9%E7%9B%AE%E4%BD%BF%E7%94%A8git%E9%92%A9%E5%AD%90%E7%9A%84%E6%8C%87%E5%8D%97/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python项目中Git的hook的使用指南</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/20/%E6%8F%92%E5%85%A5%E5%8C%BA%E9%97%B4/">
+                        <span class="hidden-mobile">57.插入区间</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

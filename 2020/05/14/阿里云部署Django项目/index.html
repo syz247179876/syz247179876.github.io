@@ -1,0 +1,766 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="环境 基于Ubuntu16.04 + Python3（虚拟环境） + nginx + mysql + Django 一、安装必要的软件，配置python环境 1.安装python：阿里云Ubuntu 16.04服务器自带python版本是2.7的，PIP版本也非常落户，到手后一定要升级Python和PIP， 命令如下。 sudo apt-get install python3.5sudo apt-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="阿里云部署Django项目">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/14/%E9%98%BF%E9%87%8C%E4%BA%91%E9%83%A8%E7%BD%B2Django%E9%A1%B9%E7%9B%AE/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="环境 基于Ubuntu16.04 + Python3（虚拟环境） + nginx + mysql + Django 一、安装必要的软件，配置python环境 1.安装python：阿里云Ubuntu 16.04服务器自带python版本是2.7的，PIP版本也非常落户，到手后一定要升级Python和PIP， 命令如下。 sudo apt-get install python3.5sudo apt-">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/linux_%E9%83%A8%E7%BD%B2django_20200317182339102971.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/linux%E9%83%A8%E7%BD%B2django_20200317182431809212.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/mysql%E5%90%AF%E5%8A%A8_20200317185916881515.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/%E6%AD%A3%E5%90%91%E4%BB%A3%E7%90%86_20200317204617763054.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86_20200317204629904796.png">
+<meta property="article:published_time" content="2020-05-14T01:27:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.473Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="部署">
+<meta property="article:tag" content="云服务器">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://syzzjw.cn/media/editor/linux_%E9%83%A8%E7%BD%B2django_20200317182339102971.png">
+  
+  <title>阿里云部署Django项目 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="阿里云部署Django项目">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-14 09:27" pubdate>
+        2020年5月14日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      9.4k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      29 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">阿里云部署Django项目</h1>
+            
+            <div class="markdown-body">
+              <h3 id="环境"><a href="#环境" class="headerlink" title="环境"></a><strong>环境</strong></h3><hr>
+<h4 id="基于Ubuntu16-04-Python3（虚拟环境）-nginx-mysql-Django"><a href="#基于Ubuntu16-04-Python3（虚拟环境）-nginx-mysql-Django" class="headerlink" title="基于Ubuntu16.04 + Python3（虚拟环境） + nginx + mysql + Django"></a>基于Ubuntu16.04 + Python3（虚拟环境） + nginx + mysql + Django</h4><hr>
+<h4 id="一、安装必要的软件，配置python环境"><a href="#一、安装必要的软件，配置python环境" class="headerlink" title="一、安装必要的软件，配置python环境"></a><strong>一、安装必要的软件，配置python环境</strong></h4><hr>
+<h4 id="1-安装python："><a href="#1-安装python：" class="headerlink" title="1.安装python："></a><strong>1.安装python：</strong></h4><p>阿里云Ubuntu 16.04服务器自带python版本是2.7的，PIP版本也非常落户，到手后一定要升级Python和PIP， 命令如下。</p>
+<p><code>sudo apt-get install python3.5</code><br><code>sudo apt-get update</code><br><code>sudo apt-get install python3-pip</code><br><code>pip3 --version</code></p>
+<p>升级pip:</p>
+<p><code>pip3 install --upgrade pip</code></p>
+<hr>
+<h4 id="2-安装pillow"><a href="#2-安装pillow" class="headerlink" title="2.安装pillow"></a><strong>2.安装pillow</strong></h4><p><code>pip3 install pillow</code>   图像处理库</p>
+<hr>
+<h4 id="3-安装virtualenv和virtualenvwrapper虚拟环境"><a href="#3-安装virtualenv和virtualenvwrapper虚拟环境" class="headerlink" title="3.安装virtualenv和virtualenvwrapper虚拟环境"></a><strong>3.安装virtualenv和virtualenvwrapper虚拟环境</strong></h4><p>Virtaulenvwrapper是virtualenv的扩展包，用于更方便管理虚拟环境，它可以方便实现以下功能：</p>
+<p>①将所有虚拟环境整合在一个目录下</p>
+<p>②管理（新增，删除，复制）虚拟环境</p>
+<p>③切换虚拟环境</p>
+<p><strong>推荐使用pip安装</strong></p>
+<p><code>pip3 install virtualenv</code><br><code>pip3 install virtualenvwrapper</code></p>
+<p>创建虚拟环境：<br><code>virtualenv MyDjango</code></p>
+<p>激活环境<br><code>source MyDjango/bin/activate</code></p>
+<hr>
+<h4 id="4-安装django"><a href="#4-安装django" class="headerlink" title="4.安装django"></a><strong>4.安装django</strong></h4><p><code>pip3 install django</code></p>
+<hr>
+<h4 id="5-查看linux的ip-方便连接到Xftp传输文件"><a href="#5-查看linux的ip-方便连接到Xftp传输文件" class="headerlink" title="5.查看linux的ip,方便连接到Xftp传输文件"></a><strong>5.查看linux的ip,方便连接到Xftp传输文件</strong></h4><p><code>建立会话输入云服务器的公网ip和root账户密码</code></p>
+<p><code>采用root登录，密码需要去网站设置。</code></p>
+<hr>
+<h4 id="6-安装mysql"><a href="#6-安装mysql" class="headerlink" title="6.安装mysql"></a><strong>6.安装mysql</strong></h4><p>输入以下安装命令：<br><code>sudo apt-get install mysql-server mysql-client</code></p>
+<p><strong>注：</strong>Ubuntu自带的版本是5.07的，如果本地是8.0以上的，在数据迁移的时候，会出现编码的问题，下面会提及到，<br>所以最好服务器上的版本和本地的版本一直。下载方法，通过本地下载安装包，然后通过Xftp上传到服务器，进行安装。</p>
+<p><strong>记住输入的密码</strong></p>
+<p>安装完后，输入 <code>mysql -u root -p</code></p>
+<p>输入密码<br><code>create database ***</code></p>
+<p><strong>注：创建数据库，这里我为了部署django项目，所以要和django项目采用的数据库名相同</strong></p>
+<p>接下来进行数据的迁移：</p>
+<p>数据的迁移：把本地数据库中的数据复制到阿里云上的数据库中。先在本地生成备份文件，syz_user是要备份的数据库，mysqls.sql是生成的备份文件。然后用Xftp把mysqls.sql文件上传到阿里云。</p>
+<p><code>mysqldump -u root -p syz_user&gt; mysqls.sql</code><br>用来生成迁移文件</p>
+<p>数据还原：阿里云终端 cd到mysqls.sql所在目录，输入以下命令</p>
+<p><code>mysql -u root -p syz_user &lt; mysqls.sql</code></p>
+<p><strong>注：</strong><br>在我部署的时候出现了一下几个问题：</p>
+<hr>
+<h4 id="错误1："><a href="#错误1：" class="headerlink" title="错误1："></a><strong>错误1：</strong></h4><p>如果两个数据库的mysql版本不一致，例如mysql8和mysql5，那么就会错：<code>&#39;utf8mb4_0900_ai_ci&#39;</code></p>
+<p>问题的原因是两个数据库待转移的表的字符格式不能被被转移数据库识别。</p>
+<p>例如mysql8的utf8mb4_0900_ai_ci格式再mysql5中就不支持。就需要更改数据库字符编码和各个varchar等字段的编码方式。</p>
+<p>在云服务器上打开导入的sql文件</p>
+<hr>
+<h4 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a><strong>解决方法：</strong></h4><p>• 把文件中的所有的utf8mb4_0900_ai_ci替换为utf8_general_ci</p>
+<p>• 以及utf8mb4替换为utf8</p>
+<p>最后找到mysqld.cnf文件注释掉<code>bind-address</code>这一行</p>
+<p>命令：<code>/etc/mysql/mysql.conf.d/mysqld.cnf </code>   #配置文件路径</p>
+<p><code>#bind-address = 127.0.0.1 </code>#注释掉这一行</p>
+<p>这样做让mysql可以绑定云服务器ip</p>
+<hr>
+<h4 id="错误2："><a href="#错误2：" class="headerlink" title="错误2："></a><strong>错误2：</strong></h4><p><code>ERROR 2002 (HY000): Can&#39;t connect to local MySQL server through socket &#39;/var/run/mysqld/mysqld.sock&#39; (2)</code></p>
+<p>连接mysql时出错，由于linux特性，window没有</p>
+<p><strong>解决方法：</strong></p>
+<p><code>cd /ect/mysql</code><br><code>sudo vim my.cnf</code></p>
+<p>会发现文件被重定向到其他地方了</p>
+<p><img src="/media/editor/linux_%E9%83%A8%E7%BD%B2django_20200317182339102971.png" srcset="/img/loading.gif" lazyload></p>
+<p>因此 <code>cd /ect/mysql/mysql.conf.d</code><br><code>sudo vim mysqld.cnf</code></p>
+<p><img src="/media/editor/linux%E9%83%A8%E7%BD%B2django_20200317182431809212.png" srcset="/img/loading.gif" lazyload></p>
+<p>增加<code>protocol = tcp</code></p>
+<p>之后重启mysql服务可能又会遇到问题</p>
+<p><strong>错误原因：</strong><br><code>Job for mysql.service failed because the control process exited with error code. See &quot;systemctl status mysql.service&quot; and &quot;journalctl -xe&quot; for details.</code></p>
+<p>服务mysql启动失败，可能是端口被占用</p>
+<p><strong>解决方案：</strong></p>
+<p><code>sudo vim mysqld.cnf</code></p>
+<p>将bind-address的注释去掉</p>
+<p>或者可能端口被占用，修改为3307,原来端口号是3306</p>
+<p>最后<br>systemctl enable mysql.service</p>
+<p>确保mysql服务开启</p>
+<p>启动mysql</p>
+<p>systemctl start mysql</p>
+<p>可以看到 ps -ef|grep mysql</p>
+<p><img src="/media/editor/mysql%E5%90%AF%E5%8A%A8_20200317185916881515.png" srcset="/img/loading.gif" lazyload></p>
+<p>mysql已经正常运行</p>
+<p><strong>注意：在生产环境中千万不要有rm -rf /var/lib/mysql的想法。</strong></p>
+<p>博主我就试过结果gameover，很多配置都没了，需要重装数据库，泪奔~</p>
+<hr>
+<h4 id="6-收集本地上项目的安装包清单"><a href="#6-收集本地上项目的安装包清单" class="headerlink" title="6.收集本地上项目的安装包清单"></a><strong>6.收集本地上项目的安装包清单</strong></h4><p>进入本地虚拟环境中</p>
+<p><code>pip freeze &gt; list.txt</code></p>
+<p>将list.txt通过Xftp上传到服务器，然后进入服务器</p>
+<p><code>pip install -r list.txt</code></p>
+<p>按照清单上一个一个装，不过如果报错无非是版本不对，自己调整版本就行了。</p>
+<hr>
+<h4 id="7-修改Django的settings"><a href="#7-修改Django的settings" class="headerlink" title="7.修改Django的settings"></a><strong>7.修改Django的settings</strong></h4><p>将<code>DEBUG = False</code></p>
+<p>取消DEBUG模式，否则会暴露源码出去</p>
+<p><code>ALLOW_HOST = [&#39;*****&#39;]</code></p>
+<p>这个改成阿里云服务器主机,所有的主机访问项目会访问这个ip</p>
+<p>到此为止，项目文件迁移，环境搭建，数据库数据迁移完成，启动python manage.py runserver 观察项目是否能够启动，如果能启动则说明配置正确。</p>
+<p>接下来就通过uwsgi，wsgi和nginx来实现浏览器ip或域名访问</p>
+<p>注：Permission denied: ‘/home/admin/mblog/mainsite/info_login.log’</p>
+<p>可能在启动python3 manage.py runserver时会报错，只要给它权限，采用sudo启动，即sudo python manage.py runserver就可以了</p>
+<hr>
+<h4 id="8-安装nginx反向代理服务器-用户不需要知道目标服务器的地址-通过反向代理服务器作为目的地址"><a href="#8-安装nginx反向代理服务器-用户不需要知道目标服务器的地址-通过反向代理服务器作为目的地址" class="headerlink" title="8.安装nginx反向代理服务器 (用户不需要知道目标服务器的地址,通过反向代理服务器作为目的地址)"></a><strong>8.安装nginx反向代理服务器 (用户不需要知道目标服务器的地址,通过反向代理服务器作为目的地址)</strong></h4><p><code>pip3 install nginx</code></p>
+<p>去阿里云查看自己IP地址</p>
+<p>在浏览器输入IP地址：查看是否成功安装nginx</p>
+<p><strong>正向代理:</strong></p>
+<p>正向代理（forward proxy） ，一个位于客户端和原始服务器之间的服务器，为了从原始服务器取得内容，客户端向代理发送一个请求并制定目标（原始服务器），然后代理向原始服务器转发请求并将获得的内容返回给客户端，客户端才能使用正向代理。我们平时说的代理就是指正向代理。 </p>
+<p>简单一点：A向C借钱，由于一些情况不能直接向C借钱，于是A想了一个办法，他让B去向C借钱，这样B就代替A向C借钱，A就得到了C的钱，C并不知道A的存在，B就充当了A的代理人的角色。 </p>
+<p><img src="/media/editor/%E6%AD%A3%E5%90%91%E4%BB%A3%E7%90%86_20200317204617763054.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>反向代理:</strong></p>
+<p>反向代理（Reverse Proxy），以代理服务器来接受internet上的连接请求，然后将请求转发给内部网络上的服务器，并将从服务器上得到的结果返回给internet上请求的客户端，此时代理服务器对外表现为一个反向代理服务器。 </p>
+<p>理解起来有些抽象，可以这么说：A向B借钱，B没有拿自己的钱，而是悄悄地向C借钱，拿到钱之后再交给A,A以为是B的钱，他并不知道C的存在。 </p>
+<p><img src="/media/editor/%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86_20200317204629904796.png" srcset="/img/loading.gif" lazyload></p>
+<p>本项目中的nginx就是反向代理，原始服务器就是遵循wsgi协议的uwsgi服务器。</p>
+<hr>
+<h4 id="9-安装uwsgi"><a href="#9-安装uwsgi" class="headerlink" title="9.安装uwsgi"></a><strong>9.安装uwsgi</strong></h4><p>在你的本地电脑访问<a target="_blank" rel="noopener" href="https://uwsgi-docs.readthedocs.io/en/latest/Download.html">https://uwsgi-docs.readthedocs.io/en/latest/Download.html</a>，下载Stable/LTS版本的源文件。</p>
+<p>本地下解压这个源文件，然后用xftp把文件拖放到阿里云的Ubuntu的家目录(home)下，使用cd命令进入到该文件夹下，按顺序依次输入下面三条命令：</p>
+<p><code>sudo apt-get install python3-setuptools</code><br><code>apt-get install build-essential python3</code><br><code>sudo apt-get install python3-dev</code><br><code>sudo python3 setup.py install</code></p>
+<p>上面四条命令为uwsgi的依赖环境</p>
+<p><code>pip3 install uwsgi</code></p>
+<p><strong>注：</strong></p>
+<p>①如果安装不小心中途退出，会出现另一个进程锁死的结果，因此需要手动杀死进程</p>
+<p>这是因为有另外一个程序在运行，导致锁不可用。原因可能是上次运行更新或安装没有正常完</p>
+<p><code>sudo rm -rf/var/cache/apt/archives/lock</code></p>
+<p><code>sudo rm -rf/var/lib/dpkg/lock</code></p>
+<p>②安装uwsgi时可能会报错：plugins/python/uwsgi_python.h:2:20: fatal error: Python.h: No such file or directory</p>
+<p>原因为python版本错误</p>
+<p>解决方法：<code>sudo apt-get install libpython3.6-dev</code></p>
+<p>然后再次执行<code>pip3 install uwsgi</code></p>
+<hr>
+<h4 id="10-配置nginx"><a href="#10-配置nginx" class="headerlink" title="10.配置nginx"></a><strong>10.配置nginx</strong></h4><p>部署到服务器的静态文件不会携带Django自带的static静态文件，因此需要先收集静态文件。</p>
+<p>在<code>settings.py</code>中添加</p>
+<p><code>STATIC_ROOT = &#39;d:/syz/virtualenvs/MyDjango/mblog/nginx/static/&#39;</code></p>
+<p>然后输入<code>python manage.py collectstatic</code></p>
+<p><strong>注：STATIC_ROOT 用于部署时候将项目所有的静态文件全部集中存放,根目录从盘区开始，所以要绝对路径</strong></p>
+<p>将项目文件通过Xftp传输到服务器上</p>
+<p>然后配置nginx文件</p>
+<p><code>cd /etc/nginx/sites-available</code></p>
+<p><code>sudo vim default</code></p>
+<p>nginx配置：打开配置文件default，路径<code>/etc/nginx/sites-available/default</code>，设置以下内容。一个是server_name后面换成你的阿里云公网IP，有的文章说不换也行。关键是下面2个location，第一个location是设置的和uWSGI的关联。第二个location /static是设置的静态文件的路径。如果你的项目还有media文件夹，那还要加一个location /media，把路径设置上。注意：location 和alias后面有空格。</p>
+<p><strong>注：如果没有加sudo执行vim，则保存时会报该文件为只读文件，因此将:wq改为:wq!强制保存就行了</strong></p>
+<p>添加修改内容如下：</p>
+<p><code>server_name 你的服务器IP地址;</code></p>
+<p>配置自己的static静态文件和media媒体文件路径</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs gradle">location /<span class="hljs-keyword">static</span> &#123;<br>        # <span class="hljs-keyword">static</span>文件目录<br>         alias <span class="hljs-regexp">/home/</span>admin<span class="hljs-regexp">/MyPython/My</span>Django<span class="hljs-regexp">/mblog/</span><span class="hljs-keyword">static</span>;<br>       &#125;<br>       location /media &#123;<br>        # 静态media文件目录<br>         alias <span class="hljs-regexp">/home/</span>admin<span class="hljs-regexp">/MyPython/My</span>Django<span class="hljs-regexp">/mblog/m</span>edia;<br>       &#125;<br></code></pre></td></tr></table></figure>
+
+<p>注：alias：用于设置指令的别名</p>
+<p>alias[别名]=[指令名称]</p>
+<p><strong>注意：location后面是有空格的，必须要有！alias后面也是有空格的；include上面那句话也是要注释掉的！</strong></p>
+<p>最后重启nginx服务<br><code>service nginx start</code> #启动<br><code>service nginx stop</code> #停止<br><code>service nginx reload</code> #重启</p>
+<p>重启服务： <code>service nginx restart</code></p>
+<p>1.快速停止或关闭Nginx：nginx -s stop</p>
+<p>2.正常停止或关闭Nginx：nginx -s quit</p>
+<p>3.配置文件修改重装载命令：nginx -s reload</p>
+<p>当然直接杀死进程也可以</p>
+<p><code>sudo kill -9 pid</code></p>
+<p><code>sudo killall -s INT processname</code></p>
+<p><strong>注：上传图片时可能会出现上传文件报<code>413 Request Entity Too Large</code>错误。</strong></p>
+<p>因为业务客户端请求是走HTTP的post方法提交数据，而提交请求数据nginx是有限制客户端请求主体大小，“content-length”，如果超过了设定值，则客户端会收到报错 413 Request Entity Too Large，导致前端浏览器不能正常显示数据。</p>
+<p><strong>解决方法：</strong></p>
+<p>进入<code>nginx.conf</code><br><code>cd /etc/nginx</code><br><code>sudo vim nginx.conf</code><br>加入这段代码：<br><code>client_max_body_size 20M;</code><br>然后重启nginx。</p>
+<p><strong>额外增加点知识：</strong></p>
+<p>可以选择在http{ }中设置：client_max_body_size 20m;</p>
+<p>也可以选择在server{ }中设置：client_max_body_size 20m;</p>
+<p>还可以选择在location{ }中设置：client_max_body_size 20m;</p>
+<p><strong>三者有区别</strong></p>
+<p>设置到http{}内，控制全局nginx所有请求报文大小</p>
+<p>设置到server{}内，控制该server的所有请求报文大小</p>
+<p>设置到location{}内，控制满足该路由规则或目录下的请求报文大小</p>
+<p>这里之前查看端口占用时用到了提一下：<code>netstat -ltunp</code>指令查看端口号使用详情</p>
+<hr>
+<h4 id="11-配置uwsgi："><a href="#11-配置uwsgi：" class="headerlink" title="11 配置uwsgi："></a><strong>11 配置uwsgi：</strong></h4><p>安装完成后，配置uWSGI：在django项目的根目录下，新建两个文件，<code>uwsgi.ini和run.log</code> 。第一个是uWSGI的配置文件，第二个是日志记录文件。设置uwsgi.ini文件如下：</p>
+<p><strong>这地方真的卡了好久，一定要写processes和threads，不然一直报找不到应用的错误！！</strong></p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-section">[uwsgi]</span><br><span class="hljs-attr">chdir</span> = /home/admin/mblog  <span class="hljs-comment"># 项目目录</span><br><span class="hljs-attr">module</span> = mblog.wsgi:application   <span class="hljs-comment"># wsgi应用模块</span><br><span class="hljs-attr">socket</span> = <span class="hljs-number">127.0</span>.<span class="hljs-number">0.1</span>:<span class="hljs-number">8002</span>           <span class="hljs-comment"># 通信地址</span><br><span class="hljs-attr">master</span> = <span class="hljs-literal">true</span>  <span class="hljs-comment"># 使用主线程</span><br><span class="hljs-attr">processes</span> = <span class="hljs-number">4</span>  <span class="hljs-comment"># 分4条进程</span><br><span class="hljs-attr">threads</span> = <span class="hljs-number">2</span><br><span class="hljs-attr">daemonize</span> = /home/admin/mblog/run.log <span class="hljs-comment"># 后台运行日志</span><br><span class="hljs-attr">disable-logging</span> = <span class="hljs-literal">true</span><br><span class="hljs-attr">wsgi-file</span> = /home/admin/mblog/mblog/wsgi.py<br><span class="hljs-attr">pidfile</span> = /home/admin/mblog/uwsgi.pid<br></code></pre></td></tr></table></figure>
+
+<p><strong>解释：</strong><br>①chdir是django项目所在目录。</p>
+<p>②socket后面的地址是和上面nginx配置文件中的地址uwsgi_pass  127.0.0.1:8002对应的，规定nginx和uWSGI之间的通信端口。</p>
+<p>③daemonize就是日志文件的路径。</p>
+<p>④disable-logging = true 表示不记录正常信息，只记录错误信息。</p>
+<p>⑤wsgi-file是你django项目根目录下项目同名目录中有一个wsgi.py文件的路径。</p>
+<p>⑥pidfile是记录uwsgi.pid文件的路径，这个文件是uWSGI运行后自动生成的，里面记录了uWSGI的进程号，可以用来重启uWSGI。</p>
+<p><strong>uWSGI基本命令：</strong></p>
+<p>启动：<code>uwsgi --ini uwsgi.ini</code><br>停止：<code>uwsgi --stop uwsgi.pid</code><br>重启：<code>uwsgi --reload uwsgi.pid</code></p>
+<p><strong>启动后</strong></p>
+<p><code>[uWSGI] getting INI configuration from uwsgi.ini</code></p>
+<p>表示启动成功</p>
+<p>通过<code>ps -ef|grep uwsgi</code>可以查看进程，判断uwsgi是否成功启动</p>
+<p>杀死进程的方式：</p>
+<p><code>killall -s INT uwsgi</code>（最后一个为进程名）</p>
+<p>查看了run.log发现许多错误，这里记录一下</p>
+<p>注：当运行uwsgi时， !!! no internal routing support, rebuild with pcre support !!!的解决方法<br>报错意思是：! ! !没有内部路由支持，使用pcre支持重新构建!!</p>
+<p><code>pip uninstall uwsgi</code><br><code>sudo apt-get install libpcre3 libpcre3-dev</code><br><code>pip install uwsgi</code></p>
+<hr>
+<h4 id="12-将celery作为后台守护进程运行："><a href="#12-将celery作为后台守护进程运行：" class="headerlink" title="12.将celery作为后台守护进程运行："></a><strong>12.将celery作为后台守护进程运行：</strong></h4><p>①首先安装进程管理工具supervisord<br>    <code>pip install supervisor</code></p>
+<p>②cd 我的项目</p>
+<p>③然后创建    管理celery的配置文件</p>
+<p><code> mkdir /etc/supervisor</code></p>
+<p><code>echo_supervisord_conf &gt; /etc/supervisor/supervisord.conf</code></p>
+<p><strong>注：一定要将配置文件放在/etc目录下，也就是存放系统配置文件的地方</strong></p>
+<p>否则会报错：</p>
+<p><strong>错误：</strong></p>
+<p><code>supervisorctl status</code>报错</p>
+<p><code>error: &lt;class &#39;socket.error&#39;&gt;, [Errno 110] Connection timed out: file: /usr/local/lib/python2.7/socket.py line: 571</code></p>
+<p>发现启动的方式是<code>usr/local/bin/supervisord -c /usr/local/supervisor/supervisord.conf</code></p>
+<p>配置文件不在默认的<code>/etc/supervisor/supervisord.conf</code></p>
+<p>那么要指定配置文件路径后正常</p>
+<p><code>supervisorctl -c /usr/local/supervisor/supervisord.conf status</code></p>
+<p>运行<code>supervisorctl</code>时指定配置文件才可以正常运行<code>supervisorctl</code>,否则supervisorctl默认去/etc/supervisord.conf去读取配置，导致错误，因此最好放在/etc/中</p>
+<p>④编辑.conf配置文件</p>
+<p><strong>linux中：</strong></p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs ini"><br><span class="hljs-section">[program:celery]</span><br><br><span class="hljs-comment">;运行目录下执行命令</span><br><span class="hljs-attr">command</span>=sudo celery -A mblog.celery worker -l info<br><span class="hljs-comment">;指定运行目录</span><br><span class="hljs-attr">directory</span>=/home/admin/mblog/<br><br><span class="hljs-comment">;启动设置</span><br><span class="hljs-attr">autostart</span>=<span class="hljs-literal">true</span>      <span class="hljs-comment">;当supervisor启动时，程序将会自动启动</span><br><span class="hljs-attr">autorestart</span>=<span class="hljs-literal">true</span>   <span class="hljs-comment">;自动重启</span><br><span class="hljs-attr">startsecs</span>=<span class="hljs-number">10</span><br><span class="hljs-attr">numprocs</span>=<span class="hljs-number">1</span>        <span class="hljs-comment">;初始的进程</span><br><br><br><span class="hljs-attr">user</span>=admin   <span class="hljs-comment">;脚本运行的用户</span><br><span class="hljs-comment">;输出日志</span><br><span class="hljs-attr">stdout_logfile</span>=/var/log/celery_worker.log<br><span class="hljs-attr">stdout_logfile_maxbytes</span>=<span class="hljs-number">10</span>MB      <span class="hljs-comment">;默认最大50M</span><br><span class="hljs-attr">stdout_logfile_backups</span>=<span class="hljs-number">10</span>               <span class="hljs-comment">;默认日志文件备份数，默认为10</span><br><br><span class="hljs-comment">;错误日志</span><br><span class="hljs-attr">redirect_stderr</span>=<span class="hljs-literal">false</span>                         <span class="hljs-comment">;为true表示禁止监听错误</span><br><span class="hljs-attr">stderr_logfile</span>=/var/log/celery_worker_err.log<br><span class="hljs-attr">stderr_logfile_maxbytes</span>=<span class="hljs-number">10</span>MB<br><span class="hljs-attr">stderr_logfile_backups</span>=<span class="hljs-number">10</span><br><br><br><span class="hljs-comment">;停止信号,默认TERM </span><br><span class="hljs-comment">;中断:INT (类似于Ctrl+C)(kill -INT pid)，退出后会将写文件或日志(推荐) </span><br><span class="hljs-comment">;终止:TERM (kill -TERM pid) </span><br><span class="hljs-comment">;挂起:HUP (kill -HUP pid),注意与Ctrl+Z/kill -stop pid不同 </span><br><span class="hljs-comment">;从容停止:QUIT (kill -QUIT pid) </span><br><span class="hljs-attr">stopsignal</span>=INT<br></code></pre></td></tr></table></figure>
+
+<p>⑤启动supervisord</p>
+<p>在配置文件目录输入以下指令：</p>
+<p><code>supervisord -c + .conf</code></p>
+<p>⑥ 关闭重启supervisord</p>
+<p>关闭supervisord需要通过supervisor控制器</p>
+<p><code>supervisorctl -c supervisord.conf shutdown</code></p>
+<p>重启supervisord也需要supervisor控制器</p>
+<p><code>supervisortl -c supervisord.conf restart</code></p>
+<p>⑦查看进程是否启动成功</p>
+<p><code>ps -ef|grep supervisord</code></p>
+<p> ③supervisorctl 操作</p>
+<p><code>supervisorctl</code> 是 <code>supervisord</code> 的命令行客户端工具，使用的配置和 supervisord 一样，这里就不再说了。下面，主要介绍 supervisorctl 操作的常用命令：</p>
+<p>输入命令 <code>supervisorctl</code> 进入 <code>supervisorctl</code> 的 shell 交互界面，就可以在下面输入命令了。：</p>
+<p><code>help</code> # 查看帮助</p>
+<p><code>status</code> # 查看程序状态</p>
+<p><code>stop program_name</code> # 关闭 指定的程序</p>
+<p><code>start program_name</code> # 启动 指定的程序</p>
+<p><code>restart program_name</code> # 重启 指定的程序</p>
+<p><code>tail -f program_name</code> # 查看 该程序的日志</p>
+<p>update # 重启配置文件修改过的程序（修改了配置，通过这个命令加载新的配置)</p>
+<p>也可以直接通过 shell 命令操作：</p>
+<p><code>supervisorctl status</code><br><code>supervisorctl update</code></p>
+<p>错误：<br>①.<code>INFO spawnerr: unknown error making dispatchers for &#39;celery&#39;: EACCES（supervisord.log）</code></p>
+<p>主要是没有权限操作日志文件</p>
+<p><strong>解决方案：</strong></p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs awk">chown youruser:youruser -R <span class="hljs-regexp">/var/</span>log<span class="hljs-regexp">/supervisor/</span><br>chown youruser:youruser -R <span class="hljs-regexp">/var/</span>run<span class="hljs-regexp">/supervisor/</span><br>chown youruser:youruser -R <span class="hljs-regexp">/var/</span>log<span class="hljs-regexp">/celery/</span><br>chown youruser:youruser -R <span class="hljs-regexp">/var/</span>log<span class="hljs-regexp">/celery/</span><br></code></pre></td></tr></table></figure>
+
+
+<p><strong>注：</strong>chown时修改日志文件的权限从文件的拥有者到指定的用户或组，这个权限一般为用户管理者root使用。<br>也可以采用Xftp的方法将日志文件权限修改：</p>
+<p><strong>注：</strong><br>①<code>sudo supervisorctl tail programname stdout</code> //查看programname的日志)该命令是动态的输出启动进程时的输出，主要用于动态差错</p>
+<p>②<code>tail -f filename</code> 会把 filename 文件里的最尾部的内容显示在屏幕上，并且不断刷新，只要 filename 更新就可以看到最新的文件内容，再改错时很有用。</p>
+<p>其实如果使用命令行的方式 只需要设定–logfile，一切的运行log都会放在一个log文件里，而使用子进程托管的方式，执行的log也只会放在一个log中，我的是放在celery_worker_err.log中，前提是设置了redirect_stderr=false  ，来监听错误。</p>
+<p>部署成功后，如果安装了ufw防火墙管理工具，那么需要手动允许端口号80的的访问</p>
+<p><code>sudo ufw allow 80</code></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/%E9%83%A8%E7%BD%B2/">部署</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E9%83%A8%E7%BD%B2/">部署</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8/">云服务器</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/15/python%E7%9A%84json.dumps%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BA%8F%E5%88%97%E5%8C%96%E6%93%8D%E4%BD%9C/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">python的json.dumps自定义序列化操作</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/13/python%20%E4%BD%BF%E7%94%A8channels%E5%AE%9E%E7%8E%B0websocket%E4%BB%8E%E7%BC%96%E7%A0%81%E5%88%B0%E9%83%A8%E7%BD%B2%E8%AF%A6%E8%A7%A3/">
+                        <span class="hidden-mobile">Python 使用channels实现websocket从编码到部署详解</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,565 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一  背景我在做毕设的项目中，写前端逻辑代码时遇到了一个问题：通过用户click触发一个函数，在函数中根据选中的index，动态修改Map容器中的对应下标的值，以此用不同的class来凸显用户的选择项。实现目标效果图如下图（解决了本篇所要解决的问题后）： {width&#x3D;”50%”}  二  实现思路先说下实现这种样子的思路，首先我在设计后端API的时候，要注意返回的Json数据格式,每一个商品都会">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解决Vue修改数组&#x2F;字典中的元素，却无法检测到数据变化的问题">
+<meta property="og:url" content="https://syzzjw.cn/2021/04/19/%E8%A7%A3%E5%86%B3Vue%E4%BF%AE%E6%94%B9%E6%95%B0%E7%BB%84,%E5%AD%97%E5%85%B8%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0%EF%BC%8C%E5%8D%B4%E6%97%A0%E6%B3%95%E6%A3%80%E6%B5%8B%E5%88%B0%E6%95%B0%E6%8D%AE%E5%8F%98%E5%8C%96%E7%9A%84%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一  背景我在做毕设的项目中，写前端逻辑代码时遇到了一个问题：通过用户click触发一个函数，在函数中根据选中的index，动态修改Map容器中的对应下标的值，以此用不同的class来凸显用户的选择项。实现目标效果图如下图（解决了本篇所要解决的问题后）： {width&#x3D;”50%”}  二  实现思路先说下实现这种样子的思路，首先我在设计后端API的时候，要注意返回的Json数据格式,每一个商品都会">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/sku-select-problem.png">
+<meta property="og:image" content="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/vue-set.png">
+<meta property="article:published_time" content="2021-04-19T12:15:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.468Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Vue">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/sku-select-problem.png">
+  
+  <title>解决Vue修改数组/字典中的元素，却无法检测到数据变化的问题 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="解决Vue修改数组/字典中的元素，却无法检测到数据变化的问题">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-04-19 20:15" pubdate>
+        2021年4月19日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      5.2k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      16 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">解决Vue修改数组/字典中的元素，却无法检测到数据变化的问题</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一-背景"><a href="#一-背景" class="headerlink" title="一  背景"></a>一  背景</h3><p>我在做毕设的项目中，写前端逻辑代码时遇到了一个问题：通过用户click触发一个函数，在函数中根据选中的index，动态修改Map容器中的对应下标的值，以此用不同的class来凸显用户的选择项。实现目标效果图如下图（解决了本篇所要解决的问题后）：</p>
+<p><img src="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/sku-select-problem.png" srcset="/img/loading.gif" lazyload>{width=”50%”}</p>
+<hr>
+<h3 id="二-实现思路"><a href="#二-实现思路" class="headerlink" title="二  实现思路"></a><strong>二  实现思路</strong></h3><p>先说下实现这种样子的思路，首先我在设计后端API的时候，要注意返回的Json数据格式,每一个商品都会有多个sku属性，每个sku属性都会对应多个sku属性值，因此这样关系很清晰，通过1：N外键关系就可以表示。格式如下：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><code class="hljs json">...<br>&quot;sku_props&quot;: [<br>        &#123;<br>            <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">8</span>,<br>            <span class="hljs-attr">&quot;sku_values&quot;</span>: [<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">19</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;黄色&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">8</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">20</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;白色&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">8</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">21</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;黑色&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">8</span><br>                &#125;<br>            ],<br>            <span class="hljs-attr">&quot;name&quot;</span>: <span class="hljs-string">&quot;颜色&quot;</span>,<br>            <span class="hljs-attr">&quot;commodity&quot;</span>: <span class="hljs-number">32</span><br>        &#125;,<br>        &#123;<br>            <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">10</span>,<br>            <span class="hljs-attr">&quot;sku_values&quot;</span>: [<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">26</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;小型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">10</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">27</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;中型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">10</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">28</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;大型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">10</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">29</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;特大型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">10</span><br>                &#125;<br>            ],<br>            <span class="hljs-attr">&quot;name&quot;</span>: <span class="hljs-string">&quot;大小&quot;</span>,<br>            <span class="hljs-attr">&quot;commodity&quot;</span>: <span class="hljs-number">32</span><br>        &#125;,<br>        &#123;<br>            <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">12</span>,<br>            <span class="hljs-attr">&quot;sku_values&quot;</span>: [<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">36</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;小型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">12</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">37</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;中型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">12</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">38</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;大型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">12</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">39</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;特大型&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">12</span><br>                &#125;<br>            ],<br>            <span class="hljs-attr">&quot;name&quot;</span>: <span class="hljs-string">&quot;大小&quot;</span>,<br>            <span class="hljs-attr">&quot;commodity&quot;</span>: <span class="hljs-number">32</span><br>        &#125;,<br>        &#123;<br>            <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">13</span>,<br>            <span class="hljs-attr">&quot;sku_values&quot;</span>: [<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">40</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;微辣&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">13</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">41</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;中辣&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">13</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">42</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;特辣&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">13</span><br>                &#125;,<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">43</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;变态辣&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">13</span><br>                &#125;<br>            ],<br>            <span class="hljs-attr">&quot;name&quot;</span>: <span class="hljs-string">&quot;辣度&quot;</span>,<br>            <span class="hljs-attr">&quot;commodity&quot;</span>: <span class="hljs-number">32</span><br>        &#125;,<br>        &#123;<br>            <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">14</span>,<br>            <span class="hljs-attr">&quot;sku_values&quot;</span>: [<br>                &#123;<br>                    <span class="hljs-attr">&quot;id&quot;</span>: <span class="hljs-number">48</span>,<br>                    <span class="hljs-attr">&quot;value&quot;</span>: <span class="hljs-string">&quot;12GB&quot;</span>,<br>                    <span class="hljs-attr">&quot;prop&quot;</span>: <span class="hljs-number">14</span><br>                &#125;<br>            ],<br>            <span class="hljs-attr">&quot;name&quot;</span>: <span class="hljs-string">&quot;内存&quot;</span>,<br>            <span class="hljs-attr">&quot;commodity&quot;</span>: <span class="hljs-number">32</span><br>        &#125;<br>    ],<br>...<br></code></pre></td></tr></table></figure>
+
+
+
+<p>这样，我在vue中通过v-for两次循环遍历即可表示出多个sku属性，每个属性下对应多个sku属性值。</p>
+<hr>
+<p>那么接下来的需求就是用户选择每个sku属性下的属性值，我需要记录下来并高亮标注显示给用户，因此我是采用字典，姑且取个名字，choiceMap，其中key为每个属性的名字，value为选中的值的下标。当用户选择了某项时，choiceMap中对应key的value的下标变化成选中的属性值的下标，然后在template中使用,:class，通过表达式（判断choiceMap[key] === index)是否为真，来增加/消除颜色高亮风格的class。对应代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs vue">&lt;div v-for&#x3D;&quot;(values, index) in propsValues&quot; :key&#x3D;&quot;index&quot;&gt;<br>     &lt;div class&#x3D;&quot;prop-name&quot;&gt;&#123;&#123; values.name &#125;&#125;&lt;&#x2F;div&gt;<br>     &lt;van-button<br>       v-for&#x3D;&quot;(value, index) in values.sku_values&quot;<br>       :key&#x3D;&quot;index&quot;<br>       :class&#x3D;&quot;[<br>         &#39;value-btn&#39;,<br>         &#123; &#39;value-btn-choice&#39;: index &#x3D;&#x3D;&#x3D; choiceMap[values.name] &#125;,<br>       ]&quot;<br>       @click&#x3D;&quot;choiceValue(index, values)&quot;&gt;<br>       &#123;&#123; value.value &#125;&#125;<br>     &lt;&#x2F;van-button&gt;<br>     &lt;van-divider&gt;&lt;&#x2F;van-divider&gt;<br>&lt;&#x2F;div&gt;<br><br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p>说明：点击某个属性值，调用<code>choiceValue(index, values)</code>来实现高亮显示。我一开始使用的方式是：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-title">choiceValue</span>(<span class="hljs-params">index, values</span>)</span> &#123;<br>      <span class="hljs-built_in">this</span>.choiceMap[values.name] = index;<br>      <span class="hljs-built_in">console</span>.log(<span class="hljs-built_in">this</span>.choiceMap)<br>&#125;,<br></code></pre></td></tr></table></figure>
+
+<p>通过控制台打印发现，数据确实更新了，但是view视图却没有更新，后来我测试了一下数组，发现同样的问题。由于鄙人前端没有深入，因此只得百度搜索解决方案，幸运的是很快找到了解决方法，在仔细阅读别人的博客后，发现了问题所在—–<strong>Vue不能检测到对象的添加或者删除。然而Vue在初始化实例时就对属性执行了setter/getter转化过程，所以属性必须开始就在对象上，这样才能让Vue转化它。</strong> 这句话什么意思呢？别急，我用几个解释以下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs vue">&#x2F;&#x2F; 假设我在实例初始化时在data域中设置元素并进行初始化<br>data() &#123;<br>    return &#123;<br>      testMap:&#123;<br>        &#39;name&#39;:&#39;syz&#39;,<br>        &#39;age&#39;:22<br>      &#125;<br>    &#125;;<br>&#x2F;&#x2F; 测试Dom<br> &lt;van-button @click&#x3D;&quot;test&quot;&gt;&lt;&#x2F;van-button&gt;<br><br>&#x2F;&#x2F; 测试方法<br>    test()&#123;<br>      this.testMap[&#39;name&#39;] &#x3D; &#39;zjw&#39;;      &#x2F;&#x2F; 修改已经存在的键<br>      this.testMap[&#39;hobby&#39;] &#x3D; &#39;coding&#39;;  &#x2F;&#x2F; 对不存在的键设置值 <br>    &#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>结果：view视图随着test方法的调用会发生变化，name属性会改变，同时hobby属性也会添加进来,dom元素能够及时响应并更新。</strong></p>
+<hr>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs vue">&#x2F;&#x2F; 将testMap中的name去掉会怎么样呢？<br>data() &#123;<br>    return &#123;<br>      testMap:&#123;<br>        &#39;age&#39;:22<br>      &#125;<br>    &#125;;<br>&#x2F;&#x2F; 测试Dom<br> &lt;van-button @click&#x3D;&quot;test&quot;&gt;&lt;&#x2F;van-button&gt;<br><br>&#x2F;&#x2F; 测试方法<br>    test()&#123;<br>      this.testMap[&#39;name&#39;] &#x3D; &#39;zjw&#39;;      &#x2F;&#x2F; 修改已经存在的键<br>      this.testMap[&#39;hobby&#39;] &#x3D; &#39;coding&#39;;  &#x2F;&#x2F; 创建属性，对不存在的键设置值 <br>    &#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>结果：view视图随着test方法的调用不会发生变化，数据会发生变化，但是dom元素并未更新，没有得到响应</strong>。</p>
+<hr>
+<p><strong>分析</strong>：根据上面两个例子，再结合 **”Vue不能检测到对象的添加或者删除。然而Vue在初始化实例时就对属性执行了setter/getter转化过程，所以属性必须开始就在对象上，这样才能让Vue转化它”**这句话来看，由于第一个例子中name属性在vue实例化时就已经执行转化过程，那么后续对访问器的属性进行操作时，会调用响应的方法，例如读取属性值，会调用getter方法，在修改属性值时会调用setter的方法，这样这些方法就会在底层来决定如何更新数据，包括更新DOM。以此来实现单向绑定及双向绑定。</p>
+<hr>
+<h3 id="三-解决方案"><a href="#三-解决方案" class="headerlink" title="三   解决方案"></a><strong>三   解决方案</strong></h3><p>为了能够对未经初始化，为执行setter/getter转化过程的属性修改，同时确保这些属性被创建后是响应式的，触发视图view的更新，可以使用Vue.set(Object, String, Any)方法，它的用法是设置对象的属性，如果该对象在data中定义为响应对象，那么该方法确保该对象的属性被创建后也是响应式的，同时触发视图更新。这个方法就可以避开Vue不能检测属性被添加的限制。</p>
+<p><img src="https://django-e-mall.oss-cn-shanghai.aliyuncs.com/vue-set.png" srcset="/img/loading.gif" lazyload>{width=”100%”}</p>
+<p>所以代码更正为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-comment">// 选择合适的map项</span><br> <span class="hljs-function"><span class="hljs-title">choiceValue</span>(<span class="hljs-params">index, values</span>)</span> &#123;<br>   <span class="hljs-built_in">this</span>.$set(<span class="hljs-built_in">this</span>.choiceMap, values.name, index);<br> &#125;,<br></code></pre></td></tr></table></figure>
+
+
+
+<p>恕我前端不够深入， 推荐一篇讲的更加详细的文章，如有兴趣，可以前去浏览</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhuzhenwei918/p/6893496.html"></a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Vue/">Vue</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Vue/">Vue</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/05/03/%E4%BD%BF%E7%94%A8axios%E6%97%B6%EF%BC%8C%E6%B7%BB%E5%8A%A0%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84headers%E5%AD%97%E6%AE%B5%EF%BC%8C%E5%87%BA%E7%8E%B0%E8%B7%A8%E5%9F%9F%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">使用axios时，添加自定义的headers字段，出现跨域的解决方案</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/04/01/Django%E5%88%86%E9%A1%B5%E5%99%A8%E5%AE%9E%E7%8E%B0%E5%88%86%E9%A1%B5%E5%92%8C%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                        <span class="hidden-mobile">Django分页器实现分页和源码分析</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

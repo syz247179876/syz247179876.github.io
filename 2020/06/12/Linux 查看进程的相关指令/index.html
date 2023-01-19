@@ -1,0 +1,548 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="1.查看总体内存消耗情况free -h  ，-h表示展现可读的格式 {:width&#x3D;”100%”}  2.查看某个进程的具体情况① ps -ef|grep nginx {:width&#x3D;”100%”}  ② ps aux|grep nginx {:width&#x3D;”100%”}  说明： ps：显示某个具体的进程-ef: 显示格式化的进程内容，不包括CPU,内存占用率等aux:显示完整的进程内容，包括C">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 查看进程的相关指令">
+<meta property="og:url" content="https://syzzjw.cn/2020/06/12/Linux%20%E6%9F%A5%E7%9C%8B%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%9B%B8%E5%85%B3%E6%8C%87%E4%BB%A4/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="1.查看总体内存消耗情况free -h  ，-h表示展现可读的格式 {:width&#x3D;”100%”}  2.查看某个进程的具体情况① ps -ef|grep nginx {:width&#x3D;”100%”}  ② ps aux|grep nginx {:width&#x3D;”100%”}  说明： ps：显示某个具体的进程-ef: 显示格式化的进程内容，不包括CPU,内存占用率等aux:显示完整的进程内容，包括C">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/free.png">
+<meta property="og:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps-ef.png">
+<meta property="og:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps-aux.png">
+<meta property="og:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps_all_ef.png">
+<meta property="og:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps_all_aux.png">
+<meta property="og:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/ten-ps-memeroy.png">
+<meta property="article:published_time" content="2020-06-12T05:14:13.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.426Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://javakeshe.oss-cn-beijing.aliyuncs.com/free.png">
+  
+  <title>Linux 查看进程的相关指令 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Linux 查看进程的相关指令">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-06-12 13:14" pubdate>
+        2020年6月12日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      640 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      2 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Linux 查看进程的相关指令</h1>
+            
+            <div class="markdown-body">
+              <h4 id="1-查看总体内存消耗情况"><a href="#1-查看总体内存消耗情况" class="headerlink" title="1.查看总体内存消耗情况"></a><strong>1.查看总体内存消耗情况</strong></h4><p><code>free -h</code>  ，-h表示展现可读的格式</p>
+<p><img src="https://javakeshe.oss-cn-beijing.aliyuncs.com/free.png" srcset="/img/loading.gif" lazyload>{:width=”100%”}</p>
+<hr>
+<h4 id="2-查看某个进程的具体情况"><a href="#2-查看某个进程的具体情况" class="headerlink" title="2.查看某个进程的具体情况"></a><strong>2.查看某个进程的具体情况</strong></h4><p>① <code>ps -ef|grep nginx</code></p>
+<p><img src="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps-ef.png" srcset="/img/loading.gif" lazyload>{:width=”100%”}</p>
+<hr>
+<p>② <code>ps aux|grep nginx</code></p>
+<p><img src="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps-aux.png" srcset="/img/loading.gif" lazyload>{:width=”100%”}</p>
+<hr>
+<p><strong>说明：</strong></p>
+<p>ps：显示某个具体的进程<br>-ef: 显示格式化的进程内容，不包括CPU,内存占用率等<br>aux:显示完整的进程内容，包括CPU,内存占用率<br>nginx：表示具体的进程名<br>grep:表示搜索查找  </p>
+<p><img src="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps_all_ef.png" srcset="/img/loading.gif" lazyload>{:width=”100%”}</p>
+<hr>
+<p><img src="https://javakeshe.oss-cn-beijing.aliyuncs.com/ps_all_aux.png" srcset="/img/loading.gif" lazyload>{:width=”100%”}</p>
+<p><strong>说明</strong></p>
+<p>USER:表示当前的用户，root为最高级别<br>PID:为进程号<br>%CPU:表示该进程所占的CPU比例<br>%MEM:表示该进程所占的MEM比例<br>VSZ:表示进程被分配到的虚拟内存<br>RSS:表示常驻内存集的大小，也就是进程被分配到的实际内存大小，包括所有分配的堆内存和栈内存，不包括交换分区的内存<br>TTY：表示该进程运行在哪个终端上，如果与运行的终端无关，则为问号。<br>STAT:表示进程的状态<br>START:表示进程启动的时间<br>TIME:表示使用掉的CPU时间<br>COMMAND:表示启动进程所需要的命令  </p>
+<p>由此可见aux显示的信息要比ef更丰富，aux显示的是BSD格式，而ef显示的标准格式，两者的差别不是很大，都可以用来查看进程的详细信息。</p>
+<hr>
+<h4 id="3-查看所有进程的信息"><a href="#3-查看所有进程的信息" class="headerlink" title="3.查看所有进程的信息"></a><strong>3.查看所有进程的信息</strong></h4><p>① <code>ps -ef</code></p>
+<p>② <code>ps aux</code></p>
+<p>③ <code>ps aux|grep -v pid</code></p>
+<h4 id="4-查看前十个内存消耗最高的进程"><a href="#4-查看前十个内存消耗最高的进程" class="headerlink" title="4.查看前十个内存消耗最高的进程"></a><strong>4.查看前十个内存消耗最高的进程</strong></h4><p><img src="https://javakeshe.oss-cn-beijing.aliyuncs.com/ten-ps-memeroy.png" srcset="/img/loading.gif" lazyload>{:width=”100%”}</p>
+<p>可以看得出来mysql占的内存还是多呀</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Linux/">Linux</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Linux/">Linux</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/06/12/ajax%E4%B8%8D%E5%90%8C%E6%95%B0%E6%8D%AE%E8%AF%B7%E6%B1%82%E7%9A%84%E7%B1%BB%E5%9E%8B%EF%BC%8Cdjango%E5%AF%B9%E5%BA%94%E4%B8%8D%E5%90%8C%E7%9A%84%E8%A7%A3%E6%9E%90/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">ajax不同数据请求的类型，Django对应不同的解析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/06/11/django-restful-framework%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96%E5%99%A8%E5%B5%8C%E5%A5%97%E9%80%92%E5%BD%92%E8%B0%83%E7%94%A8/">
+                        <span class="hidden-mobile">django-restful-framework的序列化器嵌套递归调用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

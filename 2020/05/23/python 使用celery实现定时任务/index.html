@@ -1,0 +1,546 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="python使用celery实现定时任务celery是python的第三方包，在django中也可以使用，只不过需要手动进行配置相关配置信息。 很多情况下需要定时的执行某些任务，例如我的博客中，需要每天凌晨5点更新当天的笔记记录情况，主要用于热点图的可视化工作。选定某一个时间更新，加上增加缓存就可以有效的降低服务器的压力。 或者在其他业务中也经常用到定时任务进行数据库的维护或者定时爬虫，生日定时消">
+<meta property="og:type" content="article">
+<meta property="og:title" content="python 使用celery实现定时任务">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/23/python%20%E4%BD%BF%E7%94%A8celery%E5%AE%9E%E7%8E%B0%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="python使用celery实现定时任务celery是python的第三方包，在django中也可以使用，只不过需要手动进行配置相关配置信息。 很多情况下需要定时的执行某些任务，例如我的博客中，需要每天凌晨5点更新当天的笔记记录情况，主要用于热点图的可视化工作。选定某一个时间更新，加上增加缓存就可以有效的降低服务器的压力。 或者在其他业务中也经常用到定时任务进行数据库的维护或者定时爬虫，生日定时消">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-23T05:07:05.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.444Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Celery">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>python 使用celery实现定时任务 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="python 使用celery实现定时任务">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-23 13:07" pubdate>
+        2020年5月23日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">python 使用celery实现定时任务</h1>
+            
+            <div class="markdown-body">
+              <h3 id="python使用celery实现定时任务"><a href="#python使用celery实现定时任务" class="headerlink" title="python使用celery实现定时任务"></a><strong>python使用celery实现定时任务</strong></h3><p>celery是python的第三方包，在django中也可以使用，只不过需要手动进行配置相关配置信息。</p>
+<p>很多情况下需要定时的执行某些任务，例如我的博客中，需要每天凌晨5点更新当天的笔记记录情况，主要用于热点图的可视化工作。选定某一个时间更新，加上增加缓存就可以有效的降低服务器的压力。</p>
+<p>或者在其他业务中也经常用到定时任务进行数据库的维护或者定时爬虫，生日定时消息推送等等。接下来就一起学习一下celery的定时任务的实现。</p>
+<p>假设你已经写好了celery任务函数。</p>
+<h4 id="对定时任务代码简单实现"><a href="#对定时任务代码简单实现" class="headerlink" title="对定时任务代码简单实现"></a><strong>对定时任务代码简单实现</strong></h4><p>代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-keyword">from</span> celery.schedules <span class="hljs-keyword">import</span> crontab<br><span class="hljs-comment"># 以下是我每天凌晨自动更新文章发布数量的定时任务的配置，在setting.py中进行配置</span><br><br><span class="hljs-comment"># celery时区设置，使用settings中TIME_ZONE同样的时区，关系到定时任务是否能够准确触发</span><br>CELERY_TIME_ZONE = TIME_ZONE<br><br><span class="hljs-comment"># 定时任务</span><br>CELERYBEAT_SCHEDULE = &#123;<br>    <span class="hljs-string">&#x27;update_note&#x27;</span>: &#123;     <span class="hljs-comment"># 每天零点触发的任务函数</span><br>        <span class="hljs-string">&#x27;task&#x27;</span>: <span class="hljs-string">&#x27;mainsite.tasks.update_daily_note&#x27;</span>,<br>        <span class="hljs-string">&#x27;schedule&#x27;</span>: crontab(minute=<span class="hljs-number">0</span>, hour=<span class="hljs-number">0</span>),<br>    &#125;,<br>    <span class="hljs-string">&#x27;add-every-30-seconds&#x27;</span>: &#123;     <span class="hljs-comment"># 每个30s触发的测试函数</span><br>        <span class="hljs-string">&#x27;task&#x27;</span>: <span class="hljs-string">&#x27;mainsite.tasks.tests_Periodic&#x27;</span>,<br>        <span class="hljs-string">&#x27;schedule&#x27;</span>: <span class="hljs-number">30.0</span>,<br>        <span class="hljs-string">&#x27;args&#x27;</span>: (),<br>    &#125;,<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>说明：为了让任务能够一直被监听到，我们需要一直与celery保持连接，所以我们需要启动一个心跳包（beat）。</p>
+<p>启动指令：<code>celery beat -A project -l info</code></p>
+<p>启动成功，会显示如下信息：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs cmd">celery beat v4.<span class="hljs-number">4</span>.<span class="hljs-number">2</span> (cliffs) is starting.<br>__    -    ... __   -        _<br>LocalTime -&gt; <span class="hljs-number">2020</span>-<span class="hljs-number">04</span>-<span class="hljs-number">25</span> <span class="hljs-number">21</span>:<span class="hljs-number">16</span>:<span class="hljs-number">39</span><br>Configuration -&gt;<br>    . broker -&gt; redis://:**@<span class="hljs-number">127</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>:<span class="hljs-number">6379</span>/<span class="hljs-number">0</span><br>    . loader -&gt; celery.loaders.app.AppLoader<br>    . scheduler -&gt; celery.beat.PersistentScheduler<br>    . db -&gt; celerybeat-schedule<br>    . logfile -&gt; [stderr]@%INFO<br>    . maxinterval -&gt; <span class="hljs-number">5</span>.<span class="hljs-number">00</span> minutes (<span class="hljs-number">300</span>s)<br><br></code></pre></td></tr></table></figure>
+
+<p>beat心跳包的原理是每隔一段时间告诉服务器，我还活着，不要断开我哦。</p>
+<p>因为服务器一般会在一个Timer事件中，向客户端发送一个很小的数据包，然后启动一个低级别的线程，这个线程的作用是不断监听这个客户端是否还在连接中，客户端需要告知这个线程我还活着，这样就可以一直保持着连接。</p>
+<p><strong>注：</strong>启动成功后，一旦定时任务触发，如果有输出结果的话，会在celery的日志中出现。</p>
+<h4 id="Crontab-schedules的各种形式"><a href="#Crontab-schedules的各种形式" class="headerlink" title="Crontab schedules的各种形式"></a><strong>Crontab schedules的各种形式</strong></h4><p><code>from celery.schedules import crontab</code></p>
+<p>通过crontab设定不同时间的定时任务</p>
+<p>下面是取自官方的example</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python">crontab() 	<span class="hljs-comment"># Execute every minute.</span><br>crontab(minute=<span class="hljs-number">0</span>, hour=<span class="hljs-number">0</span>) 	<span class="hljs-comment"># Execute daily at midnight.</span><br>crontab(minute=<span class="hljs-number">0</span>, hour=<span class="hljs-string">&#x27;*/3&#x27;</span>) 	<span class="hljs-comment"># Execute every three hours: midnight, 3am, 6am, 9am, noon, 3pm, 6pm, 9pm.</span><br><br>crontab(minute=<span class="hljs-number">0</span>,hour=<span class="hljs-string">&#x27;0,3,6,9,12,15,18,21&#x27;</span>)<br>crontab(minute=<span class="hljs-string">&#x27;*/15&#x27;</span>) 	<span class="hljs-comment"># Execute every 15 minutes.</span><br>crontab(day_of_week=<span class="hljs-string">&#x27;sunday&#x27;</span>) 	<span class="hljs-comment"># Execute every minute (!) at Sundays.</span><br><br>crontab(minute=<span class="hljs-string">&#x27;*&#x27;</span>, hour=<span class="hljs-string">&#x27;*&#x27;</span>, day_of_week=<span class="hljs-string">&#x27;sun&#x27;</span>) <span class="hljs-comment"># Same as previous.</span><br><br>crontab(minute=<span class="hljs-string">&#x27;*/10&#x27;</span>, hour=<span class="hljs-string">&#x27;3,17,22&#x27;</span>, day_of_week=<span class="hljs-string">&#x27;thu,fri&#x27;</span>) <span class="hljs-comment"># Execute every ten minutes, but only between 3-4 am, 5-6 pm, and 10-11 pm on Thursdays or Fridays.</span><br>crontab(minute=<span class="hljs-number">0</span>, hour=<span class="hljs-string">&#x27;*/2,*/3&#x27;</span>) 	<span class="hljs-comment"># Execute every even hour, and every hour divisible by three. This means: at every hour except: 1am, 5am, 7am, 11am, 1pm, 5pm, 7pm, 11pm</span><br>crontab(minute=<span class="hljs-number">0</span>, hour=<span class="hljs-string">&#x27;*/5&#x27;</span>) 	<span class="hljs-comment"># Execute hour divisible by 5. This means that it is triggered at 3pm, not 5pm (since 3pm equals the 24-hour clock value of “15”, which is divisible by 5).</span><br>crontab(minute=<span class="hljs-number">0</span>, hour=<span class="hljs-string">&#x27;*/3,8-17&#x27;</span>) 	<span class="hljs-comment"># Execute every hour divisible by 3, and every hour during office hours (8am-5pm).</span><br>crontab(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, day_of_month=<span class="hljs-string">&#x27;2&#x27;</span>) 	<span class="hljs-comment"># Execute on the second day of every month.</span><br><br>crontab(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, day_of_month=<span class="hljs-string">&#x27;2-30/2&#x27;</span>) <span class="hljs-comment"># Execute on every even numbered day.</span><br><br>crontab(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, day_of_month=<span class="hljs-string">&#x27;1-7,15-21&#x27;</span>) <span class="hljs-comment"># Execute on the first and third weeks of the month.</span><br><br>crontab(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, day_of_month=<span class="hljs-string">&#x27;11&#x27;</span>, month_of_year=<span class="hljs-string">&#x27;5&#x27;</span>) <span class="hljs-comment"># Execute on the eleventh of May every year.</span><br><br>crontab(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, month_of_year=<span class="hljs-string">&#x27;*/3&#x27;</span>) <span class="hljs-comment"># Execute every day on the first month of every quarter.</span><br></code></pre></td></tr></table></figure>
+
+
+<p>还有些其他的要点，可以参考官方文档：</p>
+<p><a target="_blank" rel="noopener" href="https://docs.celeryproject.org/en/stable">https://docs.celeryproject.org/en/stable</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/Celery/">Celery</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Celery/">Celery</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/23/Django%E4%B8%AD%E7%9A%84pk%E5%92%8Cid%E7%9A%84%E5%85%B3%E7%B3%BB/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Django中的pk和id的关系</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/22/Python%E6%89%B9%E9%87%8F%E5%B0%86word%E6%96%87%E6%A1%A3%E8%BD%AC%E6%8D%A2%E7%B1%BB%E5%9E%8B/">
+                        <span class="hidden-mobile">Python批量将word文档转换类型</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

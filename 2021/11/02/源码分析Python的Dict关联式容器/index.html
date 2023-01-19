@@ -1,0 +1,693 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一 、 背景字典dict是Python开发中常用的数据结构之一，同样，其他语言中也有类似的数据结构，例如C++中的map，Golang中的map, Java中的HashMap等。dict是基于哈希表实现的，但实现的方式在每个语言中都不完全相同。接下来，就来探究下dict底层的数据结构，来学习一下Python的dict相关操作集，动态扩容机制以及如何在内存的使用上进行优化的。本篇文章所使用的的Pyt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析Python的Dict关联式容器">
+<meta property="og:url" content="https://syzzjw.cn/2021/11/02/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84Dict%E5%85%B3%E8%81%94%E5%BC%8F%E5%AE%B9%E5%99%A8/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一 、 背景字典dict是Python开发中常用的数据结构之一，同样，其他语言中也有类似的数据结构，例如C++中的map，Golang中的map, Java中的HashMap等。dict是基于哈希表实现的，但实现的方式在每个语言中都不完全相同。接下来，就来探究下dict底层的数据结构，来学习一下Python的dict相关操作集，动态扩容机制以及如何在内存的使用上进行优化的。本篇文章所使用的的Pyt">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-11-02T06:28:23.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.468Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="数据结构">
+<meta property="article:tag" content="C">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>源码分析Python的Dict关联式容器 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="源码分析Python的Dict关联式容器">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-11-02 14:28" pubdate>
+        2021年11月2日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      23k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      72 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">源码分析Python的Dict关联式容器</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一-、-背景"><a href="#一-、-背景" class="headerlink" title="一 、 背景"></a>一 、 背景</h3><p>字典dict是Python开发中常用的数据结构之一，同样，其他语言中也有类似的数据结构，例如C++中的map，Golang中的map, Java中的HashMap等。dict是基于哈希表实现的，但实现的方式在每个语言中都不完全相同。接下来，就来探究下dict底层的数据结构，来学习一下Python的dict相关操作集，动态扩容机制以及如何在内存的使用上进行优化的。本篇文章所使用的的Python版本为3.10。</p>
+<h3 id="二-、dict所涉及的数据结构"><a href="#二-、dict所涉及的数据结构" class="headerlink" title="二 、dict所涉及的数据结构"></a>二 、dict所涉及的数据结构</h3><p><strong>PyDictKeyEntry键值对结构体</strong>，代码位于/Include/internal/pycore_dict.h头文件中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>    Py_hash_t me_hash;<br>    PyObject *me_key; <br>    PyObject *me_value;<br>&#125; PyDictKeyEntry;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>(1).me_hash：缓存me_key键的hash值</p>
+<p>(2).me_key： 键对象</p>
+<p>(3).me_value: 值对象， 只在combined tables中有意义, 而在splited tables中无意义，如果是splited tables， 值对象存储在PyDictObject的ma_values中，不存于PyDictKeyEntry结构体中。</p>
+<p><strong>PyDictKeysObject结构体</strong>，代码位于/Include/internal/pycore_dict.h头文件中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">dictkeysobject</span> &#123;</span><br>    Py_ssize_t dk_refcnt;<br><br>    <span class="hljs-comment">/* Size of the hash table (dk_indices). It must be a power of 2. */</span><br>    <span class="hljs-comment">/* hash表大小，必须是2的次幂方 */</span><br>    <span class="hljs-keyword">uint8_t</span> dk_log2_size;<br><br>    <span class="hljs-comment">/* Kind of keys*/</span><br>    <span class="hljs-comment">/* 键的类型*/</span><br>    <span class="hljs-keyword">uint8_t</span> dk_kind;<br><br>    <span class="hljs-comment">/* Version number -- Reset to 0 by any modification to keys */</span><br>    <span class="hljs-keyword">uint32_t</span> dk_version;<br><br>    <span class="hljs-comment">/* Number of usable entries in dk_entries. */</span><br>    <span class="hljs-comment">/* 键值对可用个数 */</span><br>    Py_ssize_t dk_usable;<br><br>    <span class="hljs-comment">/* Number of used entries in dk_entries. */</span><br>    <span class="hljs-comment">/* 键值对已用个数 */</span><br>    Py_ssize_t dk_nentries;<br><br>    <span class="hljs-comment">/* Actual hash table of dk_size entries. It holds indices in dk_entries,</span><br><span class="hljs-comment">       or DKIX_EMPTY(-1) or DKIX_DUMMY(-2).</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">       Indices must be: 0 &lt;= indice &lt; USABLE_FRACTION(dk_size).</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">       The size in bytes of an indice depends on dk_size:</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">       - 1 byte if dk_size &lt;= 0xff (char*)</span><br><span class="hljs-comment">       - 2 bytes if dk_size &lt;= 0xffff (int16_t*)</span><br><span class="hljs-comment">       - 4 bytes if dk_size &lt;= 0xffffffff (int32_t*)</span><br><span class="hljs-comment">       - 8 bytes otherwise (int64_t*)</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">       Dynamically sized, SIZEOF_VOID_P is minimum. */</span><br>    <span class="hljs-comment">/* 索引数组, 存放dk_entries中的索引值 */</span><br>    <span class="hljs-keyword">char</span> dk_indices[];  <span class="hljs-comment">/* char is required to avoid strict aliasing. */</span><br><br>    <span class="hljs-comment">/* &quot;PyDictKeyEntry dk_entries[dk_usable];&quot; array follows:</span><br><span class="hljs-comment">       see the DK_ENTRIES() macro */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>说明：</strong></p>
+<pre><code>1. dk_refcnt： 字典对象的引用计数
+2. dk_log2_size： 哈希表(dk_indices)的大小所占的位数，为2的次幂方，便于使用位运算。
+3. dk_kind： 键的类型
+4. dk_version：版本号，任何对键的修改都会重置为0
+5. dk_usable: 键值对可用个数，占hash表总容量的2/3, 用于判断是否需要动态扩容
+6. dk_nentries: 键值对已用个数
+7. dk_indices: 索引数组（真正的hash表)，存放hash值
+</code></pre>
+<p>文件下方同时还分别针对32位和64位的机器上提供了一些宏定义。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 哈希表的中大小所占的位数</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DK_LOG_SIZE(dk)  ((dk)-&gt;dk_log2_size)</span><br><span class="hljs-comment">// 如果是64位机器</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">if</span> SIZEOF_VOID_P &gt; 4</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DK_SIZE(dk)      (((int64_t)1)&lt;&lt;DK_LOG_SIZE(dk))</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DK_IXSIZE(dk)                     \</span><br>    (DK_LOG_SIZE(dk) &lt;= <span class="hljs-number">7</span> ?               \<br>        <span class="hljs-number">1</span> : DK_LOG_SIZE(dk) &lt;= <span class="hljs-number">15</span> ?       \<br>            <span class="hljs-number">2</span> : DK_LOG_SIZE(dk) &lt;= <span class="hljs-number">31</span> ?   \<br>                <span class="hljs-number">4</span> : <span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">int64_t</span>))<br><span class="hljs-meta">#<span class="hljs-meta-keyword">else</span></span><br><span class="hljs-comment">// 32位机器</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DK_SIZE(dk)      (1&lt;&lt;DK_LOG_SIZE(dk))</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DK_IXSIZE(dk)                     \</span><br>    (DK_LOG_SIZE(dk) &lt;= <span class="hljs-number">7</span> ?               \<br>        <span class="hljs-number">1</span> : DK_LOG_SIZE(dk) &lt;= <span class="hljs-number">15</span> ?       \<br>            <span class="hljs-number">2</span> : <span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">int32_t</span>))<br><span class="hljs-comment">// 指针，指向哈希表中的键值对实体数组</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DK_ENTRIES(dk) \</span><br>    ((PyDictKeyEntry*)(&amp;((<span class="hljs-keyword">int8_t</span>*)((dk)-&gt;dk_indices))[DK_SIZE(dk) * DK_IXSIZE(dk)]))<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>说明：</strong></p>
+<p>(1).<strong>DK_IXSIZE</strong>宏定义：dk_log2_size位数不断增大，其值也在不断增大，目的是在hash表扩容时，能够扩容出更大的hash表，减少当hash表小的时候频繁扩容的现象。</p>
+<p>(2).<strong>DK_ENTRIES</strong>宏定义: 指针类型，用于指向哈希表中的键值对数组的首地址。</p>
+<h3 id="三-、-阅读源码前的开胃小菜"><a href="#三-、-阅读源码前的开胃小菜" class="headerlink" title="三 、 阅读源码前的开胃小菜"></a>三 、 阅读源码前的开胃小菜</h3><p>在了解到了dict的真面目之后，接下来进入到/Objects/dictobject.c文件中，进一步学习下dict的各个操作集以及dict如何实现动态扩容。</p>
+<p>在文件的开头有很多的注释，耐心看完会对下面函数源码的阅读有很大的帮助。</p>
+<p>由于注释太多，我选取了部分注释说明：</p>
+<h4 id="1-PyDictKeysObject结构体"><a href="#1-PyDictKeysObject结构体" class="headerlink" title="1.PyDictKeysObject结构体"></a>1.PyDictKeysObject结构体</h4><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">+---------------+<br>|<span class="hljs-string"> dk_refcnt     </span>|<br>|<span class="hljs-string"> dk_log2_size  </span>|<br>|<span class="hljs-string"> dk_kind       </span>|<br>|<span class="hljs-string"> dk_usable     </span>|<br>|<span class="hljs-string"> dk_nentries   </span>|<br>+---------------+<br>|<span class="hljs-string"> dk_indices    </span>|<br>|<span class="hljs-string">               </span>|<br>+---------------+<br>|<span class="hljs-string"> dk_entries    </span>|<br>|<span class="hljs-string">               </span>|<br>+---------------+<br><br>这里比较重要的两个字段分别是dk_indices(哈希索引数组), dk_entries(键值对实体数组)<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-字典容量的说明"><a href="#2-字典容量的说明" class="headerlink" title="2. 字典容量的说明"></a>2. 字典容量的说明</h4><figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs gams"><span class="hljs-comment">* PyDict_MINSIZE is the starting size for any new dict.</span><br><span class="hljs-comment">* 8 allows dicts with no more than 5 active entries; experiments suggested</span><br><span class="hljs-comment">* this suffices for the majority of dicts (consisting mostly of usually-small</span><br><span class="hljs-comment">* dicts created to pass keyword arguments).</span><br><span class="hljs-comment">* Making this 8, rather than 4 reduces the number of resizes for most</span><br><span class="hljs-comment">* dictionaries, without any significant extra memory use.</span><br><span class="hljs-comment">* USABLE_FRACTION should be quick to calculate.</span><br><span class="hljs-comment">* Fractions around 1/2 to 2/3 seem to work well in practice.</span><br><span class="hljs-comment">* Increasing this ratio makes dictionaries more dense resulting in more collisions.  Decreasing it improves sparseness at the expense of spreading indices over more cache lines and at the cost of total memory consumed.</span><br><br></code></pre></td></tr></table></figure>
+
+<p>稍微解释一下，提取出以下三点：</p>
+<p>(1).PyDict_MINSIZE是字典初始化的大小。</p>
+<p>(2).根据实验得出，在总容量为8的字典中，键值对实体所占的容量不超过5，意味着键值对实体所占的hash表最大容量的2/3。</p>
+<p>(3).将字典初始大小设定为8，而不是4，减少了字典的频繁扩容带来的内存的开销。</p>
+<p>(4).<code>#define USABLE_FRACTION(n) (((n) &lt;&lt; 1)/3)</code>宏定义规定了负载因子要&lt;=2/3,负载因子过高将导致更多的冲突，过低的话，hash槽位会变得过于分散，带来更多的内存开销。</p>
+<h4 id="3-巧妙设定int类型的hash值"><a href="#3-巧妙设定int类型的hash值" class="headerlink" title="3.巧妙设定int类型的hash值"></a>3.巧妙设定int类型的hash值</h4><figure class="highlight tp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs tp"># python对int类型数据的hash函数做了额外的说明，是为了引出解决hash冲突的方法。<br><br>Major subtleties ahead:  Most hash schemes depend on having a <span class="hljs-string">&quot;good&quot;</span> hash<br>function, in the sense of simulating randomness.  Python doesn<span class="hljs-string">&#x27;t:  its most</span><br><span class="hljs-string">important hash functions (for ints) are very regular in common</span><br><span class="hljs-string">cases:</span><br><span class="hljs-string"></span><br><span class="hljs-string">  &gt;&gt;&gt;[hash(i) for i in range(4)]</span><br><span class="hljs-string">  [0, 1, 2, 3]</span><br><span class="hljs-string"></span><br><span class="hljs-string">This isn&#x27;</span>t necessarily bad<span class="hljs-comment">!  To the contrary, in a table of size 2**i, taking</span><br><span class="hljs-comment">the low-order i bits as the initial table index is extremely fast, and there</span><br><span class="hljs-comment">are no collisions at all for dicts indexed by a contiguous range of ints. So</span><br><span class="hljs-comment">this gives better-than-random behavior in common cases, and that&#x27;s very</span><br><span class="hljs-comment">desirable.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">OTOH, when collisions occur, the tendency to fill contiguous slices of the</span><br><span class="hljs-comment">hash table makes a good collision resolution strategy crucial.  Taking only</span><br><span class="hljs-comment">the last i bits of the hash code is also vulnerable:  for example, consider</span><br><span class="hljs-comment">the list [i &lt;&lt; 16 for i in range(20000)] as a set of keys.  Since ints are</span><br><span class="hljs-comment">their own hash codes, and this fits in a dict of size 2**15, the last 15 bits</span><br><span class="hljs-comment"> of every hash code are all 0:  they *all* map to the same table index.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">But catering to unusual cases should not slow the usual ones, so we just take</span><br><span class="hljs-comment">the last i bits anyway.  It&#x27;s up to collision resolution to do the rest.  If</span><br><span class="hljs-comment">we *usually* find the key we&#x27;re looking for on the first try (and, it turns</span><br><span class="hljs-comment">out, we usually do -- the table load factor is kept under 2/3, so the odds</span><br><span class="hljs-comment">are solidly in our favor), then it makes best sense to keep the initial index</span><br><span class="hljs-comment">computation dirt cheap.</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>稍微解释一下：</strong></p>
+<p>很多语言中的hash函数设计的理念是基于随机数提供一个冲突性很小的hash函数，但是Python中并没有这样做，对于int类型来说，python直接将int本身的值作为哈希索引值。这产生的效果并不糟糕，相反，在2**i的哈希表中，选取低阶i位的数值作为哈希表的索引相比于通过随机性的hash函数计算得到的索引值来说是非常快的。而且在一定连续范围的int类型的数据中并不会产生冲突，通常情况下，这是一种比随机性hash行为更好的索引值选取方式。</p>
+<p>当产生冲突时，hash冲突解决的方法显得至关重要。但是只采用低阶i位来说会带来冲突。</p>
+<p>举个例子</p>
+<figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs clojure">[i &lt;&lt; <span class="hljs-number">16</span> for i in range(<span class="hljs-number">20000</span>)]<br></code></pre></td></tr></table></figure>
+
+<p> <strong>注: i &lt;&lt; 16表示i左移16位。</strong></p>
+<p>上述代码得到的每个数值转为二进制格式。如果按照之前选取低阶i位，由于左移16位后，低阶16位都是0，就会映射到同一个槽位上，从而产生冲突。为了兼容这种不寻常的例子，同时不降低正常情况下hash计算的速度。依然选用低阶i为作为hash值，而处理不寻常情况则交给hash冲突解决方案。</p>
+<p>hash冲突解决方案的核心是如何高效的确定下一个槽位的位置，而Python中关于hash冲突的解决方案，我打算之后新开一个笔记专门学习，这里就暂且跳过。</p>
+<h3 id="四-、-源码分析dict的操作集和动态扩（缩）容等机制"><a href="#四-、-源码分析dict的操作集和动态扩（缩）容等机制" class="headerlink" title="四 、 源码分析dict的操作集和动态扩（缩）容等机制"></a>四 、 源码分析dict的操作集和动态扩（缩）容等机制</h3><p>接下来就开始阅读源码，学习下常见的dict的操作集和动态扩容。</p>
+<p>源码位于/Objects/dictobject.c文件下。</p>
+<h4 id="1-字典对象引用计数加减操作"><a href="#1-字典对象引用计数加减操作" class="headerlink" title="1.字典对象引用计数加减操作"></a>1.字典对象引用计数加减操作</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">// 字典本身就是一个对象，可以被其他对象所引用，因而字典的引用计数用dk_refcnt表示，如下是队引用计数的加减操作，没什么好说的。</span><br><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span><br><span class="hljs-built_in">dictkeys_incref</span>(PyDictKeysObject *dk)<br>&#123;<br><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> Py_REF_DEBUG</span><br>    _Py_RefTotal++;<br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span><br>    dk-&gt;dk_refcnt++;<br>&#125;<br><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span><br><span class="hljs-built_in">dictkeys_decref</span>(PyDictKeysObject *dk)<br>&#123;<br>    <span class="hljs-built_in">assert</span>(dk-&gt;dk_refcnt &gt; <span class="hljs-number">0</span>);<br><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> Py_REF_DEBUG</span><br>    _Py_RefTotal--;<br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span><br>    <span class="hljs-keyword">if</span> (--dk-&gt;dk_refcnt == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-built_in">free_keys_object</span>(dk);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>注：</strong></p>
+<p>(1).static关键字：用于控制变量的存储方式即可见性，对于全局变量来说，已经是静态存储，因此仅用作只在当前文件内访问，外部无法访问。对于局部变量来说，改变变量的存储方式，常见的在递归程序中，使用static声明，可以将变量的值保存到下一次调用的时候。</p>
+<p>(2).inline关键字：将函数声明为内联函数，其类似于宏定义，无需将参数压入栈，调用一系列操作，相比于宏定义，可以在类中使用。在编译时，编译器会将inline修饰的函数代码段插入到调用者的代码段中，这样在执行时，就无须跳转到目标函数去执行，相比于调用普通函数，效率更高，但同样会带来空间上的开销。</p>
+<h4 id="2-new和free一个PyDictKeyObject对象"><a href="#2-new和free一个PyDictKeyObject对象" class="headerlink" title="2.new和free一个PyDictKeyObject对象"></a>2.new和free一个PyDictKeyObject对象</h4><p>由于代码量太多，我不全部贴出来了，只说下其中对字典对象的复用机制。Python中的复用机制很多都是基于链表或者数组。对于字典复用的数据结构位于/include/internal/pycore_interp.h头文件中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta"># <span class="hljs-meta-keyword">define</span> PyDict_MAXFREELIST 80</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">Py_dict_state</span> &#123;</span><br>    <span class="hljs-comment">/* Dictionary reuse scheme to save calls to malloc and free */</span><br>    PyDictObject *free_list[PyDict_MAXFREELIST];<br>    <span class="hljs-keyword">int</span> numfree;<br>    PyDictKeysObject *keys_free_list[PyDict_MAXFREELIST];<br>    <span class="hljs-keyword">int</span> keys_numfree;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>(1).free_list：指针数组，数组中每个元素都是指向PyDictObject对象的指针。存储split类型的hash表。</p>
+<p>(2).keys_free_list：指针数组，元素指向PyDictKeyObject对象的指针。存储combined类型的hash表。</p>
+<p>(3).numfree: free_list中空闲的个数</p>
+<p>(4).keys_numfree: keys_free_list中空闲的个数</p>
+<p>(5).空闲数组的最大长度不能超过80，一旦空闲数组满了，将调用PyObject_Malloc申请内存块。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// new_keys_object函数中代码段</span><br><span class="hljs-keyword">static</span> PyDictKeysObject*<br>new_keys_object(<span class="hljs-keyword">uint8_t</span> log2_size)<br>&#123;<br>    ...<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">Py_dict_state</span> *<span class="hljs-title">state</span> =</span> get_dict_state();<br>    <span class="hljs-comment">// 如果有空闲数组的长度未到最大上限，则从空闲数组中取出一个空的PyDictKeysObject对象</span><br>    <span class="hljs-keyword">if</span> (log2_size == PyDict_LOG_MINSIZE &amp;&amp; state-&gt;keys_numfree &gt; <span class="hljs-number">0</span>) &#123;<br>        dk = state-&gt;keys_free_list[--state-&gt;keys_numfree];<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>    &#123;	<br>        <span class="hljs-comment">// 新开辟的空间大小由PyDictKeysObject结构体大小, 键值对实体结构体*已用个数大小和es&lt;&lt;log2_size大小组成。</span><br>        dk = PyObject_Malloc(<span class="hljs-keyword">sizeof</span>(PyDictKeysObject)<br>                             + (es&lt;&lt;log2_size大小组成,)<br>                             + <span class="hljs-keyword">sizeof</span>(PyDictKeyEntry) * usable);<br>        <span class="hljs-keyword">if</span> (dk == <span class="hljs-literal">NULL</span>) &#123;<br>            PyErr_NoMemory();<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>        &#125;<br>    &#125;<br>    ...<br>&#125;<br><br><span class="hljs-comment">// free_keys_object函数</span><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span><br>free_keys_object(PyDictKeysObject *keys)<br>&#123;<br>    ...<br>    <span class="hljs-keyword">if</span> (DK_SIZE(keys) == PyDict_MINSIZE &amp;&amp; state-&gt;keys_numfree &lt; PyDict_MAXFREELIST) &#123;<br>        state-&gt;keys_free_list[state-&gt;keys_numfree++] = keys;<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br>    PyObject_Free(keys);<br>    ...<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>(1).在new一个PyDictKeyObject对象前，首先会去检测下空闲数组中是否还有空闲位置，如果有，取出空的字典对象，否则调用PyObject_Malloc，为字典对象申请新的内存空间。</p>
+<p>(2).在free一个PyDictKeyObject对象前，首先会去检查空闲数组是否满，如果不满，将其存储keys_free_list数组中; 反之，调用PyObject_Free, 释放掉字典对象。</p>
+<p>(3).新开辟的空间大小由PyDictKeysObject结构体大小, 键值对实体结构体*已用个数大小和es&lt;&lt;log2_size大小组成。其中es大小取决于log2_size位数，当字典中包含大量元素时，发生扩容，将会申请更大的内存空间。所以，Python中新开辟的字典空间大小并不是线性的，一定程度上取决于log2_size大小。</p>
+<h4 id="3-字典的get-涉及的底层函数-Py-dict-lookup"><a href="#3-字典的get-涉及的底层函数-Py-dict-lookup" class="headerlink" title="3. 字典的get()涉及的底层函数_Py_dict_lookup()"></a>3. 字典的get()涉及的底层函数_Py_dict_lookup()</h4><p>在阅读_Py_dict_lookup源码前，先说明下<code>dk_indices</code>中可能存在的几种标识,</p>
+<p>代码位于/Include/internal/pycore_dict.h头文件中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DKIX_EMPTY (-1)</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DKIX_DUMMY (-2)  <span class="hljs-comment">/* Used internally */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DKIX_ERROR (-3)</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>注：只要dk_indices数组槽位中的数值能够对应上dk_entries数组中的槽位，就说明键对象找到能够被找到。</strong></p>
+<p>在/Include/dictobject.h头文件中可以找到dict容器暴露出来的接口。以下是get()方法对应的接口。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs c">PyObject *<br>PyDict_GetItem(PyObject *op, PyObject *key)<br>&#123;<br>    <span class="hljs-keyword">if</span> (!PyDict_Check(op)) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    <span class="hljs-comment">// 类型强转</span><br>    PyDictObject *mp = (PyDictObject *)op;<br><br>    Py_hash_t hash;<br>    <br>    <span class="hljs-comment">// 如果对于非unicode编码的对象, 获取该对象的hash值, 规定了键对象必须是可哈希的</span><br>    <span class="hljs-keyword">if</span> (!PyUnicode_CheckExact(key) ||<br>        (hash = ((PyASCIIObject *) key)-&gt;hash) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        hash = PyObject_Hash(key);<br>        <span class="hljs-keyword">if</span> (hash == <span class="hljs-number">-1</span>) &#123;<br>            PyErr_Clear();<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>        &#125;<br>    &#125;<br><br>    PyThreadState *tstate = _PyThreadState_GET();<br><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> Py_DEBUG</span><br>    <span class="hljs-comment">// bpo-40839: Before Python 3.10, it was possible to call PyDict_GetItem()</span><br>    <span class="hljs-comment">// with the GIL released.</span><br>    _Py_EnsureTstateNotNULL(tstate);<br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span><br><br>    <span class="hljs-comment">/* Preserve the existing exception */</span><br>    PyObject *exc_type, *exc_value, *exc_tb;<br>    PyObject *value;<br>    Py_ssize_t ix; (<span class="hljs-keyword">void</span>)ix;<br><br>    _PyErr_Fetch(tstate, &amp;exc_type, &amp;exc_value, &amp;exc_tb);<br><br>    <span class="hljs-comment">// 真正查找值对象的函数</span><br>    ix = _Py_dict_lookup(mp, key, hash, &amp;value);<br><br>    <span class="hljs-comment">/* Ignore any exception raised by the lookup */</span><br>    _PyErr_Restore(tstate, exc_type, exc_value, exc_tb);<br><br><br>    assert(ix &gt;= <span class="hljs-number">0</span> || value == <span class="hljs-literal">NULL</span>);<br>    <span class="hljs-comment">// 返回值对象</span><br>    <span class="hljs-keyword">return</span> value;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>1.阅读PyDict_GetItem函数，我们可以发现真正实现查找功能的函数是_Py_dict_lookup函数。</p>
+<p>2.字典中的键必须是可哈希的对象。</p>
+<p>3.Python 3.10版本之前调用PyDict_GetItem()方法,可能会释放掉GIL解释器锁。</p>
+<p>4.该函数默认会压制异常，所有的可能出现的错误都会被压制，甚至是当键值对存在，但可能由于堆栈溢出的错误也会被压制。</p>
+<p>字典查询对应的主要源码位于/Objects/dictobject.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><code class="hljs c"><br>Py_ssize_t _Py_HOT_FUNCTION<br>_Py_dict_lookup(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject **value_addr)<br>&#123;<br>    PyDictKeysObject *dk;<br>start:<br>    dk = mp-&gt;ma_keys;                     <span class="hljs-comment">// PyDictKeysObject对象</span><br>    DictKeysKind kind = dk-&gt;dk_kind;      <span class="hljs-comment">// 键的类型</span><br>    PyDictKeyEntry *ep0 = DK_ENTRIES(dk); <span class="hljs-comment">// 找到与dk-&gt;dk_indices对应的dk_entries</span><br>    <span class="hljs-keyword">size_t</span> mask = DK_MASK(dk);            <br>    <span class="hljs-keyword">size_t</span> perturb = hash;<br>    <span class="hljs-keyword">size_t</span> i = (<span class="hljs-keyword">size_t</span>)hash &amp; mask;       <span class="hljs-comment">// 计算查找的值位于dk-&gt;dk_indices中的索引</span><br>    Py_ssize_t ix;<br>    <span class="hljs-comment">// 检查标识以及键的类型,如果是unicode编码的键</span><br>    <span class="hljs-keyword">if</span> (PyUnicode_CheckExact(key) &amp;&amp; kind != DICT_KEYS_GENERAL) &#123;<br>        <span class="hljs-comment">/* Strings only */</span><br>        <span class="hljs-keyword">for</span> (;;) &#123;<br>            <span class="hljs-comment">// 获取dk-&gt;dk_indices数组中索引i对应的数值（该数值作为dk_entries的索引值)</span><br>            ix = dictkeys_get_index(mp-&gt;ma_keys, i);<br>            <span class="hljs-keyword">if</span> (ix &gt;= <span class="hljs-number">0</span>) &#123;<br>                 <span class="hljs-comment">// 如果ix&gt;=0,标志ix值匹配到dk_entries的索引项</span><br>                PyDictKeyEntry *ep = &amp;ep0[ix];<br>                assert(ep-&gt;me_key != <span class="hljs-literal">NULL</span>);<br>                assert(PyUnicode_CheckExact(ep-&gt;me_key));<br>                <span class="hljs-comment">// 比较key或者hash，然后根据hash表是split类型还是combined类型，返回对应的值</span><br>                <span class="hljs-keyword">if</span> (ep-&gt;me_key == key ||<br>                        (ep-&gt;me_hash == hash &amp;&amp; unicode_eq(ep-&gt;me_key, key))) &#123;<br>                    <span class="hljs-keyword">goto</span> found;<br>                &#125;<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ix == DKIX_EMPTY) &#123;<br>                <span class="hljs-comment">// 如果ix等于DKIX_EMPTY，标识查找不到该键，结束查找</span><br>                *value_addr = <span class="hljs-literal">NULL</span>;<br>                <span class="hljs-keyword">return</span> DKIX_EMPTY;<br>            &#125;<br>            <span class="hljs-comment">// 重新计算下一个槽位，然后再次在dk_indices数组中搜索，反复计算，直到遇见值为-1的槽位。</span><br>            perturb &gt;&gt;= PERTURB_SHIFT;<br>            i = mask &amp; (i*<span class="hljs-number">5</span> + perturb + <span class="hljs-number">1</span>);<br>            ix = dictkeys_get_index(mp-&gt;ma_keys, i);<br>            <span class="hljs-keyword">if</span> (ix &gt;= <span class="hljs-number">0</span>) &#123;<br>                PyDictKeyEntry *ep = &amp;ep0[ix];<br>                assert(ep-&gt;me_key != <span class="hljs-literal">NULL</span>);<br>                assert(PyUnicode_CheckExact(ep-&gt;me_key));<br>                <span class="hljs-keyword">if</span> (ep-&gt;me_key == key ||<br>                        (ep-&gt;me_hash == hash &amp;&amp; unicode_eq(ep-&gt;me_key, key))) &#123;<br>                    <span class="hljs-keyword">goto</span> found;<br>                &#125;<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ix == DKIX_EMPTY) &#123;<br>                *value_addr = <span class="hljs-literal">NULL</span>;<br>                <span class="hljs-keyword">return</span> DKIX_EMPTY;<br>            &#125;<br>            perturb &gt;&gt;= PERTURB_SHIFT;<br>            i = mask &amp; (i*<span class="hljs-number">5</span> + perturb + <span class="hljs-number">1</span>);<br>        &#125;<br>        Py_UNREACHABLE();<br>    &#125;<br>    <span class="hljs-comment">// 键为其他类型</span><br>    <span class="hljs-keyword">for</span> (;;) &#123;<br>        ix = dictkeys_get_index(dk, i);<br>        <span class="hljs-keyword">if</span> (ix == DKIX_EMPTY) &#123;<br>            *value_addr = <span class="hljs-literal">NULL</span>;<br>            <span class="hljs-keyword">return</span> ix;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (ix &gt;= <span class="hljs-number">0</span>) &#123;<br>            PyDictKeyEntry *ep = &amp;ep0[ix];<br>            assert(ep-&gt;me_key != <span class="hljs-literal">NULL</span>);<br>            <span class="hljs-keyword">if</span> (ep-&gt;me_key == key) &#123;<br>                <span class="hljs-keyword">goto</span> found;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (ep-&gt;me_hash == hash) &#123;<br>                PyObject *startkey = ep-&gt;me_key;<br>                Py_INCREF(startkey);<br>                <span class="hljs-keyword">int</span> cmp = PyObject_RichCompareBool(startkey, key, Py_EQ);<br>                Py_DECREF(startkey);<br>                <span class="hljs-keyword">if</span> (cmp &lt; <span class="hljs-number">0</span>) &#123;<br>                    *value_addr = <span class="hljs-literal">NULL</span>;<br>                    <span class="hljs-keyword">return</span> DKIX_ERROR;<br>                &#125;<br>                <span class="hljs-keyword">if</span> (dk == mp-&gt;ma_keys &amp;&amp; ep-&gt;me_key == startkey) &#123;<br>                    <span class="hljs-keyword">if</span> (cmp &gt; <span class="hljs-number">0</span>) &#123;<br>                        <span class="hljs-keyword">goto</span> found;<br>                    &#125;<br>                &#125;<br>                <span class="hljs-keyword">else</span> &#123;<br>                    <span class="hljs-comment">/* The dict was mutated, restart */</span><br>                    <span class="hljs-keyword">goto</span> start;<br>                &#125;<br>            &#125;<br>        &#125;<br>        perturb &gt;&gt;= PERTURB_SHIFT;<br>        i = (i*<span class="hljs-number">5</span> + perturb + <span class="hljs-number">1</span>) &amp; mask;<br>    &#125;<br>    Py_UNREACHABLE();<br>found:<br>    <span class="hljs-comment">// split类型</span><br>    <span class="hljs-keyword">if</span> (dk-&gt;dk_kind == DICT_KEYS_SPLIT) &#123;<br>        *value_addr = mp-&gt;ma_values[ix];<br>    &#125;<br>    <span class="hljs-comment">// combined类型</span><br>    <span class="hljs-keyword">else</span> &#123;<br>        *value_addr = ep0[ix].me_value;<br>    &#125;<br>    <span class="hljs-keyword">return</span> ix;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p><strong>注：</strong>Python3中，str对象默认是unicode编码的，所以对于以str对象作为键的字典，调用get()方法通常会进入第一个if分支。</p>
+<p><strong>说明：</strong></p>
+<p>具体的注释在源码中已经写了，下面主要总结一下查找键的过程。</p>
+<p>(1).执行宏定义DK_ENTRIES，找到与dk-&gt;dk_indices对应的dk_entries，通过(size_t)hash &amp; mask与运算计算出dk-&gt;dk_indices中的目标索引。</p>
+<p>(2).检查键key的类型，如果是unicode编码的对象，如str，进入if分支。进入步骤(2)。</p>
+<p>(3).通过调用dictkeys_get_index()方法，获取dk-&gt;dk_indices数组中索引i对应的数值ix（该数值作为dk_entries的索引值)。</p>
+<p>(4).如果数值ix &gt;= 0, 匹配到dk_entries的索引项，获取到对应的键值对实体对象ep，进入步骤(5)；如果数值ix == -1,表示遇到断链，无法继续查找，标识该键不存在，查找结束。其余情况，如ix==-2，可能槽位被其他键占用了，因此继续计算下一槽位，然后再次在dk_indices数组中搜索，反复执行步骤(4)，直到ix值 &gt;=0 ，找到键，或者 ix值==-1退出。</p>
+<p>(5).比较键值对实体对象ep-&gt;me_key对象与给定的key对象，或者比较他们的hash值是否相等</p>
+<p>(6)如果相等，判断hash表的类型是split还是combined的，如果是spilt，从PyDictObject对象的ma_values获取对应值；如果是combined，从键值对实体PyDictKeyEntry对象中的me_value获取对应值。</p>
+<h4 id="4-字典的-setitem-涉及的底层函数PyDict-SetItem"><a href="#4-字典的-setitem-涉及的底层函数PyDict-SetItem" class="headerlink" title="4.字典的__setitem__涉及的底层函数PyDict_SetItem()"></a>4.字典的<code>__setitem__</code>涉及的底层函数PyDict_SetItem()</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">int</span><br>PyDict_SetItem(PyObject *op, PyObject *key, PyObject *value)<br>&#123;<br>    PyDictObject *mp;<br>    Py_hash_t hash;<br>    <span class="hljs-keyword">if</span> (!PyDict_Check(op)) &#123;<br>        PyErr_BadInternalCall();<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    assert(key);<br>    assert(value);<br>    mp = (PyDictObject *)op;<br>    <span class="hljs-comment">// 键对象同样必须是可哈希的</span><br>    <span class="hljs-keyword">if</span> (!PyUnicode_CheckExact(key) ||<br>        (hash = ((PyASCIIObject *) key)-&gt;hash) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        hash = PyObject_Hash(key);<br>        <span class="hljs-keyword">if</span> (hash == <span class="hljs-number">-1</span>)<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 如果mp-&gt;ma_keys对象的地址等于全局唯一的空对象的地址, 向空字典中插入</span><br>    <span class="hljs-keyword">if</span> (mp-&gt;ma_keys == Py_EMPTY_KEYS) &#123;<br>        <span class="hljs-keyword">return</span> insert_to_emptydict(mp, key, hash, value);<br>    &#125;<br>    <span class="hljs-comment">/* insertdict() handles any resizing that might be necessary */</span><br>    <span class="hljs-comment">// 包含动态扩容机制</span><br>    <span class="hljs-keyword">return</span> insertdict(mp, key, hash, value);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>1.键对象同样必须是可哈希的</p>
+<p>2.插入键值对分两个函数, 当字典为空，等于全局唯一空对象时,调用insert_to_emptydict函数,不为空，调用insertdict函数,其中包含动态扩容机制。</p>
+<p>字典插入的源码主要位于/Objects/dictobject.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)<br>&#123;<br>    PyObject *old_value;<br>    PyDictKeyEntry *ep;<br><br>    <span class="hljs-comment">// 键对象, 值对象的引用计数+1</span><br>    Py_INCREF(key);<br>    Py_INCREF(value);<br>    <br>    <span class="hljs-keyword">if</span> (mp-&gt;ma_values != <span class="hljs-literal">NULL</span> &amp;&amp; !PyUnicode_CheckExact(key)) &#123;<br>        <span class="hljs-comment">// 动态扩容失败</span><br>        <span class="hljs-keyword">if</span> (insertion_resize(mp) &lt; <span class="hljs-number">0</span>)<br>            <span class="hljs-keyword">goto</span> Fail;<br>    &#125;<br><br>    <span class="hljs-comment">// 判断键是否存在</span><br>    Py_ssize_t ix = _Py_dict_lookup(mp, key, hash, &amp;old_value);<br>    <span class="hljs-comment">// 键比较过程出错</span><br>    <span class="hljs-keyword">if</span> (ix == DKIX_ERROR)<br>        <span class="hljs-keyword">goto</span> Fail;<br><br>    MAINTAIN_TRACKING(mp, key, value);<br><br>    <span class="hljs-comment">/* When insertion order is different from shared key, we can&#x27;t share</span><br><span class="hljs-comment">     * the key anymore.  Convert this instance to combine table.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">if</span> (_PyDict_HasSplitTable(mp) &amp;&amp;<br>        ((ix &gt;= <span class="hljs-number">0</span> &amp;&amp; old_value == <span class="hljs-literal">NULL</span> &amp;&amp; mp-&gt;ma_used != ix) ||<br>         (ix == DKIX_EMPTY &amp;&amp; mp-&gt;ma_used != mp-&gt;ma_keys-&gt;dk_nentries))) &#123;<br>        <span class="hljs-keyword">if</span> (insertion_resize(mp) &lt; <span class="hljs-number">0</span>)<br>            <span class="hljs-keyword">goto</span> Fail;<br>        ix = DKIX_EMPTY;<br>    &#125;<br><br>    <span class="hljs-comment">// 如果字典中不存在该键</span><br>    <span class="hljs-keyword">if</span> (ix == DKIX_EMPTY) &#123;<br>        <span class="hljs-comment">/* Insert into new slot. */</span><br>        mp-&gt;ma_keys-&gt;dk_version = <span class="hljs-number">0</span>;<br>        assert(old_value == <span class="hljs-literal">NULL</span>);<br>        <span class="hljs-comment">// 如果容器可用空间&lt;=0, 则需要进行扩容</span><br>        <span class="hljs-keyword">if</span> (mp-&gt;ma_keys-&gt;dk_usable &lt;= <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">/* Need to resize. */</span><br>            <span class="hljs-keyword">if</span> (insertion_resize(mp) &lt; <span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">goto</span> Fail;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (!PyUnicode_CheckExact(key) &amp;&amp; mp-&gt;ma_keys-&gt;dk_kind != DICT_KEYS_GENERAL) &#123;<br>            mp-&gt;ma_keys-&gt;dk_kind = DICT_KEYS_GENERAL;<br>        &#125;<br>        <span class="hljs-comment">// 查找空槽位</span><br>        Py_ssize_t hashpos = find_empty_slot(mp-&gt;ma_keys, hash);<br>        <span class="hljs-comment">// 获取到键值对实体数组中的空位置，dk_nentries表示已用的键值对个数</span><br>        ep = &amp;DK_ENTRIES(mp-&gt;ma_keys)[mp-&gt;ma_keys-&gt;dk_nentries];<br>        <span class="hljs-comment">// 将键值对实体数组中待插入键值对的索引映射到哈希索引数组中索引为hashpos的槽位上</span><br>        dictkeys_set_index(mp-&gt;ma_keys, hashpos, mp-&gt;ma_keys-&gt;dk_nentries);<br>        <span class="hljs-comment">// 赋值</span><br>        ep-&gt;me_key = key;<br>        ep-&gt;me_hash = hash;<br>        <span class="hljs-comment">// 针对split/combined将值添加到指定值</span><br>        <span class="hljs-keyword">if</span> (mp-&gt;ma_values) &#123;<br>            assert (mp-&gt;ma_values[mp-&gt;ma_keys-&gt;dk_nentries] == <span class="hljs-literal">NULL</span>);<br>            mp-&gt;ma_values[mp-&gt;ma_keys-&gt;dk_nentries] = value;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            ep-&gt;me_value = value;<br>        &#125;<br>        <span class="hljs-comment">// 修改结构体数据</span><br>        mp-&gt;ma_used++;<br>        mp-&gt;ma_version_tag = DICT_NEXT_VERSION();<br>        mp-&gt;ma_keys-&gt;dk_usable--;<br>        mp-&gt;ma_keys-&gt;dk_nentries++;<br>        assert(mp-&gt;ma_keys-&gt;dk_usable &gt;= <span class="hljs-number">0</span>);<br>        ASSERT_CONSISTENT(mp);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    <br>    <span class="hljs-comment">// 如果字典中存在该键, 判断是否覆盖。</span><br><br>    <span class="hljs-comment">// 字典键对应的值变了, 根据hash表不同类型进行覆盖</span><br>    <span class="hljs-keyword">if</span> (old_value != value) &#123;<br>        <span class="hljs-keyword">if</span> (_PyDict_HasSplitTable(mp)) &#123;<br>            mp-&gt;ma_values[ix] = value;<br>            <span class="hljs-keyword">if</span> (old_value == <span class="hljs-literal">NULL</span>) &#123;<br>                <span class="hljs-comment">/* pending state */</span><br>                assert(ix == mp-&gt;ma_used);<br>                mp-&gt;ma_used++;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            assert(old_value != <span class="hljs-literal">NULL</span>);<br>            DK_ENTRIES(mp-&gt;ma_keys)[ix].me_value = value;<br>        &#125;<br>        mp-&gt;ma_version_tag = DICT_NEXT_VERSION();<br>    &#125;<br>    <span class="hljs-comment">// 将旧值对象的引用计数减1</span><br>    <span class="hljs-comment">// 因为值也是个对象</span><br>    <span class="hljs-comment">// 如果重复执行dicts[&quot;name&quot;] = obj1, 那么old_value的地址 == value, 因此Py_XDECREF(old_value) ==&gt; Py_XDECREF(value)</span><br>    Py_XDECREF(old_value); <span class="hljs-comment">/* which **CAN** re-enter (see issue #22653) */</span><br>    ASSERT_CONSISTENT(mp);<br>    <span class="hljs-comment">// 由于键本身存在, 因此将key的引用计数减1</span><br>    Py_DECREF(key);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br><br>Fail:<br>    Py_DECREF(value);<br>    Py_DECREF(key);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>源码的面容我们已经目睹，接下来就庖丁解牛，分析各个步骤：</strong></p>
+<p>(1).因为涉及到容器的操作，所以需要将键对象和值对象的引用计数分别+1。</p>
+<p>(2).执行_Py_dict_lookup函数，判断键是否存在于字典中，如果不存在返回-1, 进入步骤(3); 如果存在, 进入步骤(8)。</p>
+<p>(3).如果字典中不存在该键，需要将键添加进去，接下来判断字典容器是否还有可用空间, 如果没有，需要进行动态扩容，调用insertion_resize函数,函数体如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 动态扩容的分析在下方</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p>(4).查找哈希索引数组中的槽位值为-1的空槽位, 函数体如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> Py_ssize_t<br>find_empty_slot(PyDictKeysObject *keys, Py_hash_t hash)<br>&#123;<br>    assert(keys != <span class="hljs-literal">NULL</span>);<br><br>    <span class="hljs-keyword">const</span> <span class="hljs-keyword">size_t</span> mask = DK_MASK(keys);<br>    <span class="hljs-comment">// hash与字典容量-1进行与运算</span><br>    <span class="hljs-keyword">size_t</span> i = hash &amp; mask;<br>    <span class="hljs-comment">// 获取hash索引数组中的索引为i的值</span><br>    Py_ssize_t ix = dictkeys_get_index(keys, i);<br>    <span class="hljs-comment">// 反复查找下一个槽位, 直到对应的槽位的值匹配不到键值对实体对象中的索引项，即ix == -1 的空槽位。</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">size_t</span> perturb = hash; ix &gt;= <span class="hljs-number">0</span>;) &#123;<br>        perturb &gt;&gt;= PERTURB_SHIFT;<br>        i = (i*<span class="hljs-number">5</span> + perturb + <span class="hljs-number">1</span>) &amp; mask;<br>        ix = dictkeys_get_index(keys, i);<br>    &#125;<br>    <span class="hljs-keyword">return</span> i;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>(5).执行宏定义<code>ep = &amp;DK_ENTRIES(mp-&gt;ma_keys)[mp-&gt;ma_keys-&gt;dk_nentries]</code>获取到键值对实体数组dk_entries中的空位置，dk_nentries表示已用的键值对个数。由此，我们可以了解，Python中的键值对对象是顺序添加到数组中的。</p>
+<p>(6).将键值对实体数组中待插入键值对的索引映射到哈希索引数组中索引为hashpos的槽位上。等价于<code>mp-&gt;ma_keys-&gt;dk_indices[hashpos] = mp-&gt;ma_keys-&gt;dk_nentries</code></p>
+<p>(7).对键值对结构体字段进行赋值,针对split/combined将值添加到指定字段上；修改mp的字段的数据，修改字典中的总键值对个数, 可用个数, 已用个数。最后返回0。</p>
+<p>(8).如果字典中存在改键，判断是否需要覆盖，如果字典键对应的值改变，根据hash表不同类型进行覆盖。</p>
+<p>(9).最后，将旧的值对象和键对象的引用计数减一，这里有一个注意点，如果<code>old_value == value</code>，两个对象地址相同，不需要进行覆盖，其引用计数在<code>insertdict</code>函数中不发生变化, 因此<code>Py_XDECREF(old_value) &lt;==&gt; Py_XDECREF(value)</code>，是不是非常的妙呢~</p>
+<p><strong>注:</strong></p>
+<p>通过阅读源码，不仅了解前辈们实现算法的思路，同时也能感受到逻辑的严密性。对于键对象来说，添加到容器中并不会增加引用计数, 而对于值对象来说，会增加引用计数。</p>
+<p><strong>特别是下面操作引用计数的这一代码段，我直呼妙哉！</strong></p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"> <span class="hljs-constructor">Py_INCREF(<span class="hljs-params">value</span>)</span>;<br> ...<br> <span class="hljs-keyword">if</span> (old_value != value) &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-constructor">_PyDict_HasSplitTable(<span class="hljs-params">mp</span>)</span>) &#123;<br>            mp-&gt;ma_values<span class="hljs-literal">[<span class="hljs-identifier">ix</span>]</span> = value;<br>            <span class="hljs-keyword">if</span> (old_value<span class="hljs-operator"> == </span>NULL) &#123;<br>                <span class="hljs-comment">/* pending state */</span><br>                <span class="hljs-keyword">assert</span>(ix<span class="hljs-operator"> == </span>mp-&gt;ma_used);<br>                mp-&gt;ma_used++;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-keyword">assert</span>(old_value != NULL);<br>            <span class="hljs-constructor">DK_ENTRIES(<span class="hljs-params">mp</span>-&gt;<span class="hljs-params">ma_keys</span>)</span><span class="hljs-literal">[<span class="hljs-identifier">ix</span>]</span>.me_value = value;<br>        &#125;<br>        mp-&gt;ma_version_tag = <span class="hljs-constructor">DICT_NEXT_VERSION()</span>;<br>    &#125;<br>    <span class="hljs-comment">// 将旧值对象的引用计数减1</span><br>    <span class="hljs-comment">// 因为值也是个对象</span><br>    <span class="hljs-comment">// 如果重复执行dicts[&quot;name&quot;] = obj1, 那么old_value的地址 == value, 因此Py_XDECREF(old_value) ==&gt; Py_XDECREF(value)</span><br><span class="hljs-constructor">Py_XDECREF(<span class="hljs-params">old_value</span>)</span>;<br>    ...<br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="5-字典的动态扩-缩-容机制"><a href="#5-字典的动态扩-缩-容机制" class="headerlink" title="5.字典的动态扩(缩)容机制"></a>5.字典的动态扩(缩)容机制</h4><p>Python中字典的动态扩(缩)容和其他语言中不一样，有些语言中字典的扩(缩)容是在原数据上进行，而有些语言会开辟一个更大(小)的容器，并将数据从原容器依次移到新容器中，接下来就学习下Python字典的动态扩(缩)容机制。</p>
+<p>源码位于/Objects/dictobject.c中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>insertion_resize(PyDictObject *mp)<br><span class="hljs-comment">// 动态扩容</span><br>&#123;<br>    <span class="hljs-keyword">return</span> dictresize(mp, calculate_log2_keysize(GROWTH_RATE(mp)));<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>dictresize接受两个参数，第一个为带扩(缩)容的字典对象，第二个为预计扩(缩)容后的最小位数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>dictresize(PyDictObject *mp, <span class="hljs-keyword">uint8_t</span> log2_newsize)<br>&#123;<br>    Py_ssize_t numentries;<br>    PyDictKeysObject *oldkeys;  <span class="hljs-comment">// combined的字典</span><br>    PyObject **oldvalues;       <br>    PyDictKeyEntry *oldentries, *newentries;  <span class="hljs-comment">// 新旧键值对实体</span><br><br>    <span class="hljs-keyword">if</span> (log2_newsize &gt;= SIZEOF_SIZE_T*<span class="hljs-number">8</span>) &#123;<br>        PyErr_NoMemory();<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    assert(log2_newsize &gt;= PyDict_LOG_MINSIZE);<br><br>    oldkeys = mp-&gt;ma_keys;<br><br>    <span class="hljs-comment">/* <span class="hljs-doctag">NOTE:</span> Current odict checks mp-&gt;ma_keys to detect resize happen.</span><br><span class="hljs-comment">     * So we can&#x27;t reuse oldkeys even if oldkeys-&gt;dk_size == newsize.</span><br><span class="hljs-comment">     * <span class="hljs-doctag">TODO:</span> Try reusing oldkeys when reimplement odict.</span><br><span class="hljs-comment">     */</span><br><br>    <span class="hljs-comment">/* Allocate a new table. */</span><br>    mp-&gt;ma_keys = new_keys_object(log2_newsize);<br>    <span class="hljs-keyword">if</span> (mp-&gt;ma_keys == <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-comment">// 申请内存失败, 扩(缩)容失败</span><br>        mp-&gt;ma_keys = oldkeys;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    <span class="hljs-comment">// New table must be large enough.</span><br>    assert(mp-&gt;ma_keys-&gt;dk_usable &gt;= mp-&gt;ma_used);<br>    <span class="hljs-keyword">if</span> (oldkeys-&gt;dk_kind == DICT_KEYS_GENERAL)<br>        mp-&gt;ma_keys-&gt;dk_kind = DICT_KEYS_GENERAL;<br><br>    numentries = mp-&gt;ma_used;<br>    oldentries = DK_ENTRIES(oldkeys);<br>    newentries = DK_ENTRIES(mp-&gt;ma_keys);<br>    oldvalues = mp-&gt;ma_values;<br>    <span class="hljs-comment">// split -&gt; combined</span><br>    <span class="hljs-keyword">if</span> (oldvalues != <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-comment">/* Convert split table into new combined table.</span><br><span class="hljs-comment">         * We must incref keys; we can transfer values.</span><br><span class="hljs-comment">         * Note that values of split table is always dense.</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-keyword">for</span> (Py_ssize_t i = <span class="hljs-number">0</span>; i &lt; numentries; i++) &#123;<br>            assert(oldvalues[i] != <span class="hljs-literal">NULL</span>);<br>            PyDictKeyEntry *ep = &amp;oldentries[i];<br>            PyObject *key = ep-&gt;me_key;<br>            Py_INCREF(key);<br>            newentries[i].me_key = key;<br>            newentries[i].me_hash = ep-&gt;me_hash;<br>            newentries[i].me_value = oldvalues[i];<br>        &#125;<br><br>        dictkeys_decref(oldkeys);<br>        mp-&gt;ma_values = <span class="hljs-literal">NULL</span>;<br>        <span class="hljs-keyword">if</span> (oldvalues != empty_values) &#123;<br>            free_values(oldvalues);<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;  <span class="hljs-comment">// combined table.</span><br>        <span class="hljs-comment">// 如果扩(缩)容后的大小和原数组大小一直, 采用memcpy拷贝过去, 意味着扩(缩)容前后,大小相等,不会对原数组进行复用</span><br>        <span class="hljs-keyword">if</span> (oldkeys-&gt;dk_nentries == numentries) &#123;<br>            <span class="hljs-built_in">memcpy</span>(newentries, oldentries, numentries * <span class="hljs-keyword">sizeof</span>(PyDictKeyEntry));<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">// ep指向旧键值对实体数组的首地址, 索引次序相对于原数组可能会发生变化</span><br>            PyDictKeyEntry *ep = oldentries;<br>            <span class="hljs-keyword">for</span> (Py_ssize_t i = <span class="hljs-number">0</span>; i &lt; numentries; i++) &#123;<br>                <span class="hljs-comment">// 忽略掉为值对象为NULL的键值对实体</span><br>                <span class="hljs-keyword">while</span> (ep-&gt;me_value == <span class="hljs-literal">NULL</span>)<br>                    ep++;<br>                <span class="hljs-comment">// 将地址指向的数据添加到新数组中的位置上</span><br>                newentries[i] = *ep++;<br>            &#125;<br>        &#125;<br><br>        assert(oldkeys-&gt;dk_kind != DICT_KEYS_SPLIT);<br>        assert(oldkeys-&gt;dk_refcnt == <span class="hljs-number">1</span>);<br><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> Py_REF_DEBUG</span><br>        _Py_RefTotal--;<br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span><br>        <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">Py_dict_state</span> *<span class="hljs-title">state</span> =</span> get_dict_state();<br><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> Py_DEBUG</span><br>        <span class="hljs-comment">// dictresize() must not be called after _PyDict_Fini()</span><br>        assert(state-&gt;keys_numfree != <span class="hljs-number">-1</span>);<br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span>  </span><br><br>        <span class="hljs-comment">// 如果缩容后的大小为初始大小8,在空闲数组有余量的情况下,会缓存到空闲数组中, 反之直接回收内存资源。</span><br>        <span class="hljs-keyword">if</span> (DK_SIZE(oldkeys) == PyDict_MINSIZE &amp;&amp;<br>            state-&gt;keys_numfree &lt; PyDict_MAXFREELIST)<br>        &#123;<br>            state-&gt;keys_free_list[state-&gt;keys_numfree++] = oldkeys;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            PyObject_Free(oldkeys);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 针对新的键值对实体数组, 重新构建hash索引数组, 即重新计算每个对象的hash值, 匹配对应的槽位, 形成映射关系。</span><br>    build_indices(mp-&gt;ma_keys, newentries, numentries);<br>    mp-&gt;ma_keys-&gt;dk_usable -= numentries;<br>    mp-&gt;ma_keys-&gt;dk_nentries = numentries;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>分析：</strong></p>
+<p>(1).计算预计扩(缩)容后的最小位数，根据最小位数，申请一个更大的字典结构体。如果申请内存失败，将导致扩(缩)容失败。</p>
+<p>(2).将split类型的hash表转为combined的hash表，如果旧的hash表是split类型，不仅需要将键值对实体拷贝过去，同时也要将旧hash表中的键对象的引用计数都减1。</p>
+<p>(3).如果旧的hash表是combined类型，又分两种情况。如果扩(缩)容后的大小和原数组大小一致, 采用memcpy拷贝过去, 意味着扩容前后,大小相等,不会对原数组进行复用；反之，遍历新的键值对实体数组，将旧的动态数组中对象依次赋值过去。</p>
+<p>(4).扩(缩)容完成，需要考虑到内存空间的复用，如果缩容后的大小为初始大小8,在空闲数组有余量的情况下,会缓存到空闲数组中state-&gt;keys_free_list, 实现状态管理, 反之直接回收内存资源。</p>
+<p>(5).由于是申请了新的内存空间，因此需要针对新的键值对实体数组,和新的hash索引数组, 调用build_indices函数重新构建映射关系。</p>
+<p>(6).修改字典可用空间和键值对实体数组大小，至此，动态扩(缩)容的全貌已经展现。</p>
+<p><strong>总结：</strong></p>
+<p>1.字典是否需要扩缩容，在于字典中可用的个数是否大于等于0，即_dictkeysobject中的dk_usable 是否 &gt;=0。</p>
+<p>2.Python中的扩缩容并不会基于原对象实现，而是申请一块合适大小的新对象。并将原对象上的键值对对象依次拷贝过去。</p>
+<p>3.扩缩容完成，如果缩容后变成了空字典，即容量为8，则需要加入到空闲数组中，减少频繁申请内存空间，实现字典复用。</p>
+<p>4.字典的查询速度非常快，Python中并没有采用类似C++的map的红黑树结构，采用的是更为简单的两个数组—–hash索引数组，键值对实体数组，形成一种映射关系，两者都是动态数组。</p>
+<p>5.Python字典的查找是首先根据hash &amp; mask(掩码,mask是随着字典容量变化而变化的)，计算出在hash索引数组中的下标，然后得到下标对应的值，即键值对实体数组中的下标，最终得到键值对实体数组中对应槽位的键值对实体指针。根据指针找到具体的结构体对象。因此动态扩(缩)容后, mask发生变化，如果按照之前的映射关系，将无法正确定位到键，所以需要重新构建新hash索引数组和新键值对实体数组之间的映射关系。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/C/">C</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                      <a class="hover-with-bg" href="/tags/C/">C</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/11/15/Python%E4%B8%AD%E8%8E%B7%E5%8F%96%E5%87%BD%E6%95%B0%E7%9A%84%E5%8F%82%E6%95%B0%E4%BF%A1%E6%81%AF/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python中获取函数的参数信息</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/11/01/selenium%E6%8E%A5%E7%AE%A1chrome%EF%BC%8C%E5%B9%B6%E5%A2%9E%E5%8A%A0%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84%E5%8F%82%E6%95%B0/">
+                        <span class="hidden-mobile">selenium接管chrome，并增加自定义的参数</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

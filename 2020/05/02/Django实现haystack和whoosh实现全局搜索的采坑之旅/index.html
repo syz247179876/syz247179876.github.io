@@ -1,0 +1,625 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="haystack接口+Whoosh引擎后端实现搜索详解：1.为什么选择使用搜索引擎？目前基本所有的网站都有搜索功能，过去主要是通过模糊查询like，但是like的效率不过，特别是针对关键字在多个字段中搜索的时候，很麻烦，而且在数据量特别大的时候，会给数据库带来特别大的压力，因此我们选择使用搜索引擎来处理。 2.搜索引擎工作原理搜索引擎的工作原理并不是直接在数据库中进行搜索，而是先对数据库的数据进行">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django实现haystack和whoosh实现全局搜索的采坑之旅">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/02/Django%E5%AE%9E%E7%8E%B0haystack%E5%92%8Cwhoosh%E5%AE%9E%E7%8E%B0%E5%85%A8%E5%B1%80%E6%90%9C%E7%B4%A2%E7%9A%84%E9%87%87%E5%9D%91%E4%B9%8B%E6%97%85/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="haystack接口+Whoosh引擎后端实现搜索详解：1.为什么选择使用搜索引擎？目前基本所有的网站都有搜索功能，过去主要是通过模糊查询like，但是like的效率不过，特别是针对关键字在多个字段中搜索的时候，很麻烦，而且在数据量特别大的时候，会给数据库带来特别大的压力，因此我们选择使用搜索引擎来处理。 2.搜索引擎工作原理搜索引擎的工作原理并不是直接在数据库中进行搜索，而是先对数据库的数据进行">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-02T05:51:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.423Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="搜索">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>Django实现haystack和whoosh实现全局搜索的采坑之旅 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Django实现haystack和whoosh实现全局搜索的采坑之旅">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-02 13:51" pubdate>
+        2020年5月2日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.4k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Django实现haystack和whoosh实现全局搜索的采坑之旅</h1>
+            
+            <div class="markdown-body">
+              <h3 id="haystack接口-Whoosh引擎后端实现搜索详解："><a href="#haystack接口-Whoosh引擎后端实现搜索详解：" class="headerlink" title="haystack接口+Whoosh引擎后端实现搜索详解："></a><strong>haystack接口+Whoosh引擎后端实现搜索详解：</strong></h3><h4 id="1-为什么选择使用搜索引擎？"><a href="#1-为什么选择使用搜索引擎？" class="headerlink" title="1.为什么选择使用搜索引擎？"></a><strong>1.为什么选择使用搜索引擎？</strong></h4><p>目前基本所有的网站都有搜索功能，过去主要是通过模糊查询like，但是like的效率不过，特别是针对关键字在多个字段中搜索的时候，很麻烦，而且在数据量特别大的时候，会给数据库带来特别大的压力，因此我们选择使用搜索引擎来处理。</p>
+<h4 id="2-搜索引擎工作原理"><a href="#2-搜索引擎工作原理" class="headerlink" title="2.搜索引擎工作原理"></a><strong>2.搜索引擎工作原理</strong></h4><p>搜索引擎的工作原理并不是直接在数据库中进行搜索，而是先对数据库的数据进行一边预处理，建立一份索引结构数据。这样以后搜索的时候，将直接在索引结构数据中搜索关键字，进而找到真实的存储位置，大大提高了效率，减小数据库的压力。</p>
+<h4 id="3-如何使用ElasticSearch？"><a href="#3-如何使用ElasticSearch？" class="headerlink" title="3.如何使用ElasticSearch？"></a><strong>3.如何使用ElasticSearch？</strong></h4><p>①安装django对接Whoosh的接口haystack包</p>
+<p><code>pip install django-haystack</code></p>
+<p><code>pip install drf-haystack</code>  # 类似drf规则的借口</p>
+<p><code>pip install jieba</code>   # 中文分词包</p>
+<p><code>pip install whoosh</code>   # 纯python编写的全文搜索引擎，虽然性能不高，但错误少。</p>
+<p>如果python版本过高，drf-haystack会自动降低你的版本为django2.2，之前的项目为django3.0不过降低到2.2,只要不涉及wsgi的问题就都没关系。</p>
+<p>注：<code>django-haystack</code>和<code>haystack</code>会冲突，报错</p>
+<p> <code>from haystack import connections</code></p>
+<p><code>ImportError: cannot import name &#39;connections&#39;</code></p>
+<p>因此需要删掉haystack</p>
+<hr>
+<p>②将app添加到INSTALLED_APP中</p>
+<p>`python<br>INSTALLED_APPS = [  </p>
+<pre><code>&#39;simpleui&#39;,  
+
+&#39;django.contrib.admin&#39;,  
+
+&#39;django.contrib.admindocs&#39;,  
+
+&#39;django.contrib.auth&#39;,  
+
+&#39;django.contrib.contenttypes&#39;,  
+
+&#39;django.contrib.sessions&#39;,  
+
+&#39;django.contrib.messages&#39;,  
+
+&#39;django.contrib.staticfiles&#39;,  
+
+&#39;django.contrib.humanize&#39;,  # 人性化标签  
+
+&#39;haystack&#39;,  
+</code></pre>
+<p>`</p>
+<hr>
+<p><strong>③添加haystack的搜索引擎</strong></p>
+<p>这个地方根据官方文档的介绍，有多种全文搜索引擎</p>
+<p>（1）.这是一种基于elasticserach的搜索引擎</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">HAYSTACK_CONNECTIONS = &#123;<br>    <span class="hljs-string">&#x27;default&#x27;</span>: &#123;<br>        <span class="hljs-string">&#x27;ENGINE&#x27;</span>: <span class="hljs-string">&#x27;haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine&#x27;</span>,<br>        <span class="hljs-string">&#x27;URL&#x27;</span>: <span class="hljs-string">&#x27;http://127.0.0.1:9200/&#x27;</span>,  <span class="hljs-comment"># 指定运行搜索引擎的服务器ip地址</span><br>        <span class="hljs-string">&#x27;INDEX_NAME&#x27;</span>: <span class="hljs-string">&#x27;haystack&#x27;</span>,  <span class="hljs-comment"># 指定elasticsearch所建立的索引库的名字</span><br>    &#125;,<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>（2）.这是一种基于Whoosh的搜索引擎，这个引擎是纯python写的，速度虽然没有elasticsearch等搜索引擎快，但是报错少呀~</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python">HAYSTACK_CONNECTIONS = &#123;<br>    <span class="hljs-string">&#x27;default&#x27;</span>: &#123;<br>        <span class="hljs-comment"># 指定使用的搜索引擎</span><br>        <span class="hljs-string">&#x27;ENGINE&#x27;</span>: <span class="hljs-string">&#x27;haystack.backends.whoosh_backend.WhooshEngine&#x27;</span>,<br>        <span class="hljs-comment"># 指定索引文件存放位置</span><br>        <span class="hljs-string">&#x27;PATH&#x27;</span>: os.path.join(BASE_DIR, <span class="hljs-string">&#x27;whoosh_index&#x27;</span>),<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>如果需要同步更新索引，添加如下配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 新增的数据自动生成索引</span><br>HAYSTACK_SIGNAL_PROCESSOR = <span class="hljs-string">&#x27;haystack.signals.RealtimeSignalProcessor&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<p>如果需要设置每页显示的数目，因为它同时内置了django的分页器功能，添加如下配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 设置每页显示的数目，默认为20，可以自己修改</span><br>HAYSTACK_SEARCH_RESULTS_PER_PAGE = <span class="hljs-number">6</span><br></code></pre></td></tr></table></figure>
+
+<hr>
+<p><strong>④添加SerachIndexes</strong></p>
+<p>SerachIndex对象指的是应该在搜索索引中放置什么样的数据和怎样处理数据流的一个对象。</p>
+<p>其次我们需要子类化indexs.SearchIndex和indexes.Indexable类。</p>
+<p>包含get_model（）获取模型方法，以及定义查询关键字的index_queryset()方法。</p>
+<p><strong>注：该py最好放在要搜索的model的app下。因为haystack会自动进行搜索。</strong></p>
+<p>在自己的app下创建py文件，<code>search_indexes.py</code>（注意名称固定，方便haystack查找到）不要随意替换目录！</p>
+<p><strong>例子：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">NoteIndex</span>(<span class="hljs-params">indexes.SearchIndex, indexes.Indexable</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    定义关于Note的haystack搜索引擎</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-comment"># document 表示该字段主要用于关键字查询的主要字段</span><br>    <span class="hljs-comment"># use_Template表示该字段将从模板中指明</span><br>    text = indexes.CharField(document=<span class="hljs-literal">True</span>, use_template=<span class="hljs-literal">True</span>)<br>    <span class="hljs-comment"># model_attr表明能让搜索引擎识别的额外字段，用来检索参照数据表中的字段值</span><br>    title = indexes.CharField(model_attr=<span class="hljs-string">&#x27;title&#x27;</span>)<br>    note_author = indexes.CharField(model_attr=<span class="hljs-string">&#x27;note_author&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_model</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-comment"># 返回建立索引的模型类</span><br>        <span class="hljs-keyword">return</span> Note<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">index_queryset</span>(<span class="hljs-params">self, using=<span class="hljs-literal">None</span></span>):</span><br>        <span class="hljs-comment"># 返回建立索引的数据查询集</span><br>        <span class="hljs-keyword">return</span> self.get_model().note_.<span class="hljs-built_in">all</span>()<br></code></pre></td></tr></table></figure>
+
+<p><strong>这里稍微说明一下：</strong></p>
+<p>1.搜索引擎要查找对应的数据肯定需要关键字，而这个关键字可能有多个，所以text字段代表了这些关键字，</p>
+<p>2.document=True必须出现在主关键字中</p>
+<p>3.use_template=True，需要新建一个txt文档来存放索引关键字。</p>
+<p>4.model_attr标记的关键字，用作额外关键字。</p>
+<hr>
+<p><strong>⑤创建搜索引擎文档：</strong></p>
+<p>名命格式：<code>templates/search/indexes/&lt;appname&gt;/&lt;model&gt;_text.txt</code></p>
+<p>写入以下内容索引字段</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">&#123;&#123; <span class="hljs-built_in">object</span>.<span class="hljs-built_in">id</span> &#125;&#125;<br>&#123;&#123; <span class="hljs-built_in">object</span>.title &#125;&#125;<br>&#123;&#123; <span class="hljs-built_in">object</span>.note_author.username &#125;&#125;<br>&#123;&#123; <span class="hljs-built_in">object</span>.<span class="hljs-built_in">type</span> &#125;&#125;<br></code></pre></td></tr></table></figure>
+
+<p>作用是构建搜索引擎所索引的文档，其中text字段的索引值可以由多个字段组成，具体由哪些模型类字段组成，将存在于搜索引擎文档中。</p>
+<p>例如我这里的关键字字段有4个，那么转化为url的时候，这些关键字将通过text参数名传递此模板指明当将关键词通过text参数名传递时</p>
+<p>（即127.0.0.1:8080/notes/search/?text=2</p>
+<p>或127.0.0.1:8080/goods/search/?text=’syz’</p>
+<p>或127.0.0.1:8080/goods/search/?text=’python笔记(1)’</p>
+<p>或127.0.0.1:8080/goods/search/?text=’celery类别’</p>
+<p>可以通过Note(model)的id、title、note_author.username、type来进行关键字索引查询。</p>
+<hr>
+<p><strong>⑥最后别忘了添加url路由</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">path(<span class="hljs-string">&#x27;search/&#x27;</span>, include(<span class="hljs-string">&#x27;haystack.urls&#x27;</span>)),<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> django.conf.urls <span class="hljs-keyword">import</span> url<br><span class="hljs-keyword">from</span> haystack.views <span class="hljs-keyword">import</span> SearchView<br>urlpatterns = [<br>    url(<span class="hljs-string">r&#x27;^$&#x27;</span>, SearchView(), name=<span class="hljs-string">&#x27;haystack_search&#x27;</span>),<br>]<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：include(haystack.urls)实际是include第二种子urlpatterns</strong></p>
+<hr>
+<p><strong>⑦使用中文分词包jieba进行词组分析</strong></p>
+<p>因为whoosh默认使用的分词功能依赖于正侧表达式，所以对英文的分词比较有用，但是对于中文分词效果不好。因此我们就需要一个具备中文字典的分词包—-jieba。</p>
+<p>jieba的关键词提取主要运用了两种算法：texttank，TF-IDF。这里超出了本篇笔记的范围，暂时不做介绍。（主要是作者我深入接触哈哈哈）</p>
+<p>使用jieba作为分词包，我们就需要修改whoosh的后端。</p>
+<p>找到<code>site-packages</code>中的<code>whoosh_backend.py</code></p>
+<p>修改配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#import最后一行加入jieba分词器</span><br><span class="hljs-keyword">from</span> jieba.analyse <span class="hljs-keyword">import</span> ChineseAnalyzer<br><br>schema_fields[field_class.index_fieldname] = TEXT(stored=<span class="hljs-literal">True</span>, analyzer=ChineseAnalyzer(), field_boost=field_class.boost, sortable=<span class="hljs-literal">True</span>)<br><span class="hljs-comment"># 将analyzer替换成jieba的ChineseAnalyzer</span><br><br></code></pre></td></tr></table></figure>
+
+<p>以上基本的配置及搜索索引已经搭建好，接下来就需要生成索引表了</p>
+<hr>
+<p><strong>⑧手动更新索引：</strong></p>
+<p><code>python manage.py rebuild_index</code> # 更新数据库的数据到es中</p>
+<hr>
+<p><strong>⑨搭配restful api 传递数据</strong></p>
+<p>做下一个项目的时候完善这里</p>
+<hr>
+<p>详情参考haystack官方文档：<br><a target="_blank" rel="noopener" href="https://django-haystack.readthedocs.io/en/v2.5.1/tutorial.html">https://django-haystack.readthedocs.io/en/v2.5.1/tutorial.html</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%90%9C%E7%B4%A2/">搜索</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/02/Ubuntu%E7%9A%84%E9%98%B2%E7%81%AB%E5%A2%99---ufw/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Ubuntu的防火墙---ufw</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/02/%E8%A7%A3%E5%86%B3%20linux%20%E4%B8%8A%E5%AE%89%E8%A3%85%E7%9A%84script%E4%B8%8D%E5%9C%A8path/">
+                        <span class="hidden-mobile">解决 Linux 上安装的script不在path</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

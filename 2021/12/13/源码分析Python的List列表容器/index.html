@@ -1,0 +1,604 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一 、背景列表list是Python开发中常用的数据结构之一，同样，其他语言中也有类似的数据结构，例如C++中的vector，Golang中的list, Java中的ArrayList等。list在Python底层是基于动态数组，给个通俗的名字—指针数组实现的，但实现的方式在每个语言中可能不完全相同。接下来，就来探究下list底层的数据结构，来学习一下Python的list相关操作集，动态扩容机制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析Python的List的列表容器">
+<meta property="og:url" content="https://syzzjw.cn/2021/12/13/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84List%E5%88%97%E8%A1%A8%E5%AE%B9%E5%99%A8/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一 、背景列表list是Python开发中常用的数据结构之一，同样，其他语言中也有类似的数据结构，例如C++中的vector，Golang中的list, Java中的ArrayList等。list在Python底层是基于动态数组，给个通俗的名字—指针数组实现的，但实现的方式在每个语言中可能不完全相同。接下来，就来探究下list底层的数据结构，来学习一下Python的list相关操作集，动态扩容机制">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-13T08:51:00.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.468Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="数据结构">
+<meta property="article:tag" content="C">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>源码分析Python的List的列表容器 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="源码分析Python的List的列表容器">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-12-13 16:51" pubdate>
+        2021年12月13日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      7.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      24 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">源码分析Python的List的列表容器</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一-、背景"><a href="#一-、背景" class="headerlink" title="一 、背景"></a>一 、背景</h3><p>列表list是Python开发中常用的数据结构之一，同样，其他语言中也有类似的数据结构，例如C++中的vector，Golang中的list, Java中的ArrayList等。list在Python底层是基于动态数组，给个通俗的名字—指针数组实现的，但实现的方式在每个语言中可能不完全相同。接下来，就来探究下list底层的数据结构，来学习一下Python的list相关操作集，动态扩容机制以及如何在内存的使用上进行优化的。本篇文章所使用的的Python版本为3.10。</p>
+<h3 id="二-、list所设计的数据结构"><a href="#二-、list所设计的数据结构" class="headerlink" title="二 、list所设计的数据结构"></a>二 、list所设计的数据结构</h3><p>list结构体对应的代码位于/cpython/listobject.h</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>    PyObject_VAR_HEAD<br>    PyObject **ob_item;  <span class="hljs-comment">/* 动态数组中存放的是真实对象的指针，即指针数组*/</span><br>    Py_ssize_t allocated;<br>&#125; PyListObject;<br></code></pre></td></tr></table></figure>
+
+<p>list对象，是可变对象，相比于不可变对象的数据结构来说，增加了ob_size字段。因此PyObject_VAR_HEAD如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>    PyObject ob_base;<br>    Py_ssize_t ob_size; <span class="hljs-comment">/* 数组中的长度 */</span><br>&#125; PyVarObject;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">object</span> &#123;</span><br>    _PyObject_HEAD_EXTRA<br>    Py_ssize_t ob_refcnt;<br>    PyTypeObject *ob_type;<br>&#125; PyObject;<br></code></pre></td></tr></table></figure>
+
+<p>说明:</p>
+<ol>
+<li>ob_refcnt：对象的引用计数值。</li>
+<li>ob_type：对象的类型。</li>
+<li>ob_size：数组中已使用的元素的个数。</li>
+<li>ob_item：指针指向存放指针的数组，即指针数组。</li>
+<li>allocated：数组中的总容量。</li>
+<li><strong>list中包含的是每个指向ob_item对应位置的指针，所以使用<code>**ob_item</code>等价于<code>*ob_item[]</code></strong></li>
+</ol>
+<h3 id="三-、-list相关的操作集"><a href="#三-、-list相关的操作集" class="headerlink" title="三 、 list相关的操作集"></a>三 、 list相关的操作集</h3><p>list相关的部分操作集位于/Include/listobject.h，还有一部分位于/Objects/listobject.c中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c">PyAPI_FUNC(PyObject *) PyList_New(Py_ssize_t size);<br>PyAPI_FUNC(Py_ssize_t) PyList_Size(PyObject *);<br><br>PyAPI_FUNC(PyObject *) PyList_GetItem(PyObject *, Py_ssize_t);<br>PyAPI_FUNC(<span class="hljs-keyword">int</span>) PyList_SetItem(PyObject *, Py_ssize_t, PyObject *);<br>PyAPI_FUNC(<span class="hljs-keyword">int</span>) PyList_Insert(PyObject *, Py_ssize_t, PyObject *);<br>PyAPI_FUNC(<span class="hljs-keyword">int</span>) PyList_Append(PyObject *, PyObject *);<br><br>PyAPI_FUNC(PyObject *) PyList_GetSlice(PyObject *, Py_ssize_t, Py_ssize_t);<br>PyAPI_FUNC(<span class="hljs-keyword">int</span>) PyList_SetSlice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);<br><br>PyAPI_FUNC(<span class="hljs-keyword">int</span>) PyList_Sort(PyObject *);<br>PyAPI_FUNC(<span class="hljs-keyword">int</span>) PyList_Reverse(PyObject *);<br>PyAPI_FUNC(PyObject *) PyList_AsTuple(PyObject *);<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> PySequenceMethods list_as_sequence = &#123;<br>    (lenfunc)list_length,                       <span class="hljs-comment">/* sq_length */</span><br>    (binaryfunc)list_concat,                    <span class="hljs-comment">/* sq_concat */</span><br>    (ssizeargfunc)list_repeat,                  <span class="hljs-comment">/* sq_repeat */</span><br>    (ssizeargfunc)list_item,                    <span class="hljs-comment">/* sq_item */</span><br>    <span class="hljs-number">0</span>,                                          <span class="hljs-comment">/* sq_slice */</span><br>    (ssizeobjargproc)list_ass_item,             <span class="hljs-comment">/* sq_ass_item */</span><br>    <span class="hljs-number">0</span>,                                          <span class="hljs-comment">/* sq_ass_slice */</span><br>    (objobjproc)list_contains,                  <span class="hljs-comment">/* sq_contains */</span><br>    (binaryfunc)list_inplace_concat,            <span class="hljs-comment">/* sq_inplace_concat */</span><br>    (ssizeargfunc)list_inplace_repeat,          <span class="hljs-comment">/* sq_inplace_repeat */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p><strong>1.首先，来看下<code>PyList_GetItem</code>函数和<code>PyList_SetItem</code>函数。</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs c">PyObject *<br>PyList_GetItem(PyObject *op, Py_ssize_t i)<br>&#123;<br>    <span class="hljs-comment">// 检查对象的类型</span><br>    <span class="hljs-keyword">if</span> (!PyList_Check(op)) &#123;<br>        PyErr_BadInternalCall();<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    <span class="hljs-comment">// 检查索引是否超过数组长度</span><br>    <span class="hljs-keyword">if</span> (!valid_index(i, Py_SIZE(op))) &#123;<br>        <span class="hljs-keyword">if</span> (indexerr == <span class="hljs-literal">NULL</span>) &#123;<br>            indexerr = PyUnicode_FromString(<br>                <span class="hljs-string">&quot;list index out of range&quot;</span>);<br>            <span class="hljs-keyword">if</span> (indexerr == <span class="hljs-literal">NULL</span>)<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>        &#125;<br>        PyErr_SetObject(PyExc_IndexError, indexerr);<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    <span class="hljs-comment">// 返回动态数组中的指针</span><br>    <span class="hljs-keyword">return</span> ((PyListObject *)op) -&gt; ob_item[i]; <br>&#125;<br><br><br><span class="hljs-keyword">int</span><br>PyList_SetItem(PyObject *op, Py_ssize_t i,<br>               PyObject *newitem)<br>&#123;<br>    PyObject **p;<br>    <span class="hljs-keyword">if</span> (!PyList_Check(op)) &#123;<br>        Py_XDECREF(newitem);<br>        PyErr_BadInternalCall();<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    <span class="hljs-comment">// 检查索引是否超过数组长度</span><br>    <span class="hljs-keyword">if</span> (!valid_index(i, Py_SIZE(op))) &#123;<br>        Py_XDECREF(newitem);<br>        PyErr_SetString(PyExc_IndexError,<br>                        <span class="hljs-string">&quot;list assignment index out of range&quot;</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    <span class="hljs-comment">// 指针赋值, 地址偏移i个元素，在64位机器上指针大小为8字节，因此总偏移量为i*8字节</span><br>    p = ((PyListObject *)op) -&gt; ob_item + i;<br>    Py_XSETREF(*p, newitem);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>(1).PyList_GetItem函数和PyList_SetItem函数前两步都是判断对象类型以及检查索引是否超过数组的长度。</p>
+<p>(2).由于Python中处处皆对象，因此容器中存放的是对象的指针，a = list[0], a即指向ob_items[0]的指针。</p>
+<p>(3).PyList_SetItem中的赋值操作是对指针进行赋值，因此首先需要计算第i个元素指针的位置，这里采用了地址偏移的集散方式，地址偏移i个元素，因为每个元素为指针，在64位机器上占8个字节，因此总偏移量为i*8字节，然后将newitem指针覆盖p指针。</p>
+<p><strong>2.在指定位置插入元素的PyList_Insert函数和追加元素的PyList_Append函数。</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 带了动态扩容的数组的插入, 平均时间复杂度为0(N) */</span><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>ins1(PyListObject *self, Py_ssize_t where, PyObject *v)<br>&#123;<br>    <span class="hljs-comment">// 获取数组大小</span><br>    Py_ssize_t i, n = Py_SIZE(self);<br>    PyObject **items;<br>    <br>    <span class="hljs-keyword">if</span> (v == <span class="hljs-literal">NULL</span>) &#123;<br>        PyErr_BadInternalCall();<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 数组长度是否小于最大限度, 小于size_t = 0 ~ 2^64, (size_t)-1)&gt;&gt;1</span><br>    assert((<span class="hljs-keyword">size_t</span>)n + <span class="hljs-number">1</span> &lt; PY_SSIZE_T_MAX);<br>    <span class="hljs-comment">// 动态扩容</span><br>    <span class="hljs-keyword">if</span> (list_resize(self, n+<span class="hljs-number">1</span>) &lt; <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    <br>    <span class="hljs-comment">// 负索引 =&gt; 正索引</span><br>    <span class="hljs-keyword">if</span> (where &lt; <span class="hljs-number">0</span>) &#123;<br>        where += n;<br>        <span class="hljs-keyword">if</span> (where &lt; <span class="hljs-number">0</span>)<br>            where = <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-comment">// 如果超过数组长度, 默认插入到最后一个位置</span><br>    <span class="hljs-keyword">if</span> (where &gt; n)<br>        where = n;<br>    items = self-&gt;ob_item;<br>    <span class="hljs-comment">// 向后移动元素, 然后插入指定元素</span><br>    <span class="hljs-keyword">for</span> (i = n; --i &gt;= where; )<br>        items[i+<span class="hljs-number">1</span>] = items[i];<br>    <span class="hljs-comment">// 增加引用计数</span><br>    Py_INCREF(v);<br>    items[where] = v;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br><br><span class="hljs-comment">/* 追加元素, 时间复杂度为O(1) */</span><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>app1(PyListObject *self, PyObject *v)<br>&#123;<br>    Py_ssize_t n = PyList_GET_SIZE(self);<br><br>    assert (v != <span class="hljs-literal">NULL</span>);<br>    assert((<span class="hljs-keyword">size_t</span>)n + <span class="hljs-number">1</span> &lt; PY_SSIZE_T_MAX);<br>    <span class="hljs-keyword">if</span> (list_resize(self, n+<span class="hljs-number">1</span>) &lt; <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br><br>    Py_INCREF(v);<br>    PyList_SET_ITEM(self, n, v);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<h3 id="四、-list的动态扩-缩-容机制"><a href="#四、-list的动态扩-缩-容机制" class="headerlink" title="四、 list的动态扩(缩)容机制"></a>四、 list的动态扩(缩)容机制</h3><p>list动态扩(缩)容对应的函数为list_resize, 位置位于/Objects/listobject.c中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>list_resize(PyListObject *self, Py_ssize_t newsize)<br>&#123;<br>    PyObject **items;<br>    <span class="hljs-keyword">size_t</span> new_allocated, num_allocated_bytes;<br>    Py_ssize_t allocated = self-&gt;allocated;<br><br>    <span class="hljs-comment">/* Bypass realloc() when a previous overallocation is large enough</span><br><span class="hljs-comment">       to accommodate the newsize.  If the newsize falls lower than half</span><br><span class="hljs-comment">       the allocated size, then proceed with the realloc() to shrink the list.</span><br><span class="hljs-comment">    */</span><br>    <br>    <span class="hljs-comment">/* 如果newsize小于allocated并且newsize大于总容量的一半，小于总容量，无需扩缩容 */</span><br>    <span class="hljs-keyword">if</span> (allocated &gt;= newsize &amp;&amp; newsize &gt;= (allocated &gt;&gt; <span class="hljs-number">1</span>)) &#123;<br>        assert(self-&gt;ob_item != <span class="hljs-literal">NULL</span> || newsize == <span class="hljs-number">0</span>);<br>        Py_SET_SIZE(self, newsize);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br><br>    <span class="hljs-comment">/* This over-allocates proportional to the list size, making room</span><br><span class="hljs-comment">     * for additional growth.  The over-allocation is mild, but is</span><br><span class="hljs-comment">     * enough to give linear-time amortized behavior over a long</span><br><span class="hljs-comment">     * sequence of appends() in the presence of a poorly-performing</span><br><span class="hljs-comment">     * system realloc().</span><br><span class="hljs-comment">     * Add padding to make the allocated size multiple of 4.</span><br><span class="hljs-comment">     * 数组容量大小始终为4的倍数</span><br><span class="hljs-comment">     * The growth pattern is:  0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="hljs-comment">     * Note: new_allocated won&#x27;t overflow because the largest possible value</span><br><span class="hljs-comment">     *       is PY_SSIZE_T_MAX * (9 / 8) + 6 which always fits in a size_t.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-comment">// 使得数组容量大小始终为4的倍数</span><br>    new_allocated = ((<span class="hljs-keyword">size_t</span>)newsize + (newsize &gt;&gt; <span class="hljs-number">3</span>) + <span class="hljs-number">6</span>) &amp; ~(<span class="hljs-keyword">size_t</span>)<span class="hljs-number">3</span>;<br>    <span class="hljs-comment">/* Do not overallocate if the new size is closer to overallocated size</span><br><span class="hljs-comment">     * than to the old size.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">if</span> (newsize - Py_SIZE(self) &gt; (Py_ssize_t)(new_allocated - newsize))<br>        new_allocated = ((<span class="hljs-keyword">size_t</span>)newsize + <span class="hljs-number">3</span>) &amp; ~(<span class="hljs-keyword">size_t</span>)<span class="hljs-number">3</span>;<br><br>    <span class="hljs-keyword">if</span> (newsize == <span class="hljs-number">0</span>)<br>        new_allocated = <span class="hljs-number">0</span>;<br>    num_allocated_bytes = new_allocated * <span class="hljs-keyword">sizeof</span>(PyObject *);<br>    <span class="hljs-comment">// 为申请新的大小的数组空间并拷贝数组</span><br>    items = (PyObject **)PyMem_Realloc(self-&gt;ob_item, num_allocated_bytes);<br>    <span class="hljs-keyword">if</span> (items == <span class="hljs-literal">NULL</span>) &#123;<br>        PyErr_NoMemory();<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    <span class="hljs-comment">// 替换掉items和allocated</span><br>    self-&gt;ob_item = items;<br>    Py_SET_SIZE(self, newsize);<br>    self-&gt;allocated = new_allocated;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>(1).动态扩(缩)容机制的核心在于计算new_allocated大小。</p>
+<p>(2).在python3.6左右的版本中，new_allocated的大小为`new_allocated = (size_t)newsize + (newsize &gt;&gt; 3) + (newsize &lt; 9 ? 3 : 6);</p>
+<ul>
+<li><p>新容量大小在之前容量的基础上加1/8的容量,再加上3或6的容量。</p>
+</li>
+<li><p>加上3或6的容量为了避免频繁扩容。</p>
+</li>
+<li><p>当newsize &lt; 9时，加上3的容量，当newsize &gt; 9 时，加上6的容量，减小当处理扩容小数据集的时候，减少内存的浪费。</p>
+</li>
+</ul>
+<p>(3).在python3.9左右的版本中，也就是上述对应代码段中，相比于之前的版本，做了优化。</p>
+<ul>
+<li>新容量大小在之前容量的基础上添加1/8的容量，再加上6的容量，然后<code>&amp; ~(size_t)3</code>，这样得到的心容量大小恒为4的整数倍。</li>
+</ul>
+<p>(4).PyMem_Realloc函数的功能主要分为三步：</p>
+<ul>
+<li>首先分配一个大小为num_allocated_bytes字节的内存块</li>
+<li>将旧内存块中的ptr(ob_items), 拷贝到新申请的内存空间。</li>
+<li>释放旧内存块，并返回新的内存块。</li>
+</ul>
+<h3 id="五-、-list对象申请和释放的内存管理"><a href="#五-、-list对象申请和释放的内存管理" class="headerlink" title="五 、 list对象申请和释放的内存管理"></a>五 、 list对象申请和释放的内存管理</h3><p>1.首先，来看下list对象的申请过程对应的函数PyList_New，源码位于/Objects/listobjects.py中</p>
+<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs arduino"><span class="hljs-comment">/* 在BUILD_LIST字节码中被调用 */</span><br>PyObject *<br><span class="hljs-built_in">PyList_New</span>(Py_ssize_t size)<br>&#123;<br>    <span class="hljs-keyword">if</span> (size &lt; <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-built_in">PyErr_BadInternalCall</span>();<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 获取执行程序所处的解释器中本地线程中的状态, state是个双向链表, 从状态集中获取list缓存数组。</span><br>    <span class="hljs-comment">// state对象存在于local thread的上下文中</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">Py_list_state</span> *<span class="hljs-title">state</span> =</span> <span class="hljs-built_in">get_list_state</span>();<br>    <span class="hljs-comment">// 定义指针</span><br>    PyListObject *op;<br><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> Py_DEBUG</span><br>    <span class="hljs-comment">// PyList_New() must not be called after _PyList_Fini()</span><br>    <span class="hljs-built_in">assert</span>(state-&gt;numfree != <span class="hljs-number">-1</span>);<br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span><br>    <span class="hljs-comment">// 检查这个list缓存池中是否还有剩余空间, 如果存在, 从缓存池中取出list对象</span><br>    <span class="hljs-keyword">if</span> (state-&gt;numfree) &#123;<br>        state-&gt;numfree--;<br>        op = state-&gt;free_list[state-&gt;numfree];<br>        _Py_NewReference((PyObject *)op);<br>    &#125;<br>    <span class="hljs-comment">// 开辟新的空间, 创建PyListObject对象</span><br>    <span class="hljs-keyword">else</span> &#123;<br>        op = <span class="hljs-built_in">PyObject_GC_New</span>(PyListObject, &amp;PyList_Type);<br>        <span class="hljs-keyword">if</span> (op == <span class="hljs-literal">NULL</span>) &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">if</span> (size &lt;= <span class="hljs-number">0</span>) &#123;<br>        op-&gt;ob_item = <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">// 为数组开辟空间</span><br>        op-&gt;ob_item = (PyObject **) <span class="hljs-built_in">PyMem_Calloc</span>(size, <span class="hljs-built_in"><span class="hljs-keyword">sizeof</span></span>(PyObject *));<br>        <span class="hljs-keyword">if</span> (op-&gt;ob_item == <span class="hljs-literal">NULL</span>) &#123;<br>            <span class="hljs-built_in">Py_DECREF</span>(op);<br>            <span class="hljs-keyword">return</span> <span class="hljs-built_in">PyErr_NoMemory</span>();<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 设定op-&gt;size和op-&gt;allocated</span><br>    <span class="hljs-built_in">Py_SET_SIZE</span>(op, size);<br>    op-&gt;allocated = size;<br>    _PyObject_GC_TRACK(op);<br>    <span class="hljs-keyword">return</span> (PyObject *) op;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="六-、总结："><a href="#六-、总结：" class="headerlink" title="六 、总结："></a>六 、总结：</h3><p>未完待续~</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/C/">C</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                      <a class="hover-with-bg" href="/tags/C/">C</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/12/22/%E5%88%86%E6%9E%90CPython%E4%B8%AD%E7%9A%84%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">源码分析CPython中的垃圾回收机制</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/12/08/%E5%A4%9A%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E4%B9%8B%E5%9F%BA%E4%BA%8Emmap%E7%9A%84%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E5%92%8C%E6%96%87%E4%BB%B6%E9%94%81/">
+                        <span class="hidden-mobile">多进程通信之基于mmap的共享内存和文件锁</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,941 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+<meta property="og:type" content="website">
+<meta property="og:title" content="云中小站">
+<meta property="og:url" content="https://syzzjw.cn/page/5/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="捕捉一只在计算机领域不断努力的程序猿">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="计算机, 后端, 算法, Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 100vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="每个人, 来到&#39;花前&#39;, 都看见不一样的东西, 得到不一样的明白">
+              
+            </span>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      <div class="container nopadding-x-md">
+        <div class="py-5" id="board"
+          style=margin-top:0>
+          
+          <div class="container">
+            <div class="row">
+              <div class="col-12 col-md-10 m-auto">
+                
+
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/11/15/Mongodb%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%8E%E5%AE%9E%E8%B7%B5(1)/" target="_self">
+          Mongodb的学习与实践(1)
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/11/15/Mongodb%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%8E%E5%AE%9E%E8%B7%B5(1)/" target="_self">
+          
+          
+            
+          
+          之前做项目时候使用的关系性数据库在面对一些不可控的字段情况下,变得很复杂.因此尝试学习下Mongodb,来寻找更快速方便的解决方案.
+Mongodb官方有免费的集群云服务器,帮你现搭了由3个mongodb服务组成的集群.如果不想自己本地配置的话,直接去官方注册一下,申请云mongo,然后会给你连接字符串,包括shell,mongodb compass,或者不同语言建立连接的字符串.这样就可以去构建
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-11-15 21:13" pubdate>
+              2020-11-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Mongodb/">Mongodb</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Mongodb/">Mongodb</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/11/05/FastAPI%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/" target="_self">
+          FastAPI框架学习笔记（一）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/11/05/FastAPI%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          一  背景出入学习，简单介绍一下FastApi这个框架，它是具备高性能，支持异步的基于OpenApi和json scheme 协议模式的并适用于API快速开发的框架。其性能可媲美GO的web框架。是python的web框架速度最快框架之一。
+声明：之前学习了DRF用于开发API的框架，所以现在学习FastAPI的过程中我有时也会对比思考两框架的相同点和不同点，这样更易于理解两个框架。
+学习文档来源
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-11-05 19:42" pubdate>
+              2020-11-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/FastApi/">FastApi</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/FastApi/">FastApi</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/10/21/%E6%8E%A2%E6%9E%90cached_propety%E8%A3%85%E9%A5%B0%E5%99%A8%E7%BC%93%E5%AD%98%E7%9A%84%E5%8E%9F%E7%90%86/" target="_self">
+          探析cached_propety装饰器缓存的原理
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/10/21/%E6%8E%A2%E6%9E%90cached_propety%E8%A3%85%E9%A5%B0%E5%99%A8%E7%BC%93%E5%AD%98%E7%9A%84%E5%8E%9F%E7%90%86/" target="_self">
+          
+          
+            
+          
+          一  背景今天在用FastDfs重写Django默认的Storage存储系统，跟着源码来设计一些常用的功能，正好看到了一个装饰器cached_propety,看着这个名字，非常好懂，缓存+描述器。于是我打算学习下源码中是如何利用描述器实现缓存的。
+cached_property是我在Django的Storage类中找到的，其他地方也可以找到。
+
+二  源码分析1234567891011121314
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-10-21 13:25" pubdate>
+              2020-10-21
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+              <a href="/categories/Django/Python/">Python</a>
+            
+              <a href="/categories/Django/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/10/15/%E8%AF%A6%E7%BB%86%E7%90%86%E8%A7%A3%E5%B9%B6%E4%B8%BE%E4%BE%8B%E5%88%86%E6%9E%90Python%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/" target="_self">
+          详细理解并举例分析Python中的上下文管理器
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/10/15/%E8%AF%A6%E7%BB%86%E7%90%86%E8%A7%A3%E5%B9%B6%E4%B8%BE%E4%BE%8B%E5%88%86%E6%9E%90Python%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/" target="_self">
+          
+          
+            
+          
+          理解Python的上下文管理器的原理和使用一  背景很久前看了《流畅的Python》一书，未做笔记，最近学FastAPI框架时，学到了在FastAPI中使用到了上下文管理器，特此来把笔记补上，加深学习印象！
+二  简介with作为python上下文管理的关键字，它会设置一个临时的上下文，交给上下文的管理器对象控制，并且负责清理上下文，避免错误以及减少重用代码。
+用一句话简要概括: 上下文管理器的存
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-10-15 08:02" pubdate>
+              2020-10-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Python/">Python</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Python/">Python</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/10/08/manjaro%E6%B7%BB%E5%8A%A0%E5%8F%8C%E5%B1%8F%E7%9A%84%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98/" target="_self">
+          Manjaro添加双屏的显示问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/10/08/manjaro%E6%B7%BB%E5%8A%A0%E5%8F%8C%E5%B1%8F%E7%9A%84%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          背景今天刚到手便携显示器，刚连接manjaro发现，触摸屏幕不准，有意思的是两个屏幕上界面竟然不一样，讲道理不应该是共享嘛？用了几个小时，滑动屏幕，随着越左，偏移越多，竟然偏移到了主屏上。
+经过百度了一番，最终确定是屏幕显示的问题，默认将第二屏幕向右扩展了。因此只需要修改复制屏幕就行了
+
+解决方案首先查看显示器状态，xrandr
+我这里连接了两个，eDP-1为主屏，而HDMI-2为副屏，因此只需要
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-10-08 14:13" pubdate>
+              2020-10-08
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Linux/">Linux</a>
+            
+              <a href="/categories/Linux/Manjaro/">Manjaro</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Linux/">Linux</a>
+            
+              <a href="/tags/Manjaro/">Manjaro</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/10/05/%E4%BB%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3B%E5%92%8CB+%E6%A0%91%E7%9A%84%E7%89%B9%E6%80%A7/" target="_self">
+          从数据结构角度理解B和B+树的特性
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/10/05/%E4%BB%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3B%E5%92%8CB+%E6%A0%91%E7%9A%84%E7%89%B9%E6%80%A7/" target="_self">
+          
+          
+            
+          
+          一  背景之前通过网课学习了B树和B+树的一些知识，我再另一篇笔记中分析比较了4钟类型的树结构，文章地址，最近忙于考研，正好看到了王道书上B树和B+树的知识点，从数据结构角度来讲解的，为了加深理解，我将结合王道书的内容和自己的理解，写成本篇笔记。
+
+二  B树的概念首先标明几个概念：
+1.阶：B树中所有结点的孩子个数的最大值
+2.终端结点：除叶子结点外最底层的那一层结点
+1.概念：B树称为多路平衡
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-10-05 12:52" pubdate>
+              2020-10-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/MySQL/">MySQL</a>
+            
+              <a href="/categories/MySQL/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/MySQL/">MySQL</a>
+            
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/09/14/%E4%BB%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3B%E6%A0%91%E7%9A%84%E7%89%B9%E6%80%A7/" target="_self">
+          从数据结构角度理解B树的特性
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/09/14/%E4%BB%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3B%E6%A0%91%E7%9A%84%E7%89%B9%E6%80%A7/" target="_self">
+          
+          
+            
+          
+          一  背景之前通过网课学习了B树和B+树的一些知识，我再另一篇笔记中分析比较了4钟类型的树结构，文章地址，最近忙于考研，正好看到了王道书上B树和B+树的知识点，从数据结构角度来讲解的，为了加深理解，我将结合王道书的内容和自己的理解，写成本篇笔记。
+
+二  B树的概念首先标明几个概念：
+1.阶：B树中所有结点的孩子个数的最大值
+2.终端结点：除叶子结点外最底层的那一层结点
+1.概念：B树称为多路平衡
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-09-14 15:17" pubdate>
+              2020-09-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+            
+              <a href="/tags/B-%E6%A0%91/">B+树</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/09/10/git%20pull%E5%A4%B1%E8%B4%A5%EF%BC%8C%E6%98%BE%E7%A4%BA%E2%80%9C%E6%9C%AC%E5%9C%B0%E6%96%87%E4%BB%B6%E4%BF%AE%E6%94%B9%E5%B0%86%E8%A2%AB%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C%E8%A6%86%E7%9B%96%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          git pull失败，显示“本地文件修改将被合并操作覆盖”的问题（已解决）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/09/10/git%20pull%E5%A4%B1%E8%B4%A5%EF%BC%8C%E6%98%BE%E7%A4%BA%E2%80%9C%E6%9C%AC%E5%9C%B0%E6%96%87%E4%BB%B6%E4%BF%AE%E6%94%B9%E5%B0%86%E8%A2%AB%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C%E8%A6%86%E7%9B%96%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          git pull 拉取项目出现  error: 您对下列文件的本地修改将被合并操作覆盖： settings.py一  背景在github上私有仓库做了几个月的项目，今天打算将项目public，上午一直在写readme，提交了7，8次。然后下午准备修改下配置文件，提交上去。因为远程仓库文件修改过了，所以首先要pull下最新版，于是乎出现了问题：” error: 您对下列文件的本地修改将被合并操作覆盖
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-09-10 21:17" pubdate>
+              2020-09-10
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Git/">Git</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Git/">Git</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/09/05/linux%E4%B8%AD%E6%B7%BB%E5%8A%A0%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E7%9A%84%E7%AE%80%E5%8D%95%E6%93%8D%E4%BD%9C/" target="_self">
+          Linux中添加环境变量的简单操作
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/09/05/linux%E4%B8%AD%E6%B7%BB%E5%8A%A0%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E7%9A%84%E7%AE%80%E5%8D%95%E6%93%8D%E4%BD%9C/" target="_self">
+          
+          
+            
+          
+          一   Linux中添加环境变量Linux中一般手动下载tar.gz包的时候，安装服务的时候需要自行添加环境变量。而使用包管理器下载服务的时候，则会自动配置好环境变量。
+
+二  步骤1.进入profile环境变量配置文件（针对所有用户的系统环境变量文件）或者~/.bashrc文件（每个用户目录下的环境变量文件）
+sudo vim /etc/profile
+ 或
+ vim ~/.bashrc
+2.添
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-09-05 14:17" pubdate>
+              2020-09-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Linux/">Linux</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Linux/">Linux</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2020/09/01/%E5%81%B6%E9%81%87%E6%96%B0%E7%9A%84%E9%97%AE%E9%A2%98---%E9%83%A8%E7%BD%B2nginx%E8%AE%BF%E9%97%AE%E9%9D%99%E6%80%81%E8%B5%84%E6%BA%90%E6%97%B6%E6%96%B0%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          偶遇新的问题---部署nginx访问静态资源时新的问题（已解决）
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/09/01/%E5%81%B6%E9%81%87%E6%96%B0%E7%9A%84%E9%97%AE%E9%A2%98---%E9%83%A8%E7%BD%B2nginx%E8%AE%BF%E9%97%AE%E9%9D%99%E6%80%81%E8%B5%84%E6%BA%90%E6%97%B6%E6%96%B0%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
+          
+          
+            
+          
+          一   背景每一次的尝试都会产生新的问题，而每一次的解决都会让自己感到成就满满
+
+二  问题所在及解决方法有了第一次部署的经验，第二次部署一切都很快，但是偏偏又出现了问题—-访问静态资源出现permission denied。
+当时一出现这个问题，我立马想到了会不会是文件权限访问不够，我去查看了文件权限，都是我统一的非root角色，而且我启动nginx的时候是以root角色启动的，讲道理不应该会出
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-09-01 21:16" pubdate>
+              2020-09-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Nginx/">Nginx</a>
+            
+              <a href="/categories/Nginx/%E9%83%A8%E7%BD%B2/">部署</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Nginx/">Nginx</a>
+            
+              <a href="/tags/%E9%83%A8%E7%BD%B2/">部署</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+
+
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <a class="extend prev" rel="prev" href="/page/4/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/#board">6</a><a class="page-number" href="/page/7/#board">7</a><span class="space">&hellip;</span><a class="page-number" href="/page/20/#board">20</a><a class="extend next" rel="next" href="/page/6/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
+
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

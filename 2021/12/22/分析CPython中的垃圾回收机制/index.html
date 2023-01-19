@@ -1,0 +1,632 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一、背景之前有幸拜读过《Python源码解析》专栏，学习了CPython的内存管理及GC，对CPython 垃圾回收相关算法有了一定了解。现在尝试去阅读CPython 的GC模块的底层源码，去学习下各个算法的原理和实现逻辑。本文旨在探究原理而仅非GC的概念。 二、CPython中三种垃圾回收机制算法1.引用计数 2.标记-清除 3.分代回收 注：引用计数是实时清理的，标记-清除和分代回收是结合使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析CPython中的垃圾回收机制">
+<meta property="og:url" content="https://syzzjw.cn/2021/12/22/%E5%88%86%E6%9E%90CPython%E4%B8%AD%E7%9A%84%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一、背景之前有幸拜读过《Python源码解析》专栏，学习了CPython的内存管理及GC，对CPython 垃圾回收相关算法有了一定了解。现在尝试去阅读CPython 的GC模块的底层源码，去学习下各个算法的原理和实现逻辑。本文旨在探究原理而仅非GC的概念。 二、CPython中三种垃圾回收机制算法1.引用计数 2.标记-清除 3.分代回收 注：引用计数是实时清理的，标记-清除和分代回收是结合使用">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-22T06:15:28.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.457Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="GC">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>源码分析CPython中的垃圾回收机制 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="源码分析CPython中的垃圾回收机制">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-12-22 14:15" pubdate>
+        2021年12月22日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      20k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      61 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">源码分析CPython中的垃圾回收机制</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h3><p>之前有幸拜读过《Python源码解析》专栏，学习了CPython的内存管理及GC，对CPython 垃圾回收相关算法有了一定了解。现在尝试去阅读CPython 的GC模块的底层源码，去学习下各个算法的原理和实现逻辑。本文旨在探究原理而仅非GC的概念。</p>
+<h3 id="二、CPython中三种垃圾回收机制算法"><a href="#二、CPython中三种垃圾回收机制算法" class="headerlink" title="二、CPython中三种垃圾回收机制算法"></a>二、CPython中三种垃圾回收机制算法</h3><p>1.引用计数</p>
+<p>2.标记-清除</p>
+<p>3.分代回收</p>
+<p><strong>注：引用计数是实时清理的，标记-清除和分代回收是结合使用的</strong></p>
+<h3 id="三、引用计数"><a href="#三、引用计数" class="headerlink" title="三、引用计数"></a>三、引用计数</h3><p>先来谈谈引用计数，引用计数是CPython中 GC的主要算法。众所周知，Python中任何一个对象都是基于PyObject实现的，PyObject中包含引用计数<code>ob_refcnt</code>字段，记录该对象被引用的个数。影响该字段的因素主要有以下四个：</p>
+<ul>
+<li>构造一个新的对象时, 例如<code>a = &#39;2&#39;</code></li>
+<li>目标对象作为函数的参数传入到函数体中, 例如 <code>def main(a):</code></li>
+<li>对象之间相互引用, 例如 <code>b = a</code></li>
+<li>容器对象的操作, 例如<code>b.append(a)</code></li>
+</ul>
+<p>当某对象<code>ob_refcnt</code>的值到达0时，该对象就会被立即回收，并释放他们的占据的资源。</p>
+<p>正常情况下，基本所有的对象，他们的<code>ob_refcnt</code>的值最终都可以变为0，但是在编码中，由于编码不规范，存在循环引用带来的内存泄漏问题，循环引用会导致多个对象的<code>ob_refcnt</code>的值最终恒为1，而如果仅依赖引用计数算法的话，CPython会认为这些<code>ob_refcnt</code> 为1的对象还不需要清除，但实际这些对象本应被清除，这样就会引发内存泄露。看如下例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestList</span>(<span class="hljs-params"><span class="hljs-built_in">list</span></span>):</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__del__</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-built_in">print</span>(self)<br><br><br>a = TestList([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br>b = TestList([<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])<br><br>a.append(b)<br>b.append(a)<br><span class="hljs-keyword">del</span> a<br><span class="hljs-keyword">del</span> b<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;已清除&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+
+
+<p>上述为简易的循环引用的例子，在执行<code>del a</code>, <code>del b</code>时会去调用<code>__del__</code>内置方法，执行的结果如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">已清除<br>[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, [<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, [...]]]<br>[<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, [...]]]<br></code></pre></td></tr></table></figure>
+
+<p>我们可以看到真正实行的时机与预想的顺序不太一样，此时由CPython内部检测到存在循环引用，进而CPython会在程序执行完毕后，采用标记-清除算法回收垃圾。如果对上述代码使用手动gc呢？再来看下结果。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> gc<br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestList</span>(<span class="hljs-params"><span class="hljs-built_in">list</span></span>):</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__del__</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-built_in">print</span>(self)<br><br><br>a = TestList([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])<br>b = TestList([<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])<br><br>a.append(b)<br>b.append(a)<br><span class="hljs-keyword">del</span> a<br><span class="hljs-keyword">del</span> b<br>gc.collect()<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;已清除&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, [<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, [...]]]<br>[<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, [...]]]<br>已清除<br></code></pre></td></tr></table></figure>
+
+<p>此时，由于我们在<code>del</code>后手动执行了一次gc，会触发标记-清除算法，a和b的资源将被提前回收，最后打印”已清除”, 这样程序实际执行的顺序和预期的顺序就完全符合了。</p>
+<p>所以，当程序内存在变量循环引用的情况下，CPython会自动使用标记-清除算法来解决引用计数算法下无法回收的节点对象。那么CPython是如何标记出这些不可达节点并回收他们的呢？</p>
+<h3 id="四、标记-清除及跟踪的对象"><a href="#四、标记-清除及跟踪的对象" class="headerlink" title="四、标记-清除及跟踪的对象"></a>四、标记-清除及跟踪的对象</h3><p>标记-清除是CPython解决引用计数无法处理 <strong>循环引用</strong> 的问题，在读CPython源码前，因为做了一段的前端的模块，所以特地去了解了下V8的Javascript的GC算法。简单的说，Javascript中的标记-清除算法是遍历堆中所有的节点对象，标记存活的对象，在随后的清除阶段，只清除没有被标记的对象。</p>
+<p>而在CPython中，标记-清除算法只针对满足条件的容器对象，因为这些容器对象是通过<code>_PyObject_GC_Alloc </code>创建的，受到GC的跟踪。同时GC会忽略不可变对象，如int, bool, str, 以及由不可变对象组成的tuple等。在<code>Include/internal/pycore_gc.h</code>源码中有这样一段注释，告诉我们什么样的对象会被GC跟踪，被GC处理，以及对象跟踪状态的切换的时机。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs armasm"><span class="hljs-comment">/*</span><br><span class="hljs-comment">   <span class="hljs-doctag">NOTE:</span> about untracking of mutable objects.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   Certain types of container cannot participate in a reference cycle, and</span><br><span class="hljs-comment">   so do not need to be tracked by the garbage collector. Untracking these</span><br><span class="hljs-comment">   objects reduces the cost of garbage collections. However, determining</span><br><span class="hljs-comment">   which objects may be untracked is not free, and the costs must be</span><br><span class="hljs-comment">   weighed against the benefits for garbage collection.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   There are two possible strategies for when to untrack a container:</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   i) When the container is created.</span><br><span class="hljs-comment">   ii) When the container is examined by the garbage collector.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   Tuples containing only immutable objects (integers, strings etc, and</span><br><span class="hljs-comment">   recursively, tuples of immutable objects) do not need to be tracked.</span><br><span class="hljs-comment">   The interpreter creates a large number of tuples, many of which will</span><br><span class="hljs-comment">   not survive until garbage collection. It is therefore not worthwhile</span><br><span class="hljs-comment">   to untrack eligible tuples at creation time.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   Instead, all tuples except the empty tuple are tracked when created.</span><br><span class="hljs-comment">   During garbage collection it is determined whether any surviving tuples</span><br><span class="hljs-comment">   can be untracked. A tuple can be untracked if all of its contents are</span><br><span class="hljs-comment">   already not tracked. Tuples are examined for untracking in all garbage</span><br><span class="hljs-comment">   collection cycles. It may take more than one cycle to untrack a tuple.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   Dictionaries containing only immutable objects also do not need to be</span><br><span class="hljs-comment">   tracked. Dictionaries are untracked when created. If a tracked item is</span><br><span class="hljs-comment">   inserted into a dictionary (either as a key or value), the dictionary</span><br><span class="hljs-comment">   becomes tracked. During a full garbage collection (all generations),</span><br><span class="hljs-comment">   the collector will untrack any dictionaries whose contents are not</span><br><span class="hljs-comment">   tracked.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   The module provides the python function is_tracked(obj), which returns</span><br><span class="hljs-comment">   the CURRENT tracking status of the object. Subsequent garbage</span><br><span class="hljs-comment">   collections may change the tracking status of the object.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">   Untracking of certain containers was introduced in issue #4688, and</span><br><span class="hljs-comment">   the algorithm was refined in response to issue #14775.</span><br><span class="hljs-comment">*/</span><br></code></pre></td></tr></table></figure>
+
+<p>从上述注释中简要提取几点：</p>
+<p>1.取消跟踪某一对象遵循两条策略：</p>
+<ul>
+<li>当容器对象创建时，无需跟踪</li>
+<li>当进行垃圾回收时，会去评估容器对象是否需要跟踪。</li>
+</ul>
+<p>2.对于元祖对象来说，在创建时空元祖不用跟踪，在进行垃圾回收时，如果元祖内部的对象都取消跟踪，则元祖也取消跟踪。</p>
+<p>3.对于字典对象来说，字典中的对象全部是不可变对象时，取消跟踪。同样在进行垃圾回收时，如果向字典中增加一个追踪的对象，那么这个字典变为可追踪的，反之当字典中都是不可追踪的对象，该字典变为不可追踪。</p>
+<p>4.在进行垃圾回收时，容器对象的跟踪状态可能因内部对象的跟踪状态发生改变而改变。</p>
+<p>同时CPython会维护两个容器链表，分别为包含所有待scan的结点的链表和只含unreachable结点的链表。每个结点额外增加<code>gc_ref</code>字段,其值初始化为每个结点对象的<code>ob_refcnt</code>。CPython并不像V8会去标记<strong>存活</strong>的对象，而是首先假设所收集的对象都是可达的，在遍历链表过程中，使用不可达链表记录并标识所有<strong>不可达</strong>的对象。</p>
+<h3 id="五、GC源码阅读"><a href="#五、GC源码阅读" class="headerlink" title="五、GC源码阅读"></a>五、GC源码阅读</h3><p>上述简要的介绍了下引用计数和标记-清除的概念，当然还有分代回收，不过值得注意的是，标记-清除算法和分代回收是结合作用于GC的。GC实现的源码位于<code>/Modules/gcmodule.c</code>， GC涉及的结构体定义源码位于<code>/Include/internal/pycore_gc.h</code>。</p>
+<p>由于每一代触发GC时，实际是也执行了标记-清除算法，因此先来看分代的结构体定义，再来看标记-清除算法的实现原理，最后再来看分代回收算法的实现原理。</p>
+<h4 id="1-分代的结构体定义"><a href="#1-分代的结构体定义" class="headerlink" title="1.分代的结构体定义"></a>1.分代的结构体定义</h4><p>先来看下分代的结构，在CPython中，默认分为三代<code>#define NUM_GENERATIONS 3</code>，分别记为新生代，中生代，老生代, 对应<code>generations</code>数组下表的0, 1, 2。分代回收遵循一种规则，即新生代中的结点对象大约占总的80%~90%，存在的时间也最短，也最容易回收，换句话说，对象存活时间越长，越能够常驻内存，那么越不太可能成为垃圾，那么应该越少去收集。这样一来，在每一代的回收中会执行标记-清除算法，而越到老生代，那么在执行<code>Mark-Sweep</code>算法时所需要遍历的跟踪结点对象的个数就会越少，其中体现了用空间换时间的思想。</p>
+<p><strong>每一代的结构体如下：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>    <span class="hljs-comment">// Pointer to next object in the list.</span><br>    <span class="hljs-comment">// 0 means the object is not tracked</span><br>    <span class="hljs-keyword">uintptr_t</span> _gc_next;<br><br>    <span class="hljs-comment">// Pointer to previous object in the list.</span><br>    <span class="hljs-comment">// Lowest two bits are used for flags documented later.</span><br>    <span class="hljs-keyword">uintptr_t</span> _gc_prev;<br>&#125; PyGC_Head;<br><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">gc_generation</span> &#123;</span><br>    PyGC_Head head;  <br>    <span class="hljs-keyword">int</span> threshold; <span class="hljs-comment">/* collection threshold */</span><br>    <span class="hljs-keyword">int</span> count; <span class="hljs-comment">/* count of allocations or collections of younger</span><br><span class="hljs-comment">                  generations */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明</strong>：</p>
+<p>(1).head: 双向链表, 表示可收集对象的链表头部，用于维护对应代中的对象结点。</p>
+<p>(2).threadshold: 表示当前代所容纳的结点阈值，当<code>count &gt; threadhold</code>时，触发一次GC。</p>
+<p>(3).count: 表示当前代的结点计数器。</p>
+<p><strong>GC运行时的结构体如下：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">gc_runtime_state</span> &#123;</span><br>    ...<br>    <span class="hljs-comment">// 默认三代, 新生代, 中生代, 老生代</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">gc_generation</span> <span class="hljs-title">generations</span>[<span class="hljs-title">NUM_GENERATIONS</span>];</span><br>    ...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>每代状态的初始化函数</strong></p>
+<figure class="highlight handlebars"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs handlebars"><span class="xml">void</span><br><span class="xml">_PyGC_InitState(GCState *gcstate)</span><br><span class="xml">&#123;</span><br><span class="xml">    gcstate-&gt;enabled = 1; /* automatic collection enabled? */</span><br><span class="xml">#define _GEN_HEAD(n) GEN_HEAD(gcstate, n)</span><br><span class="xml">	// 默认分三代</span><br><span class="xml">    struct gc_generation generations[NUM_GENERATIONS] = &#123;</span><br><span class="xml">        /* PyGC_Head,                                    threshold,    count */</span><br><span class="xml">        </span><span class="hljs-template-variable">&#123;&#123;(<span class="hljs-name">uintptr_t</span>)_GEN_HEAD(<span class="hljs-name">0</span>), (<span class="hljs-name">uintptr_t</span>)_GEN_HEAD(<span class="hljs-name">0</span>)&#125;,   <span class="hljs-number">700</span>,        <span class="hljs-number">0</span>&#125;,</span><br><span class="hljs-template-variable">        &#123;&#123;(<span class="hljs-name">uintptr_t</span>)_GEN_HEAD(<span class="hljs-name">1</span>), (<span class="hljs-name">uintptr_t</span>)_GEN_HEAD(<span class="hljs-name">1</span>)&#125;,   <span class="hljs-number">10</span>,         <span class="hljs-number">0</span>&#125;,</span><br><span class="hljs-template-variable">        &#123;&#123;(<span class="hljs-name">uintptr_t</span>)_GEN_HEAD(<span class="hljs-name">2</span>), (<span class="hljs-name">uintptr_t</span>)_GEN_HEAD(<span class="hljs-name">2</span>)&#125;,   <span class="hljs-number">10</span>,         <span class="hljs-number">0</span>&#125;,</span><br><span class="hljs-template-variable">    &#125;;</span><br><span class="hljs-template-variable">    for (<span class="hljs-name">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_GENERATIONS; i++) &#123;</span><br><span class="hljs-template-variable">        gcstate-&gt;generations[i] = generations[i];</span><br><span class="hljs-template-variable">    &#125;;</span><br><span class="hljs-template-variable">    gcstate-&gt;generation0 = GEN_HEAD(<span class="hljs-name">gcstate</span>, <span class="hljs-number">0</span>);</span><br><span class="hljs-template-variable">    struct gc_generation permanent_generation = &#123;</span><br><span class="hljs-template-variable">          &#123;(<span class="hljs-name">uintptr_t</span>)&amp;gcstate-&gt;permanent_generation.head,</span><br><span class="hljs-template-variable">           (<span class="hljs-name">uintptr_t</span>)&amp;gcstate-&gt;permanent_generation.head&#125;, <span class="hljs-number">0</span>, <span class="hljs-number">0</span></span><br><span class="hljs-template-variable">    &#125;;</span><br><span class="hljs-template-variable">    gcstate-&gt;permanent_generation = permanent_generation;</span><br><span class="hljs-template-variable">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>说明:</strong></p>
+<p>(1).默认分为三代，分为新生代，中生代，老生代，对应的阈值分别为700, 10, 10, 新生代的阈值相比于中生代和老生代更大，因为所有新创建的被GC跟踪的对象都会使得新生代的<code>count++</code>, 且新生代中的对象存活时间不会太长，执行GC的次数相比要更频繁，所以为了减少新生代执行GC的频率，提高其对应的<code>threshold</code>。</p>
+<p>(2).每代的默认<code>count</code>设置为0。</p>
+<h4 id="2-标记-清除算法原理"><a href="#2-标记-清除算法原理" class="headerlink" title="2.标记-清除算法原理"></a>2.标记-清除算法原理</h4><p><code>Mark-Sweep</code>算法的执行原理框架位于<code>/Modules/gcmodule.c</code>中的<code>deduce_unreachable</code>函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span><br>deduce_unreachable(PyGC_Head *base, PyGC_Head *unreachable) &#123;<br>    validate_list(base, collecting_clear_unreachable_clear);<br> <br>    update_refs(base);  <span class="hljs-comment">// gc_prev is used for gc_refs</span><br>    subtract_refs(base);<br><br>    gc_list_init(unreachable);<br>    move_unreachable(base, unreachable);  <span class="hljs-comment">// gc_prev is pointer again</span><br>    validate_list(base, collecting_clear_unreachable_clear);<br>    validate_list(unreachable, collecting_set_unreachable_set);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>遍历可收集的链表, 标识出不可达节点和推断出不可达链表的步骤主要有以下三步：</p>
+<p>(1).首先调用遍历一遍可收集链表, 将每个结点的真实<code>ob_refcnt</code>引用计数值赋值到<code>_gc_prev</code>字段中，而不是开辟一个新的字段存储(网上很多资料都说是<code>gc_refs</code>字段，在我阅读的这个Python10版本并没有所谓的<code>gc_refs</code>字段, 只是概念上叫做<code>gc_refs</code>),这里<code>_gc_prev</code>字段既做结点(含有标识flag)又做引用计数的承载体。</p>
+<p>(2).第二遍遍历每个结点对象，将他们的<code>_gc_prev</code>字段值减一, 这样做是为了   <strong>解内部引用</strong>,内部引用是指某结点被链表内的其他结点所引用。在遍历完成后,所有可达对象(<code>_gc_prev</code>值为正数)一定是存在外部引用,而那些不可达对象的<code>_gc_prev</code>值一定为0。这样一来，初步筛选并标记出不可达对象(此时并不移入不可达链表)</p>
+<p>(3).此时虽然所有结点概念上被分为两个链表（可达和不可达)，但是他们之间的引用关系(指针)并未真正解除，意思仍可能存在可达链表中的结点指向不可达链表中某结点的现象, <strong>而这些被可达结点所引用的不可达结点也是不能被回收的</strong>(这里可以仔细思考下，可以将引用关系理解为需求，就好理解了)。因此接下来所要做的就是将被可达结点所引用的不可达结点的<code>gc_refs</code>重设置为1，标识为可达，而将真正不可达对象设置标识为<code>NEXT_MASK_UNREACHABLE</code>，并将他们移动到不可达链表中。</p>
+<p>(4).最终，所有对象都经过scan后，所有位于不可达链表的结点才会被GC真正回收。</p>
+<p><strong>源码分析具体算法步骤：</strong></p>
+<p> <strong>第一步：</strong>在开始收集结点时**, CPython首先会遍历收集的链表中所有结点，拷贝他们的<code>ob_refcnt</code>到<code>_gc_prev(gc_refs)</code>,此时<code>_gc_prev</code>用于表示<code>gc_refs</code>。对应源码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// /Modules/gcmodule.c</span><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span><br>update_refs(PyGC_Head *containers)<br>&#123;<br>    PyGC_Head *gc = GC_NEXT(containers);<br>    <span class="hljs-comment">// 循环遍历双向链表</span><br>    <span class="hljs-keyword">for</span> (; gc != containers; gc = GC_NEXT(gc)) &#123;<br>        gc_reset_refs(gc, Py_REFCNT(FROM_GC(gc)));<br>        _PyObject_ASSERT(FROM_GC(gc), gc_get_refs(gc) != <span class="hljs-number">0</span>);<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span><br>gc_reset_refs(PyGC_Head *g, Py_ssize_t refs)<br>&#123;<br>    g-&gt;_gc_prev = (g-&gt;_gc_prev &amp; _PyGC_PREV_MASK_FINALIZED)<br>        | PREV_MASK_COLLECTING<br>        | ((<span class="hljs-keyword">uintptr_t</span>)(refs) &lt;&lt; _PyGC_PREV_SHIFT);<br>&#125;<br><br><span class="hljs-comment">// /Include/object.h</span><br><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> _PyVarObject_CAST_CONST(op) ((const PyVarObject*)(op))</span><br><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> Py_ssize_t _Py_REFCNT(<span class="hljs-keyword">const</span> PyObject *ob) &#123;<br>    <span class="hljs-keyword">return</span> ob-&gt;ob_refcnt;<br>&#125;<br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> Py_REFCNT(ob) _Py_REFCNT(_PyObject_CAST_CONST(ob))</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>第二步：</strong>遍历链表，将每个结点的<code>gc_prev</code>减一。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span><br>subtract_refs(PyGC_Head *containers)<br>&#123;<br>    traverseproc traverse;<br>    PyGC_Head *gc = GC_NEXT(containers);<br>    <span class="hljs-keyword">for</span> (; gc != containers; gc = GC_NEXT(gc)) &#123;<br>        PyObject *op = FROM_GC(gc);<br>        traverse = Py_TYPE(op)-&gt;tp_traverse;<br>        (<span class="hljs-keyword">void</span>) traverse(op,<br>                        (visitproc)visit_decref,<br>                        op);<br>    &#125;<br>&#125;<br><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>visit_decref(PyObject *op, <span class="hljs-keyword">void</span> *parent)<br>&#123;<br>    _PyObject_ASSERT(_PyObject_CAST(parent), !_PyObject_IsFreed(op));<br><br>    <span class="hljs-keyword">if</span> (_PyObject_IS_GC(op)) &#123;<br>        PyGC_Head *gc = AS_GC(op);<br>        <span class="hljs-comment">/* We&#x27;re only interested in gc_refs for objects in the</span><br><span class="hljs-comment">         * generation being collected, which can be recognized</span><br><span class="hljs-comment">         * because only they have positive gc_refs.</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-keyword">if</span> (gc_is_collecting(gc)) &#123;<br>            <span class="hljs-comment">// 将该对象结点的引用计数减一</span><br>            gc_decref(gc);<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span><br>gc_decref(PyGC_Head *g)<br>&#123;<br>    _PyObject_ASSERT_WITH_MSG(FROM_GC(g),<br>                              gc_get_refs(g) &gt; <span class="hljs-number">0</span>,<br>                              <span class="hljs-string">&quot;refcount is too small&quot;</span>);<br>    g-&gt;_gc_prev -= <span class="hljs-number">1</span> &lt;&lt; _PyGC_PREV_SHIFT;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>第三步：</strong>使用<code>gc_list_init(unreachable);</code>初始化一个空的不可达链表。</p>
+<p><strong>第四步：</strong>调用该<code>move_unreachable</code>，该函数是找出真正不可达的结点。主要包含两个作用：</p>
+<p>(1).若结点对象的<code>gc_refs</code>大于0，调用<code>visit_reachable</code>函数，遍历待收集链表中从该结点起始的引用链，若位于该引用链上结点的<code>gc_refs</code>为0，将其<code>gc_refs</code>值重设置为1，或者在此之前已经被标记为<code>NEXT_MASK_UNREACHABLE</code>且移入不可达链表的结点对象，则将其<code>gc_refs</code>值重设置为1并且移入待收集链表，即表示被可达对象引用的对象也是可达的，同时以便后序再次访问该结点时，因该结点的<code>gc_refs</code>已经是1了，而不会将其归为不可达结点。</p>
+<p>(2).若结点对象的<code>gc_refs</code>等于0，表明该结点确实不可达，则将其移入不可达链表，并给予<code>NEXT_MASK_UNREACHABLE</code>不可达的标识(该结点后序可能会变为可达结点)。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span><br>move_unreachable(PyGC_Head *young, PyGC_Head *unreachable)<br>&#123;<br>    <span class="hljs-comment">// previous elem in the young list, used for restore gc_prev.</span><br>    PyGC_Head *prev = young;<br>    PyGC_Head *gc = GC_NEXT(young);<br><br>    <span class="hljs-keyword">while</span> (gc != young) &#123;<br>        <span class="hljs-comment">// 遍历gc_refs大于0的结点对象及其引用的对象, 将其引用的对象中gc_refs为0的对象的gc_refs重设为1, 或者将其引用的对象中标识为NEXT_MASK_UNREACHABLE的结点对象的gc_refs重设为1，并将其移入待收集链表。</span><br>        <span class="hljs-keyword">if</span> (gc_get_refs(gc)) &#123;<br>            PyObject *op = FROM_GC(gc);<br>            traverseproc traverse = Py_TYPE(op)-&gt;tp_traverse;<br>            _PyObject_ASSERT_WITH_MSG(op, gc_get_refs(gc) &gt; <span class="hljs-number">0</span>,<br>                                      <span class="hljs-string">&quot;refcount is too small&quot;</span>);<br>            (<span class="hljs-keyword">void</span>) traverse(op,<br>                    (visitproc)visit_reachable,<br>                    (<span class="hljs-keyword">void</span> *)young);<br>            <span class="hljs-comment">// relink gc_prev to prev element.</span><br>            _PyGCHead_SET_PREV(gc, prev);<br>            gc_clear_collecting(gc);<br>            prev = gc;<br>        &#125;<br>        <span class="hljs-comment">// 对真正gc_refs为0的对象，将其移入unreachable不可达链表,并标识为NEXT_MASK_UNREACHABLE，以便在未来遍历到该对象结点时，发现器是被可达对象引用的，还需将其移回待收集链表，去除其标识。</span><br>        <span class="hljs-keyword">else</span> &#123;<br>            prev-&gt;_gc_next = gc-&gt;_gc_next;<br><br>            PyGC_Head *last = GC_PREV(unreachable);<br>            last-&gt;_gc_next = (NEXT_MASK_UNREACHABLE | (<span class="hljs-keyword">uintptr_t</span>)gc);<br>            _PyGCHead_SET_PREV(gc, last);<br>            gc-&gt;_gc_next = (NEXT_MASK_UNREACHABLE | (<span class="hljs-keyword">uintptr_t</span>)unreachable);<br>            unreachable-&gt;_gc_prev = (<span class="hljs-keyword">uintptr_t</span>)gc;<br>        &#125;<br>        gc = (PyGC_Head*)prev-&gt;_gc_next;<br>    &#125;<br>    <span class="hljs-comment">// young-&gt;_gc_prev must be last element remained in the list.</span><br>    young-&gt;_gc_prev = (<span class="hljs-keyword">uintptr_t</span>)prev;<br>    <span class="hljs-comment">// don&#x27;t let the pollution of the list head&#x27;s next pointer leak</span><br>    unreachable-&gt;_gc_next &amp;= ~NEXT_MASK_UNREACHABLE;<br>&#125;<br><br><br><span class="hljs-comment">/* A traversal callback for move_unreachable. */</span><br><span class="hljs-comment">// 重设被可达对象引用的对象的gc_refs为1</span><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span><br>visit_reachable(PyObject *op, PyGC_Head *reachable)<br>&#123;	<br>    <span class="hljs-comment">// 忽略gc_refs值&lt;=0的结点对象</span><br>    <span class="hljs-keyword">if</span> (!_PyObject_IS_GC(op)) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br><br>    PyGC_Head *gc = AS_GC(op);<br>    <span class="hljs-keyword">const</span> Py_ssize_t gc_refs = gc_get_refs(gc);<br><br>    <span class="hljs-keyword">if</span> (! gc_is_collecting(gc)) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    assert(gc-&gt;_gc_next != <span class="hljs-number">0</span>);<br><br>    <span class="hljs-keyword">if</span> (gc-&gt;_gc_next &amp; NEXT_MASK_UNREACHABLE) &#123;<br>        PyGC_Head *prev = GC_PREV(gc);<br>        PyGC_Head *next = (PyGC_Head*)(gc-&gt;_gc_next &amp; ~NEXT_MASK_UNREACHABLE);<br>        _PyObject_ASSERT(FROM_GC(prev),<br>                         prev-&gt;_gc_next &amp; NEXT_MASK_UNREACHABLE);<br>        _PyObject_ASSERT(FROM_GC(next),<br>                         next-&gt;_gc_next &amp; NEXT_MASK_UNREACHABLE);<br>        prev-&gt;_gc_next = gc-&gt;_gc_next;  <span class="hljs-comment">// copy NEXT_MASK_UNREACHABLE</span><br>        _PyGCHead_SET_PREV(next, prev);<br><br>        gc_list_append(gc, reachable);<br>        gc_set_refs(gc, <span class="hljs-number">1</span>);<br>    &#125;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (gc_refs == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 重设被可达对象引用的对象的gc_refs为1</span><br>        gc_set_refs(gc, <span class="hljs-number">1</span>);<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;<br>        _PyObject_ASSERT_WITH_MSG(op, gc_refs &gt; <span class="hljs-number">0</span>, <span class="hljs-string">&quot;refcount is too small&quot;</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>第五步：</strong>在分代回收算法基础上，调用<code>delete_garbage</code>，清理不可达链表中的结点对象。</p>
+<h4 id="3-分代算法原理"><a href="#3-分代算法原理" class="headerlink" title="3.分代算法原理"></a>3.分代算法原理</h4><p>最后，我们来看下分代回收算法，事实上，在执行分代回收算法时，会基于不同的分代策略执行标记-清除算法将可收集链表拆分成可达和不可达链表，然后调用<code>delete_garbage</code>回收不可达链表中的结点，最终会调用该结点对象的<code>tp-&gt;clear</code>函数指针指向的函数，清理结点对象。分代算法核心源码同样位于<code>gcmodules.c</code>中。</p>
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br></pre></td><td class="code"><pre><code class="hljs xl"><span class="hljs-comment">/*</span><br><span class="hljs-comment">    回收的核心算法</span><br><span class="hljs-comment">*/</span><br>static Py_ssize_t<br>gc_collect_main(PyThreadState *tstate, int generation,<br>                Py_ssize_t *n_collected, Py_ssize_t *n_uncollectable,<br>                int nofail)<br>&#123;<br>int i;<br>    Py_ssize_t m = <span class="hljs-number">0</span>; <span class="hljs-comment">/* 待收集的对象个数 */</span><br>    Py_ssize_t n = <span class="hljs-number">0</span>; <span class="hljs-comment">/* 不能被收集的不可达对象个数 */</span><br>    PyGC_Head *young; <span class="hljs-comment">/* 正在处理的这一代 */</span><br>    PyGC_Head *old; <span class="hljs-comment">/* young的下一代 */</span><br>    PyGC_Head unreachable; <span class="hljs-comment">/* 不可达链表 */</span><br>    PyGC_Head finalizers;  <span class="hljs-comment">/* 实现__del__的对象 */</span><br>    PyGC_Head *gc;<br>    _PyTime_t t1 = <span class="hljs-number">0</span>;   <span class="hljs-comment">/* initialize to prevent a compiler warning */</span><br><br>    <span class="hljs-comment">// GC状态体</span><br>    GCS<span class="hljs-function"><span class="hljs-title">tate</span> *gcstate = &amp;tstate-&gt;</span><span class="hljs-function"><span class="hljs-title">interp</span>-&gt;</span>gc;<br><br>    <span class="hljs-comment">// gc_collect_main() must not be called before _PyGC_Init</span><br>    <span class="hljs-comment">// or after _PyGC_Fini()</span><br>    <span class="hljs-function"><span class="hljs-title">assert</span>(gcstate-&gt;</span>garbage != NULL);<br>    assert(!_PyErr_Occurred(tstate));<br><br>#ifdef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS<br>    <span class="hljs-function"><span class="hljs-title">if</span> (tstate-&gt;</span><span class="hljs-function"><span class="hljs-title">interp</span>-&gt;</span>config._isolated_interpreter) &#123;<br>        <span class="hljs-comment">// bpo-40533: The garbage collector must not be run on parallel on</span><br>        <span class="hljs-comment">// Python objects shared by multiple interpreters.</span><br>        return <span class="hljs-number">0</span>;<br>    &#125;<br>#endif<br><br>    <span class="hljs-function"><span class="hljs-title">if</span> (gcstate-&gt;</span>debug &amp; DEBUG_STATS) &#123;<br>        PySys_WriteStderr(<span class="hljs-string">&quot;gc: collecting generation %d...\n&quot;</span>, generation);<br>        show_stats_each_generations(gcstate);<br>        t1 = _PyTime_GetMonotonicClock();<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> (PyDTrace_GC_START_ENABLED())<br>        PyDTrace_GC_START(generation);<br><br>    <span class="hljs-comment">/* update collection and allocation counters */</span><br>    <span class="hljs-comment">// 将当前代的后一代的GC计数值 + 1</span><br>    <span class="hljs-comment">// 将当前代及其以前的GC计数值重置为0, 因为回收某一代时, 会一起回收该代之前的所有代的不可达结点</span><br>    <span class="hljs-keyword">if</span> (generation+<span class="hljs-number">1</span> &lt; NUM_GENERATIONS)<br>        <span class="hljs-function"><span class="hljs-title">gcstate</span>-&gt;</span>generations[generation+<span class="hljs-number">1</span>].count += <span class="hljs-number">1</span>;<br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt;= generation; i++)<br>        <span class="hljs-function"><span class="hljs-title">gcstate</span>-&gt;</span>generations[i].count = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">/* merge younger generations with one we are currently collecting */</span><br>    <span class="hljs-comment">// 将当前代与其之前的所有代的可收集结点的链表合并起来</span><br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; generation; i++) &#123;<br>        gc_list_merge(GEN_HEAD(gcstate, i), GEN_HEAD(gcstate, generation));<br>    &#125;<br><br>    <span class="hljs-comment">/* handy references */</span><br>    <span class="hljs-comment">// young: 当前代可收集链表的头部节点, old: 当前代的下一代可收集链表的头部结点</span><br>    young = GEN_HEAD(gcstate, generation);<br>    <span class="hljs-keyword">if</span> (generation &lt; NUM_GENERATIONS-<span class="hljs-number">1</span>)<br>        old = GEN_HEAD(gcstate, generation+<span class="hljs-number">1</span>);<br>    <span class="hljs-keyword">else</span><br>        old = young;<br>    validate_list(old, collecting_clear_unreachable_clear);<br><br>    <span class="hljs-comment">// 执行标记-清除算法, 将可收集对象链表拆分成可达链表和不可达链表</span><br>    deduce_unreachable(young, &amp;unreachable);<br><br>    untrack_tuples(young);<br>    <span class="hljs-comment">/* Move reachable objects to next generation. */</span><br>    <span class="hljs-comment">// 将当前代的可达对象移入下一代中, 并将当前代的链表置空。</span><br>    <span class="hljs-keyword">if</span> (young != old) &#123;<br>        <span class="hljs-keyword">if</span> (generation == NUM_GENERATIONS - <span class="hljs-number">2</span>) &#123;<br>            <span class="hljs-function"><span class="hljs-title">gcstate</span>-&gt;</span>long_lived_pending += gc_list_size(young);<br>        &#125;<br>        gc_list_merge(young, old);<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">/* We only un-track dicts in full collections, to avoid quadratic</span><br><span class="hljs-comment">           dict build-up. See issue #14775. */</span><br>        untrack_dicts(young);<br>        <span class="hljs-function"><span class="hljs-title">gcstate</span>-&gt;</span>long_lived_pending = <span class="hljs-number">0</span>;<br>        <span class="hljs-function"><span class="hljs-title">gcstate</span>-&gt;</span>long_lived_total = gc_list_size(young);<br>    &#125;<br><br>    <span class="hljs-comment">/* All objects in unreachable are trash, but objects reachable from</span><br><span class="hljs-comment">     * legacy finalizers (e.g. tp_del) can&#x27;t safely be deleted.</span><br><span class="hljs-comment">     */</span><br>    gc_list_init(&amp;finalizers);<br>    <span class="hljs-comment">// NEXT_MASK_UNREACHABLE is cleared here.</span><br>    <span class="hljs-comment">// After move_legacy_finalizers(), unreachable is normal list.</span><br><br>    <span class="hljs-comment">// 去除不可达结点的标识, 最终移入finalizers链表</span><br>    move_legacy_finalizers(&amp;unreachable, &amp;finalizers);<br>    <span class="hljs-comment">/* finalizers contains the unreachable objects with a legacy finalizer;</span><br><span class="hljs-comment">     * unreachable objects reachable *from* those are also uncollectable,</span><br><span class="hljs-comment">     * and we move those into the finalizers list too.</span><br><span class="hljs-comment">     */</span><br>    move_legacy_finalizer_reachable(&amp;finalizers);<br><br>    validate_list(&amp;finalizers, collecting_clear_unreachable_clear);<br>    validate_list(&amp;unreachable, collecting_set_unreachable_clear);<br><br>    <span class="hljs-comment">/* Print debugging information. */</span><br>    <span class="hljs-function"><span class="hljs-title">if</span> (gcstate-&gt;</span>debug &amp; DEBUG_COLLECTABLE) &#123;<br>        <span class="hljs-keyword">for</span> (gc = GC_NEXT(&amp;unreachable); gc != &amp;unreachable; gc = GC_NEXT(gc)) &#123;<br>            debug_cycle(<span class="hljs-string">&quot;collectable&quot;</span>, FROM_GC(gc));<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">/* Clear weakrefs and invoke callbacks as necessary. */</span><br>    <span class="hljs-comment">// 清除不可达对象自身绑定的弱引用，并执行弱引用绑定的回调函数。</span><br>    m += handle_weakrefs(&amp;unreachable, old);<br><br>    validate_list(old, collecting_clear_unreachable_clear);<br>    validate_list(&amp;unreachable, collecting_set_unreachable_clear);<br><br>    <span class="hljs-comment">/* Call tp_finalize on objects which have one. */</span><br>    finalize_garbage(tstate, &amp;unreachable);<br><br>    <span class="hljs-comment">/* Handle any objects that may have resurrected after the call</span><br><span class="hljs-comment">     * to &#x27;finalize_garbage&#x27; and continue the collection with the</span><br><span class="hljs-comment">     * objects that are still unreachable */</span><br>    PyGC_Head final_unreachable;<br>    handle_resurrected_objects(&amp;unreachable, &amp;final_unreachable, old);<br><br>    <span class="hljs-comment">/* Call tp_clear on objects in the final_unreachable set.  This will cause</span><br><span class="hljs-comment">    * the reference cycles to be broken.  It may also cause some objects</span><br><span class="hljs-comment">    * in finalizers to be freed.</span><br><span class="hljs-comment">    */</span><br>    m += gc_list_size(&amp;final_unreachable);<br><br>    <span class="hljs-comment">// 动态清除垃圾</span><br>    delete_garbage(tstate, gcstate, &amp;final_unreachable, old);<br><br>    <span class="hljs-comment">/* Collect statistics on uncollectable objects found and print</span><br><span class="hljs-comment">     * debugging information. */</span><br>    <span class="hljs-keyword">for</span> (gc = GC_NEXT(&amp;finalizers); gc != &amp;finalizers; gc = GC_NEXT(gc)) &#123;<br>        n++;<br>        <span class="hljs-function"><span class="hljs-title">if</span> (gcstate-&gt;</span>debug &amp; DEBUG_UNCOLLECTABLE)<br>            debug_cycle(<span class="hljs-string">&quot;uncollectable&quot;</span>, FROM_GC(gc));<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-title">if</span> (gcstate-&gt;</span>debug &amp; DEBUG_STATS) &#123;<br>        double d = _PyTime_AsSecondsDouble(_PyTime_GetMonotonicClock() - t1);<br>        PySys_WriteStderr(<br>            <span class="hljs-string">&quot;gc: done, %zd unreachable, %zd uncollectable, %.4fs elapsed\n&quot;</span>,<br>            n+m, n, d);<br>    &#125;<br><br>    <span class="hljs-comment">/* Append instances in the uncollectable set to a Python</span><br><span class="hljs-comment">     * reachable list of garbage.  The programmer has to deal with</span><br><span class="hljs-comment">     * this if they insist on creating this type of structure.</span><br><span class="hljs-comment">     */</span><br>    handle_legacy_finalizers(tstate, gcstate, &amp;finalizers, old);<br>    validate_list(old, collecting_clear_unreachable_clear);<br><br>    <span class="hljs-comment">/* Clear free list only during the collection of the highest</span><br><span class="hljs-comment">     * generation */</span><br>    <span class="hljs-keyword">if</span> (generation == NUM_GENERATIONS-<span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-function"><span class="hljs-title">clear_freelists</span>(tstate-&gt;</span>interp);<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> (_PyErr_Occurred(tstate)) &#123;<br>        <span class="hljs-keyword">if</span> (nofail) &#123;<br>            _PyErr_Clear(tstate);<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            _PyErr_WriteUnraisableMsg(<span class="hljs-string">&quot;in garbage collection&quot;</span>, NULL);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">/* Update stats */</span><br>    <span class="hljs-comment">// 更新</span><br>    <span class="hljs-keyword">if</span> (n_collected) &#123;<br>        *n_collected = m;<br>    &#125;<br>    <span class="hljs-keyword">if</span> (n_uncollectable) &#123;<br>        *n_uncollectable = n;<br>    &#125;<br><br>    <span class="hljs-comment">// 维护GC状态体</span><br>    <span class="hljs-function"><span class="hljs-title">struct</span> gc_generation_stats *stats = &amp;gcstate-&gt;</span>generation_stats[generation];<br>    <span class="hljs-function"><span class="hljs-title">stats</span>-&gt;</span>collections++;<br>    <span class="hljs-function"><span class="hljs-title">stats</span>-&gt;</span>collected += m;<br>    <span class="hljs-function"><span class="hljs-title">stats</span>-&gt;</span>uncollectable += n;<br><br>    <span class="hljs-keyword">if</span> (PyDTrace_GC_DONE_ENABLED()) &#123;<br>        PyDTrace_GC_DONE(n + m);<br>    &#125;<br><br>    assert(!_PyErr_Occurred(tstate));<br>    return n + m;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span><br>delete_garbage(PyThreadState *tstate, GCState *gcstate,<br>               PyGC_Head *collectable, PyGC_Head *old)<br>&#123;<br>    assert(!_PyErr_Occurred(tstate));<br><br>    <span class="hljs-keyword">while</span> (!gc_list_is_empty(collectable)) &#123;<br>        PyGC_Head *gc = GC_NEXT(collectable);<br>        PyObject *op = FROM_GC(gc);<br><br>        _PyObject_ASSERT_WITH_MSG(op, Py_REFCNT(op) &gt; <span class="hljs-number">0</span>,<br>                                  <span class="hljs-string">&quot;refcount is too small&quot;</span>);<br><br>        <span class="hljs-keyword">if</span> (gcstate-&gt;debug &amp; DEBUG_SAVEALL) &#123;<br>            assert(gcstate-&gt;garbage != <span class="hljs-literal">NULL</span>);<br>            <span class="hljs-keyword">if</span> (PyList_Append(gcstate-&gt;garbage, op) &lt; <span class="hljs-number">0</span>) &#123;<br>                _PyErr_Clear(tstate);<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            inquiry clear;<br>            <span class="hljs-comment">// 执行tp_clear函数指针指向的函数, 像list列表, dict字典对应的应该是clear方法</span><br>            <span class="hljs-keyword">if</span> ((clear = Py_TYPE(op)-&gt;tp_clear) != <span class="hljs-literal">NULL</span>) &#123;<br>                Py_INCREF(op);<br>                (<span class="hljs-keyword">void</span>) clear(op);<br>                <span class="hljs-keyword">if</span> (_PyErr_Occurred(tstate)) &#123;<br>                    _PyErr_WriteUnraisableMsg(<span class="hljs-string">&quot;in tp_clear of&quot;</span>,<br>                                              (PyObject*)Py_TYPE(op));<br>                &#125;<br>                Py_DECREF(op);<br>            &#125;<br>        &#125;<br>        <span class="hljs-comment">// 由于程序运行, collectable链表在程序运行时是动态变化的, </span><br>        <span class="hljs-comment">// 如果该对象又回到了可收集链表中，那么表明它可能还活着, 将其移入下一代中，后序再回收。</span><br>        <span class="hljs-keyword">if</span> (GC_NEXT(collectable) == gc) &#123;<br>            <span class="hljs-comment">/* object is still alive, move it, it may die later */</span><br>            gc_clear_collecting(gc);<br>            gc_list_move(gc, old);<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>分析：</strong></p>
+<p>(1).上文提到CPython默认分为三代，新生代，中生代，老生代，三代的计数器阈值分别为700, 20, 10。每触发一次GC，会导致后一代的计数器值加1。同时会将当前代及其前面所有代的计数器重置为0，因为后序操作会将当前代及其前面所有代的可收集链表合并，然后走标记-清除算法<code>deduce_unreachable</code>，具体实现原理前文已经分析过。</p>
+<p>(2).执行完<code>Mark-Sweep</code>算法后，已经区分出可达链表和<strong>不可达链表</strong>，接下来要将可达链表中的所有结点对象移入到下一代的可收集对象链表中。</p>
+<p>(3).对<strong>不可达链表</strong>进行垃圾回收，遍历不可达链表，对每个对象调用其<code>tp_clear</code>函数指针指向的函数，因此像list，dict，在Python层面来说，与<code>tp_clear</code>指向的函数等效的是<code>clear()</code>。</p>
+<p><strong>注</strong>：</p>
+<p>在<code>delete_garbage</code>中有这样一段代码，我觉得开发者考虑的确实挺严谨的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">if</span> (GC_NEXT(collectable) == gc) &#123;<br>    <span class="hljs-comment">/* object is still alive, move it, it may die later */</span><br>    gc_clear_collecting(gc);<br>    gc_list_move(gc, old);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>程序在运行中, collectable链表在程序运行时是动态变化的, 如果该对象又出现在了可收集链表中，那么表明它可能还活着, 所以需要将其移入下一代中，后序再回收。这样虽然会额外增加判断、移动操作，但解决了再极偶然情况下，对象被误判回收的问题。</p>
+<h4 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h4><p><a target="_blank" rel="noopener" href="https://pythoninternal.wordpress.com/2014/08/04/the-garbage-collector/">https://pythoninternal.wordpress.com/2014/08/04/the-garbage-collector/</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/python/cpython">https://github.com/python/cpython</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/GC/">GC</a>
+                    
+                      <a class="hover-with-bg" href="/categories/GC/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/GC/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/tags/GC/">GC</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/04/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84%E6%A0%88%E5%B8%A7%E5%AF%B9%E8%B1%A1/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">源码分析Python的栈帧对象的构造和VM执行字节码的原理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/12/13/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84List%E5%88%97%E8%A1%A8%E5%AE%B9%E5%99%A8/">
+                        <span class="hidden-mobile">源码分析Python的List的列表容器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

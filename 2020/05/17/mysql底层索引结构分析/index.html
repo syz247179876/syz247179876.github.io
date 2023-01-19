@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="Mysql底层索引结构分析mysql数据库底层所采用的是B+树，那么B+树的索引结构，又是怎么推导出来的呢？为什么Mysql选用B+树作为索引结构，而不是二叉树，平衡二叉树，红黑树或是B树呢？今天来分别学习一下这些树的结构。 一、二叉树二叉树应该是我们学习数据结构的一开始就接触的树结构。二叉树的性质就是左子树的所有节点的值小于当前根结点，右子树的所有节点的值大于当前根结点。假设二叉树作为索引结构，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL底层索引结构分析">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/17/mysql%E5%BA%95%E5%B1%82%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="Mysql底层索引结构分析mysql数据库底层所采用的是B+树，那么B+树的索引结构，又是怎么推导出来的呢？为什么Mysql选用B+树作为索引结构，而不是二叉树，平衡二叉树，红黑树或是B树呢？今天来分别学习一下这些树的结构。 一、二叉树二叉树应该是我们学习数据结构的一开始就接触的树结构。二叉树的性质就是左子树的所有节点的值小于当前根结点，右子树的所有节点的值大于当前根结点。假设二叉树作为索引结构，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91_20200503171756313469.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/%E7%BA%A2%E9%BB%91%E6%A0%91_20200503173027310615.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/%E7%BA%A2%E9%BB%91%E6%A0%912_20200503173051195543.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/B%E6%A0%91_20200503174312079300.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/B%E6%A0%912_20200503174352504810.png">
+<meta property="og:image" content="https://syzzjw.cn/media/editor/B+%E6%A0%91_20200503175515038305.png">
+<meta property="article:published_time" content="2020-05-17T00:13:23.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.444Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://syzzjw.cn/media/editor/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91_20200503171756313469.png">
+  
+  <title>MySQL底层索引结构分析 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="MySQL底层索引结构分析">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-17 08:13" pubdate>
+        2020年5月17日 早上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      8 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">MySQL底层索引结构分析</h1>
+            
+            <div class="markdown-body">
+              <h3 id="Mysql底层索引结构分析"><a href="#Mysql底层索引结构分析" class="headerlink" title="Mysql底层索引结构分析"></a><strong>Mysql底层索引结构分析</strong></h3><p>mysql数据库底层所采用的是B+树，那么B+树的索引结构，又是怎么推导出来的呢？为什么Mysql选用B+树作为索引结构，而不是二叉树，平衡二叉树，红黑树或是B树呢？今天来分别学习一下这些树的结构。</p>
+<h4 id="一、二叉树"><a href="#一、二叉树" class="headerlink" title="一、二叉树"></a><strong>一、二叉树</strong></h4><p>二叉树应该是我们学习数据结构的一开始就接触的树结构。二叉树的性质就是左子树的所有节点的值小于当前根结点，右子树的所有节点的值大于当前根结点。假设二叉树作为索引结构，要比一条一条遍历要效率要高不少。</p>
+<p>举个简单的例子：</p>
+<p><img src="/media/editor/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91_20200503171756313469.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<p>说明：假设根据用户的id创建索引，从小到大，那么现在我要查找id为20的用户信息，通过二叉树，我们只需要比较4次，就可以找到该用户，而如果不建立索引，通过一条一条数据行遍历，那么就会需要9次，由此我们可以看出建立索引要比不建立索引至少效率提高一倍。</p>
+<p>注：但是二叉树也会存在弊端，就是遇见最坏的情况，所有的结点变成了一条线性链表。因此平衡二叉树可以有效的防止这种最坏的情况出现。尽管如此，mysql却并没有选择平衡二叉树作为索引结构，那么说明还有更好的索引结构。请继续往下看~</p>
+<hr>
+<h4 id="二、红黑树"><a href="#二、红黑树" class="headerlink" title="二、红黑树"></a><strong>二、红黑树</strong></h4><p>红黑树是一种自平衡二叉树，因为伴随着某一个结点的增加删除，会自适应的调整当前树的结构，使之满足任意两个节点之间的层次差不大于2，也就是小于等于2.我们应该知道平衡二叉树应该任意两个节点之间的层次不超过1，所以红黑树不能算是一棵严格的平衡二叉树。</p>
+<p>红黑树的性质：</p>
+<p>① 根结点为红色或者黑色。</p>
+<p>② 所有的叶子结点都为黑色（叶子结点为Null）</p>
+<p>③ 如果一棵二叉树为红黑树，那么其子树也为红黑树</p>
+<p>④ 任意两个结点间的层次差不能大于2</p>
+<p>⑤ 每条路径都包含相同的黑色结点个数</p>
+<p><img src="/media/editor/%E7%BA%A2%E9%BB%91%E6%A0%91_20200503173027310615.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<hr>
+<p>为上图添加2个值为3的结点，红黑树会根据其性质做适当的翻转，调整，在插入和删除的情况下，效率要好于平衡二叉树。但是查找的情况下，因为红黑树在结点相同的情况下，层次要比平衡二叉树高，所以查询的效率要稍微低于平衡二叉树。通过翻转来提高查找删除效率。</p>
+<p><img src="/media/editor/%E7%BA%A2%E9%BB%91%E6%A0%912_20200503173051195543.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<hr>
+<h4 id="三、B树"><a href="#三、B树" class="headerlink" title="三、B树"></a><strong>三、B树</strong></h4><p>B树相较于二叉树，平衡二叉树，红黑树来说，结构发生了一些改变。B树允许一个结点中存放多个关键字，而这些结点中多了一个空间域，存放data，可以是当前行所在的磁盘文件指针地址，也可以是当前行的数据。为什么要要存放多个结点呢？我们应该晓得一棵树的层次越浅，查找的性能就越高。如果存在千万级的数据量，使用平衡二叉树的话，树的深度会非常深，所需要读取磁盘IO的次数将会非常多，因为读取数据会以磁盘块的形式读取，而不是一条一条的读取，这就导致查找的效率也不是很高。而B树就很好的弥补了平衡二叉树的这种缺陷。</p>
+<p><img src="/media/editor/B%E6%A0%91_20200503174312079300.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<p><img src="/media/editor/B%E6%A0%912_20200503174352504810.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<p>我们通过图可以看见，我设定了每个结点中的关键字最大不超过4，每个关键字都会带上data域。</p>
+<p><strong>说明：</strong></p>
+<p>假设我要查找88这个元素，那么首先将0015关键字放进内存中与0088比较，在磁盘上找到0024和0076所在的结点，然后将其们放入内存与0088比较，比较得出0088和0089这个页，然后将其们放进内存，比较得出88，最后，找到88所对应的data，进入相应的磁盘文件读取该数据行，返回结果。</p>
+<p>这个过程总共比较了3次，外加三次次磁盘IO读取，在B树中查找结点实在磁盘上进行的，而在结点中找关键字是在内存中进行的，因此相比于平衡二叉树来说效率会更高。那么为什么mysql选用的是B+树作为索引结构，而不是B树呢？别急，请看下面介绍B+树~</p>
+<hr>
+<h4 id="四、B-树"><a href="#四、B-树" class="headerlink" title="四、B+树"></a><strong>四、B+树</strong></h4><p>B+树听起来就像是B树的升级版，实事也是如此，B+树对B树的改进主要在于将所有非叶子节点中的data域去除了，这样做可以增加索引个数，这里给大家简单的计算下索引个数，假设我存储的索引类型为int整型，大小也就是4B（不包含data），而Mysql底层规定的指针大小为6B，每一页的大小为16k，那么索引个数为<code>16k/(6B+4B)</code>个索引，如果加上了data，会变得更小。</p>
+<p><strong>注：</strong></p>
+<p>每个结点中存放的关键字多了，层数自然就会相对于B树更浅了。同时一次磁盘IO读取的磁盘块中的索引结点也会更多，有效的减少了磁盘IO，提高了查找效率。</p>
+<p><img src="/media/editor/B+%E6%A0%91_20200503175515038305.png" srcset="/img/loading.gif" lazyload>{width=80%}</p>
+<p>通过图，我们可以清晰的看出B树和B+树的差异。</p>
+<hr>
+<h4 id="五、Mysql中的两种索引结构"><a href="#五、Mysql中的两种索引结构" class="headerlink" title="五、Mysql中的两种索引结构"></a><strong>五、Mysql中的两种索引结构</strong></h4><p>mysql中建立索引的时候，有两种可以选择的索引，分别为B+树和hash，通常我们选择B+树作为索引结构，而不是用hash，因为hash创建索引结构存在几个弊端：</p>
+<p>① hash查找单个索引的时间复杂度为0(1),但无法查找范围内的数据</p>
+<p>② 针对索引使用order by的时候，hash不支持排序</p>
+<p>③ 当数据量非常大的时候，哈希冲突也就更加明显。</p>
+<hr>
+<h4 id="六、Mysql中的两种存储引擎"><a href="#六、Mysql中的两种存储引擎" class="headerlink" title="六、Mysql中的两种存储引擎"></a><strong>六、Mysql中的两种存储引擎</strong></h4><p>Mysql中同样穿在两种存储引擎，分别为innodb和mylsam，两者的区别主要是data域上的区别以及产生的不同的效果</p>
+<p>mylsam的data域上存放的当前行的磁盘文件索引地址，也就是找到了该索引，要进行一次磁盘IO读取该行所对应的数据。</p>
+<p>Innodb的data域上存放的是当前行的数据信息，将数据和索引放在了同一个文件下，因此减少了mylsam中的所需要的一次磁盘IO读写，也相应的提高了查找效率。毕竟磁盘的读取速度要比内存慢很多很多。</p>
+<hr>
+<h4 id="七、为什么要设计主键，并且为整型？主键为什么要自增？"><a href="#七、为什么要设计主键，并且为整型？主键为什么要自增？" class="headerlink" title="七、为什么要设计主键，并且为整型？主键为什么要自增？"></a><strong>七、为什么要设计主键，并且为整型？主键为什么要自增？</strong></h4><p>① 首先如果你不创建主键，mysql会自动为你创建一个主键，主键常常用作索引，因此在索引比较的时候，整型的数据比较大小要比字符串按位比较大小效率快得多。</p>
+<p>② 主键自增带来的好处是范围查找以及插入的效率。主键自增的话，索引的排列顺序将会是依次增加的，根据上面的B+数中的图，我们也可以发现，所有的叶子节点之间用了指针相连，这样查找大于某个索引值的数据集的话，就很方便，因为它是按顺序排列的嘛。但是如果不是自增的话，加入我之前已经插入了50这个索引，现在我要插入46这个索引，假设一个页只能够存储4个字节，而之前50这个领域（包含自己）内已经存在了4个字节，此时我要插入46是不是得将这个已经满的页给分裂成两个子页，重新组合，这样就可能破坏了树的结构。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/MySQL/">MySQL</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/MySQL/">MySQL</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/19/django%20%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BDsettings.py%20%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Django 如何加载settings.py 的源码分析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/15/python%20%E5%A6%82%E4%BD%95%E5%8E%BB%E6%8E%89redis%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E4%B8%AD%E7%9A%84&#39;b&#39;/">
+                        <span class="hidden-mobile">Python 如何去掉redis返回结果中的'b'</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

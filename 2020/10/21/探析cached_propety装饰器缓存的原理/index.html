@@ -1,0 +1,548 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一  背景今天在用FastDfs重写Django默认的Storage存储系统，跟着源码来设计一些常用的功能，正好看到了一个装饰器cached_propety,看着这个名字，非常好懂，缓存+描述器。于是我打算学习下源码中是如何利用描述器实现缓存的。 cached_property是我在Django的Storage类中找到的，其他地方也可以找到。  二  源码分析1234567891011121314">
+<meta property="og:type" content="article">
+<meta property="og:title" content="探析cached_propety装饰器缓存的原理">
+<meta property="og:url" content="https://syzzjw.cn/2020/10/21/%E6%8E%A2%E6%9E%90cached_propety%E8%A3%85%E9%A5%B0%E5%99%A8%E7%BC%93%E5%AD%98%E7%9A%84%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一  背景今天在用FastDfs重写Django默认的Storage存储系统，跟着源码来设计一些常用的功能，正好看到了一个装饰器cached_propety,看着这个名字，非常好懂，缓存+描述器。于是我打算学习下源码中是如何利用描述器实现缓存的。 cached_property是我在Django的Storage类中找到的，其他地方也可以找到。  二  源码分析1234567891011121314">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-10-21T05:25:40.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>探析cached_propety装饰器缓存的原理 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="探析cached_propety装饰器缓存的原理">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-10-21 13:25" pubdate>
+        2020年10月21日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      11 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">探析cached_propety装饰器缓存的原理</h1>
+            
+            <div class="markdown-body">
+              <h4 id="一-背景"><a href="#一-背景" class="headerlink" title="一  背景"></a><strong>一  背景</strong></h4><p>今天在用FastDfs重写Django默认的Storage存储系统，跟着源码来设计一些常用的功能，正好看到了一个装饰器cached_propety,看着这个名字，非常好懂，缓存+描述器。于是我打算学习下源码中是如何利用描述器实现缓存的。</p>
+<p>cached_property是我在Django的Storage类中找到的，其他地方也可以找到。</p>
+<hr>
+<h4 id="二-源码分析"><a href="#二-源码分析" class="headerlink" title="二  源码分析"></a><strong>二  源码分析</strong></h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">cached_property</span>:</span><br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    Decorator that converts a method with a single self argument into a</span><br><span class="hljs-string">    property cached on the instance.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    A cached property can be made out of an existing method:</span><br><span class="hljs-string">    (e.g. ``url = cached_property(get_absolute_url)``).</span><br><span class="hljs-string">    On Python &lt; 3.6, the optional ``name`` argument must be provided, e.g.</span><br><span class="hljs-string">    ``url = cached_property(get_absolute_url, name=&#x27;url&#x27;)``.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    name = <span class="hljs-literal">None</span><br><br><span class="hljs-meta">    @staticmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">func</span>(<span class="hljs-params">instance</span>):</span><br>        <span class="hljs-keyword">raise</span> TypeError(<br>            <span class="hljs-string">&#x27;Cannot use cached_property instance without calling &#x27;</span><br>            <span class="hljs-string">&#x27;__set_name__() on it.&#x27;</span><br>        )<br><br><span class="hljs-meta">    @staticmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_is_mangled</span>(<span class="hljs-params">name</span>):</span><br>        <span class="hljs-keyword">return</span> name.startswith(<span class="hljs-string">&#x27;__&#x27;</span>) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> name.endswith(<span class="hljs-string">&#x27;__&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, func, name=<span class="hljs-literal">None</span></span>):</span><br>        <span class="hljs-keyword">if</span> PY36:<br>            self.real_func = func<br>        <span class="hljs-keyword">else</span>:<br>            func_name = func.__name__<br>            name = name <span class="hljs-keyword">or</span> func_name<br>            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> (<span class="hljs-built_in">isinstance</span>(name, <span class="hljs-built_in">str</span>) <span class="hljs-keyword">and</span> name.isidentifier()):<br>                <span class="hljs-keyword">raise</span> ValueError(<br>                    <span class="hljs-string">&quot;%r can&#x27;t be used as the name of a cached_property.&quot;</span> % name,<br>                )<br>            <span class="hljs-keyword">if</span> self._is_mangled(name):<br>                <span class="hljs-keyword">raise</span> ValueError(<br>                    <span class="hljs-string">&#x27;cached_property does not work with mangled methods on &#x27;</span><br>                    <span class="hljs-string">&#x27;Python &lt; 3.6 without the appropriate `name` argument. See &#x27;</span><br>                    <span class="hljs-string">&#x27;https://docs.djangoproject.com/en/%s/ref/utils/&#x27;</span><br>                    <span class="hljs-string">&#x27;#cached-property-mangled-name&#x27;</span> % get_docs_version(),<br>                )<br>            self.name = name<br>            self.func = func<br>        self.__doc__ = <span class="hljs-built_in">getattr</span>(func, <span class="hljs-string">&#x27;__doc__&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__set_name__</span>(<span class="hljs-params">self, owner, name</span>):</span><br>        <span class="hljs-keyword">if</span> self.name <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            self.name = name<br>            self.func = self.real_func<br>        <span class="hljs-keyword">elif</span> name != self.name:<br>            <span class="hljs-keyword">raise</span> TypeError(<br>                <span class="hljs-string">&quot;Cannot assign the same cached_property to two different names &quot;</span><br>                <span class="hljs-string">&quot;(%r and %r).&quot;</span> % (self.name, name)<br>            )<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get__</span>(<span class="hljs-params">self, instance, cls=<span class="hljs-literal">None</span></span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        Call the function and put the return value in instance.__dict__ so that</span><br><span class="hljs-string">        subsequent attribute access on the instance returns the cached value</span><br><span class="hljs-string">        instead of calling cached_property.__get__().</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">if</span> instance <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-keyword">return</span> self<br>        res = instance.__dict__[self.name] = self.func(instance)<br>        <span class="hljs-keyword">return</span> res<br></code></pre></td></tr></table></figure>
+
+<hr>
+<p>这个装饰器的源码不算长，这里主要关注的几个函数分别为<code>__init__</code>，<code>__set_name___</code>,<code>__get__</code>方法，我之前认为的类装饰器一般都会使用<code>__call__</code>内置方法，在这里我要直呼装饰器的强大。</p>
+<p>之前还看见DRF的viewset中action装饰器工厂，在增强被修饰的函数其实装饰器工厂只需两层就够了，并不一定像书上说的装饰器工厂需要三层，三层的情况一般在装饰器中显示调用了被修饰的函数，这里可能您看着比较绕，我会在之后的笔记中详细解读各类框架中的优秀装饰器！</p>
+<hr>
+<p>1.首先我们来看下<strong>init</strong>()初始化函数，传入了两个额外参数，分别为func，name，func其实就是装饰器修饰的方法，而name默认为None,为可变防御参数。<strong>init</strong>()方法主要是获取被修饰函数的一些元属性，包括__name__，然后进行类型检查等，并规定被cached_property修饰的方法不能是魔法方法（内置方法），原因异常中给出了，小于python3.6的版本没有name属性。</p>
+<p><strong>注：这里有一点我没有弄懂，他在这里加了name，那我该如何在写@cached_property的时候添加上name呢？如果作为@cached_property的参数，则会报参数不够的异常。如果有大佬知道，欢迎给我留言或者注册下，还请您不吝珠玉！</strong></p>
+<hr>
+<p>2.接着来看第二个函数<code>__get__()</code>函数,熟悉描述器的高手们肯定知道这个这个方法是属于描述器协议中的。用于当一个定义了<code>__get__()</code>/<code>__set__()</code>/<code>__del__()</code>的协议的类作为另一个类的类属性时，调用该属性，则会调用<code>__get__()</code>方法。我在另一篇笔记中讲解了<a href="https://syzzjw.cn/notes/user_articles_list/syz_descriptors/">描述器</a>。这个函数是整个缓存思想的核心哦，原理就是首先调用被修饰的方法，然后获取到结果，将其保存在调用类（不是cached_propery,而是其所修饰的函数所在的类)的实例对象的实例字典__dict__中，键为默认为函数名。然后返回结果。</p>
+<p><strong>注：第一次会调用<strong>get</strong>()方法，因为__dict__中没有对应的键值对，而第一次调用后会添加键值对，以便后面的调用都会直接获取实例字典中的属性，而不需要重复调用被修饰的函数了。这样有效的利用实例字典缓存数据提高了性能！</strong></p>
+<p>为此我自己模仿它，写了简单的类并通过Debug来验证其只有在第一此调用才会调用<strong>get</strong>(),之后则会调用<strong>getattribute</strong>()方法，实则调用<code>__dict[name]__.__get__(self,type(self))</code>。</p>
+<hr>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Test</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br><br>    counts = <span class="hljs-number">0</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get__</span>(<span class="hljs-params">self, instance, cls=<span class="hljs-literal">None</span></span>):</span><br>        self.counts += <span class="hljs-number">1</span><br>        instance.__dict__[<span class="hljs-string">&#x27;t&#x27;</span>] = <span class="hljs-string">&#x27;ok!&#x27;</span><br>        <span class="hljs-built_in">print</span>(self.counts)<br>        <span class="hljs-keyword">return</span> instance.__dict__[<span class="hljs-string">&#x27;t&#x27;</span>]<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Operation</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br><br>    t = Test()<br><br>m = Operation()<br><br><span class="hljs-built_in">print</span>(m.t)       <span class="hljs-comment"># 第一次调用__get()__方法</span><br><br><span class="hljs-built_in">print</span>(m.t)       <span class="hljs-comment"># 第二次调用__getattribute__()&lt;==&gt;__dict__[&#x27;t&#x27;].__get__(m,type(m))</span><br></code></pre></td></tr></table></figure>
+
+<p>感兴趣的可以利用debug <code>__get__()</code>来看counts的打印次数，只有一次</p>
+<hr>
+<p>3.最后第三个函数，就是<code>__set_name__</code>函数，一边运行时可以动态修改name值，修改dict字典中映射键值对。</p>
+<hr>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h4><p>看完上面的讲解，是不是发现大神们的框架中有很多高级的用法呢？或许肯定有小伙伴觉得麻烦，认为直接在函数中可以直接利用实例字典进行缓存。是的，没错，但是框架毕竟是框架，要高可用和扩展性强才能证明是一个好框架。而利用了装饰器的解耦效果，增强了扩展性！</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/11/05/FastAPI%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">FastAPI框架学习笔记（一）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/10/15/%E8%AF%A6%E7%BB%86%E7%90%86%E8%A7%A3%E5%B9%B6%E4%B8%BE%E4%BE%8B%E5%88%86%E6%9E%90Python%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/">
+                        <span class="hidden-mobile">详细理解并举例分析Python中的上下文管理器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

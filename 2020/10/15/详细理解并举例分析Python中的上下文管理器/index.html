@@ -1,0 +1,585 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="理解Python的上下文管理器的原理和使用一  背景很久前看了《流畅的Python》一书，未做笔记，最近学FastAPI框架时，学到了在FastAPI中使用到了上下文管理器，特此来把笔记补上，加深学习印象！ 二  简介with作为python上下文管理的关键字，它会设置一个临时的上下文，交给上下文的管理器对象控制，并且负责清理上下文，避免错误以及减少重用代码。 用一句话简要概括: 上下文管理器的存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="详细理解并举例分析Python中的上下文管理器">
+<meta property="og:url" content="https://syzzjw.cn/2020/10/15/%E8%AF%A6%E7%BB%86%E7%90%86%E8%A7%A3%E5%B9%B6%E4%B8%BE%E4%BE%8B%E5%88%86%E6%9E%90Python%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="理解Python的上下文管理器的原理和使用一  背景很久前看了《流畅的Python》一书，未做笔记，最近学FastAPI框架时，学到了在FastAPI中使用到了上下文管理器，特此来把笔记补上，加深学习印象！ 二  简介with作为python上下文管理的关键字，它会设置一个临时的上下文，交给上下文的管理器对象控制，并且负责清理上下文，避免错误以及减少重用代码。 用一句话简要概括: 上下文管理器的存">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/fastApi_context_manager.png">
+<meta property="article:published_time" content="2020-10-15T00:02:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.473Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/fastApi_context_manager.png">
+  
+  <title>详细理解并举例分析Python中的上下文管理器 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="详细理解并举例分析Python中的上下文管理器">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-10-15 08:02" pubdate>
+        2020年10月15日 早上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">详细理解并举例分析Python中的上下文管理器</h1>
+            
+            <div class="markdown-body">
+              <h3 id="理解Python的上下文管理器的原理和使用"><a href="#理解Python的上下文管理器的原理和使用" class="headerlink" title="理解Python的上下文管理器的原理和使用"></a>理解Python的上下文管理器的原理和使用</h3><h3 id="一-背景"><a href="#一-背景" class="headerlink" title="一  背景"></a><strong>一  背景</strong></h3><p>很久前看了《流畅的Python》一书，未做笔记，最近学FastAPI框架时，学到了在FastAPI中使用到了上下文管理器，特此来把笔记补上，加深学习印象！</p>
+<h3 id="二-简介"><a href="#二-简介" class="headerlink" title="二  简介"></a><strong>二  简介</strong></h3><p>with作为python上下文管理的关键字，它会设置一个临时的上下文，交给上下文的管理器对象控制，并且负责清理上下文，避免错误以及减少重用代码。</p>
+<p><strong>用一句话简要概括</strong>: 上下文管理器的存在母的是管理with语句，就像迭代器的存在是为了管理for语句</p>
+<hr>
+<h3 id="三-探索with"><a href="#三-探索with" class="headerlink" title="三  探索with"></a><strong>三  探索with</strong></h3><p>1.with的语句是简化重复的try/finally在语句中多次出现，并完成try/finally该做的事情。说到这，我觉得装饰器和上下文管理器有着异曲同工之妙，面向切面编程。</p>
+<p>2.上下文管理器的协议包含<code>__enter__</code>和<code>__exit__</code>方法。</p>
+<p>3.以<code>with open() as f:</code>为例子大致执行流程：</p>
+<p>(1)首先with开始运行时，会在上下文管理器中调用<code>__enter__</code>方法，将<code>__enter__</code>返回的值绑定到<code>f</code>对象上，这样就得到了上下文管理对象，接下来在with代码体内都可以通过f来调用相关属性（例如这里的f就是文件对象，那么我就可以通过f来调用文件对象中的属性和方法）。退出with代码块时调用<code>__exit__</code>。</p>
+<p>(2)<code>__enter__</code>返回的也不一定是上下文对象（自身），也可以是其他对象</p>
+<p>(3)注意要绑定对象，必须使用<code>as</code>。</p>
+<hr>
+<p><strong>举一个最简单的例子：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestContextManager</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__enter__</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;__enter__ is running&#x27;</span>)<br>        <span class="hljs-keyword">return</span> self<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">compute</span>(<span class="hljs-params">self</span>):</span><br>        x = <span class="hljs-number">1</span>/<span class="hljs-number">0</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;computing is running&#x27;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__exit__</span>(<span class="hljs-params">self, exc_type, exc_value,traceback</span>):</span><br>        <span class="hljs-keyword">if</span> exc_type <span class="hljs-keyword">is</span> ZeroDivisionError:<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;error&#x27;</span>)<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;no error&#x27;</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br><br><br><span class="hljs-keyword">with</span> TestContextManager() <span class="hljs-keyword">as</span> t:<br>    t.compute()<br>    <br><span class="hljs-comment"># 执行结果：</span><br>__enter__ <span class="hljs-keyword">is</span> running<br>error<br></code></pre></td></tr></table></figure>
+
+<p><strong>执行流程：</strong>先进入with前，执行<code>__enter__</code>,然后调用<code>compute</code>,最后退出with时调用<code>__exit__</code>。</p>
+<p><strong>注意点：</strong> </p>
+<p>1.从上述<code>__exit__</code>代码的参数中可以看出需要传入三个参数，分别为异常类型，异常实例（通过exc_value.args来获取异常值)，回朔点对象。</p>
+<p>2.注意看<code>__exit__</code>中最后一句是<code>return True</code>,这里会告诉解释器异常已经处理，解释器会压制异常，从而不会报错。而如果不写<code>return True</code>时，则解释器仍会抛出异常。这一点会在@contextmanager装饰器中再次提到</p>
+<hr>
+<h3 id="四-常用的contextlib-contextmanager装饰器"><a href="#四-常用的contextlib-contextmanager装饰器" class="headerlink" title="四  常用的contextlib.@contextmanager装饰器"></a><strong>四  常用的contextlib.@contextmanager装饰器</strong></h3><p>1.在抽象AbstractContextManager(出现在3.6中)定义了该两个函数的默认抽象方法，同时定义了一个钩子函数，用于检查自定义的上下文管理器类是否具备<code>__enter__</code>,和<code>__exit__</code>方法。（也就是继承了抽象类，必须要存在这两个方法）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AbstractContextManager</span>(<span class="hljs-params">abc.ABC</span>):</span><br><br>    <span class="hljs-string">&quot;&quot;&quot;An abstract base class for context managers.&quot;&quot;&quot;</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__enter__</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;Return `self` upon entering the runtime context.&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self<br><br><span class="hljs-meta">    @abc.abstractmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__exit__</span>(<span class="hljs-params">self, exc_type, exc_value, traceback</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;Raise any exception triggered within the runtime context.&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br><br><span class="hljs-meta">    @classmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__subclasshook__</span>(<span class="hljs-params">cls, C</span>):</span><br>        <span class="hljs-keyword">if</span> cls <span class="hljs-keyword">is</span> AbstractContextManager:<br>            <span class="hljs-keyword">return</span> _collections_abc._check_methods(C, <span class="hljs-string">&quot;__enter__&quot;</span>, <span class="hljs-string">&quot;__exit__&quot;</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NotImplemented</span><br><br></code></pre></td></tr></table></figure>
+
+<p>（1）默认的<code>__enter__</code>返回的是上下文管理器对象自身。</p>
+<p>（2）默认的<code>__exit__</code>返回的是None</p>
+<hr>
+<p>2.AbstractAsyncContextManager和AbstractContextManager的区别主要在前者之处异步，后者支持同步。</p>
+<p>3.@contextmanager（出现在3.7版本)是一个装饰器，装饰器在这里的作用是简化代码，通过装饰器来装饰函数，而不需要定义一个类，包含两个必要的函数（<code>__enter__</code>,<code>__exit__</code>)。这样在函数中需用yield来作为<code>__enter__</code>和<code>__exit__</code>的临界点。yield的前半段的代码作用等同于调用了<code>__enter__</code>,后半段等同与调用了<code>__exit__</code>。</p>
+<p>4.@contextmanager会将函数包装成实现了<code>__enter__</code>和<code>__exit__</code>。</p>
+<p>5.会在退出with的作用域后调用<code>__exit__</code>或执行yield之后的代码段</p>
+<hr>
+<p><strong>仍用上面的1/0举个例子：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-meta">@contextlib.contextmanager</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_contextmanager</span>(<span class="hljs-params">number</span>):</span><br><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;enter %d&#x27;</span> % number)<br><br>    <span class="hljs-keyword">try</span>:<br>        <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span><br>    <span class="hljs-keyword">except</span> ZeroDivisionError <span class="hljs-keyword">as</span> e:<br>        <span class="hljs-built_in">print</span>(e)<br><br><span class="hljs-keyword">with</span> test_contextmanager(<span class="hljs-number">0</span>) <span class="hljs-keyword">as</span> t:<br>    <span class="hljs-built_in">print</span>(t)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;running&#x27;</span>)     <span class="hljs-comment"># 模拟业务逻辑</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-number">1</span>/<span class="hljs-number">0</span>)    <span class="hljs-comment"># 模拟业务逻辑出错,会被yield后的异常处理代码段捕捉</span><br><br><span class="hljs-comment"># 执行结果：</span><br>enter <span class="hljs-number">0</span>  <span class="hljs-comment"># yield之前执行</span><br><span class="hljs-number">1</span>           <span class="hljs-comment"># yield之后执行</span><br>running   <span class="hljs-comment"># yield之后执行</span><br>division by zero   <span class="hljs-comment"># 异常处理</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>注意：</strong></p>
+<p>使用调试模式运行，在with下面的所有语句（包括自身）打上断点，就可以直观的感受到是如何运行的了，@contextlib.contextmanager是语法糖，能够在无需<code>__enter__</code>和<code>__exit__</code>方法，通过单yield实现<br>上下文管理器功能。</p>
+<hr>
+<p><strong>4.1 @contextmanager中等价于<code>__enter__</code>的功能作用：</strong></p>
+<p>(1)调用生成器函数（被装饰的函数），保存生成器对象obj。</p>
+<p>(2)调用next(obj),执行到yield关键字所在的位置处。</p>
+<p>(3)将yield value产出的值，绑定到as 后指明的目标变量上。</p>
+<hr>
+<p><strong>4.2 @contextmanager中等价于<code>__exit__</code>的功能作用：</strong></p>
+<p>(1)检查有没有把异常传给exc_type，如果有则调用obj.throw，抛出异常。</p>
+<p>(2)在生成器函数yield关键字那一行抛出抛出异常（可以回滚到yield)，在yield后半段处理异常</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 例如在yield处抛出异常，yield后半段进行处理</span><br><span class="hljs-keyword">try</span>:<br>    <span class="hljs-keyword">yield</span> ValueError(<span class="hljs-string">&#x27;value error&#x27;</span>)<br><span class="hljs-keyword">except</span> ValueError <span class="hljs-keyword">as</span> e:<br>    <span class="hljs-built_in">print</span>(e)<br><span class="hljs-keyword">finally</span>:<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;Exception successfully handled&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>(3)否则没有异常，则继续调用next(obj)，执行yield语句以后的代码。</p>
+<p><strong>注意点：</strong></p>
+<p>刚才上面提到了自定义的上下文类中的<code>__exit__</code>方法中使用了<code>return True</code>来压制异常。但是在<code>@contextmanager</code>中由于没有显示的<code>__exit__</code>方法存在，所以其装饰器会默认异常已经被处理，也就是强制压制了异常，因此在使用<code>@contextmanager</code>的时候必须要在yield处用try和catch捕获异常。然后捕捉到在yield处抛出。</p>
+<hr>
+<h3 id="五-FastApi中所提到的Dependencies-with-yield"><a href="#五-FastApi中所提到的Dependencies-with-yield" class="headerlink" title="五  FastApi中所提到的Dependencies with yield"></a><strong>五  FastApi中所提到的Dependencies with yield</strong></h3><p>1.如果对FastApi不感兴趣的可以不用往下看了。</p>
+<p>2.FastApi中使用到了一种解耦+复用的机制—-依赖注入，依赖注入在Spring中也被广泛使用到。而FastApi将依赖注入和上下文管理器结合到了一起。</p>
+<p>举个官网的例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> fastapi <span class="hljs-keyword">import</span> Depends<br><br><br><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dependency_a</span>():</span><br>    dep_a = generate_dep_a()<br>    <span class="hljs-keyword">try</span>:<br>        <span class="hljs-keyword">yield</span> dep_a<br>    <span class="hljs-keyword">finally</span>:<br>        dep_a.close()<br><br><br><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dependency_b</span>(<span class="hljs-params">dep_a=Depends(<span class="hljs-params">dependency_a</span>)</span>):</span><br>    dep_b = generate_dep_b()<br>    <span class="hljs-keyword">try</span>:<br>        <span class="hljs-keyword">yield</span> dep_b<br>    <span class="hljs-keyword">finally</span>:<br>        dep_b.close(dep_a)<br><br><br><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dependency_c</span>(<span class="hljs-params">dep_b=Depends(<span class="hljs-params">dependency_b</span>)</span>):</span><br>    dep_c = generate_dep_c()<br>    <span class="hljs-keyword">try</span>:<br>        <span class="hljs-keyword">yield</span> dep_c<br>    <span class="hljs-keyword">finally</span>:<br>        dep_c.close(dep_b)<br>        <br><span class="hljs-meta">@app.get(<span class="hljs-params"><span class="hljs-string">&#x27;/items-syz&#x27;</span></span>)</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dependency</span>(<span class="hljs-params">dependency: <span class="hljs-built_in">str</span> = DeDepends(<span class="hljs-params">dependency_c</span>)</span>):</span><br>    <span class="hljs-keyword">return</span> dependency<br></code></pre></td></tr></table></figure>
+
+<p><strong>分析：</strong></p>
+<p>1.FastApi中对上下文管理器的用法和普通的上下文管理器有一些差别，但基本原理是一致的。</p>
+<p>2.FastApi中设定了这样一种机制，它允许在<code>__exit__</code>中依赖项处理异常程序之外自定义异常处理程序。其中依赖项退出代码相当于在<code>__exit__</code>中定义的函数。而自定义异常需要自定义异常处理程序处理，不能由依赖项退出代码处理（<code>__exit__</code>\yield之后）</p>
+<p>3.FastApi在捕获处理了HttpExcpetion后，其他自定义的异常处理程序将不能再捕获该异常。</p>
+<p>4.如果在后台运行期间（路径函数中）发生了异常，可以会滚到yield处进行捕获抛出。</p>
+<p>5.进入到yield后的代码段，将执行异常处理程序，同时将不能再对response做出修改(此时已经退出了路径函数作用域)。</p>
+<p>6.总的来说，其实并不需要在fastapi中使用@contextmanager装饰器或者自定义上下文管理器类实现，因为它已经将其和依赖注入结合封装好了（Depends)，要学习它的原理。</p>
+<hr>
+<p>结合官方的一张图能更好的理解：</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/fastApi_context_manager.png" srcset="/img/loading.gif" lazyload alt="6666">{width=100%}</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/10/21/%E6%8E%A2%E6%9E%90cached_propety%E8%A3%85%E9%A5%B0%E5%99%A8%E7%BC%93%E5%AD%98%E7%9A%84%E5%8E%9F%E7%90%86/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">探析cached_propety装饰器缓存的原理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/10/08/manjaro%E6%B7%BB%E5%8A%A0%E5%8F%8C%E5%B1%8F%E7%9A%84%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98/">
+                        <span class="hidden-mobile">Manjaro添加双屏的显示问题</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

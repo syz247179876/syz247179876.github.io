@@ -1,0 +1,609 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="一、 什么是堆栈？ 栈帧也叫过程活动记录，是编译器用来实现过程&#x2F;函数调用的一种数据结构。—–百度百科  栈帧对象其中所使用的数据结构是我们常见的栈，栈是一种受限的线性表，具备后进先出的特性。栈这个数据结构具有记忆效果，常见的使用场景比如浏览器的前进和后退。在几乎所有语言中，栈帧都是实现函数调用功能的标配，栈帧中可以保存某一函数运行过程中的上下文信息，即过程活动记录。今天，通过阅读源码一起探究，在P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析Python的栈帧对象的构造和VM执行字节码的原理">
+<meta property="og:url" content="https://syzzjw.cn/2022/01/04/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84%E6%A0%88%E5%B8%A7%E5%AF%B9%E8%B1%A1/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="一、 什么是堆栈？ 栈帧也叫过程活动记录，是编译器用来实现过程&#x2F;函数调用的一种数据结构。—–百度百科  栈帧对象其中所使用的数据结构是我们常见的栈，栈是一种受限的线性表，具备后进先出的特性。栈这个数据结构具有记忆效果，常见的使用场景比如浏览器的前进和后退。在几乎所有语言中，栈帧都是实现函数调用功能的标配，栈帧中可以保存某一函数运行过程中的上下文信息，即过程活动记录。今天，通过阅读源码一起探究，在P">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/frameobject.png">
+<meta property="article:published_time" content="2022-01-04T01:41:00.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.468Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="数据结构">
+<meta property="article:tag" content="C">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/frameobject.png">
+  
+  <title>源码分析Python的栈帧对象的构造和VM执行字节码的原理 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="源码分析Python的栈帧对象的构造和VM执行字节码的原理">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-04 09:41" pubdate>
+        2022年1月4日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      10k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      32 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">源码分析Python的栈帧对象的构造和VM执行字节码的原理</h1>
+            
+            <div class="markdown-body">
+              <h3 id="一、-什么是堆栈？"><a href="#一、-什么是堆栈？" class="headerlink" title="一、 什么是堆栈？"></a>一、 什么是堆栈？</h3><blockquote>
+<p>栈帧也叫过程<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E6%B4%BB%E5%8A%A8%E8%AE%B0%E5%BD%95">活动记录</a>，是<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E7%BC%96%E8%AF%91%E5%99%A8">编译器</a>用来实现过程/<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8">函数调用</a>的一种数据结构。—–百度百科</p>
+</blockquote>
+<p>栈帧对象其中所使用的数据结构是我们常见的栈，栈是一种受限的线性表，具备后进先出的特性。栈这个数据结构具有记忆效果，常见的使用场景比如浏览器的前进和后退。在几乎所有语言中，栈帧都是实现函数调用功能的标配，栈帧中可以保存某一函数运行过程中的上下文信息，即过程活动记录。今天，通过阅读源码一起探究，在Python中，是如何使用栈帧对象（栈结构）来实现函数的调用和相关上下文信息的保存和获取的, 以及分析Python VM执行字节码的原理。</p>
+<h3 id="二、-栈帧对象的结构体"><a href="#二、-栈帧对象的结构体" class="headerlink" title="二、 栈帧对象的结构体"></a>二、 栈帧对象的结构体</h3><p>搜索Python实现的源码，发现栈帧结构有两部分，一部分是外部栈帧(PyFrameObject)，另外一部分是内部栈帧(InterpreterFrame)。先来看第一部分。</p>
+<p>1.PyFrameObject对象位于/Include/pyframe.h头文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">frame</span> &#123;</span><br>    PyObject_HEAD<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">frame</span> *<span class="hljs-title">f_back</span>;</span>      <span class="hljs-comment">/* 指向前一个栈帧对象 */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">interpreter_frame</span> *<span class="hljs-title">f_frame</span>;</span> <span class="hljs-comment">/* 指向栈帧数据 */</span><br>    PyObject *f_trace;          <span class="hljs-comment">/* 堆栈异常函数 */</span><br>    <span class="hljs-keyword">int</span> f_lineno;               <span class="hljs-comment">/* 指向与当前字节码指令对应的源码⾏号 */</span><br>    <span class="hljs-keyword">char</span> f_trace_lines;         <span class="hljs-comment">/* Emit per-line trace events? */</span><br>    <span class="hljs-keyword">char</span> f_trace_opcodes;       <span class="hljs-comment">/* Emit per-opcode trace events? */</span><br>    <span class="hljs-keyword">char</span> f_own_locals_memory;   <span class="hljs-comment">/* 栈帧所占有的内存 */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>​    </p>
+<p>2.InterpreterFrame对象位于/Include/internal/pycore_frame.h头文件中:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">interpreter_frame</span> &#123;</span><br>    PyFunctionObject *f_func;<br>    PyObject *f_globals;  <span class="hljs-comment">// 全局名字空间</span><br>    PyObject *f_builtins; <span class="hljs-comment">// 内建名字空间</span><br>    PyObject *f_locals;   <span class="hljs-comment">// 局部名字空间</span><br>    PyCodeObject *f_code;   <span class="hljs-comment">// 代码对象，记录该栈帧的上下文信息</span><br>    PyFrameObject *frame_obj;  <span class="hljs-comment">// 基本栈帧对象</span><br>    <span class="hljs-comment">/* Borrowed reference to a generator, or NULL */</span><br>    PyObject *generator;    <span class="hljs-comment">// 生成器对象</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">interpreter_frame</span> *<span class="hljs-title">previous</span>;</span>  <span class="hljs-comment">// 指向前一个栈帧对象</span><br>    <span class="hljs-keyword">int</span> f_lasti;       <span class="hljs-comment">/* 记录最后一条调用的指令 */</span><br>    <span class="hljs-keyword">int</span> stacktop;     <span class="hljs-comment">/*栈顶指针*/</span><br>    PyFrameState f_state;  <span class="hljs-comment">/* 栈帧所处的状态*/</span><br>    PyObject *localsplus[<span class="hljs-number">1</span>]; <span class="hljs-comment">/* 申请的连续的内存地址, 即栈*/</span><br>&#125; InterpreterFrame;<br></code></pre></td></tr></table></figure>
+
+
+<p>看完了上述两个数据结构，栈帧对象是通过双向链表的形式组织起来，我大致绘了如下关于栈帧对象的数据结构图。</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/frameobject.png" srcset="/img/loading.gif" lazyload alt="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/frameobject.png"></p>
+<p>通过上述图，我们可以很清楚的看出来栈帧对象是以双向链表的形式组合在一起。那么这个栈帧对象链又是被谁管理的呢？我们进一步分析。</p>
+<p>在Include/internal/pycore_frame.h中，我们可以找到对链栈的一系列的实现，包含判断栈帧的状态、获取栈帧的基地址、获取栈帧的栈顶对象、出栈、入栈，获取栈顶的栈顶地址，获取栈帧的局部变量（局部变量以数组形式存储，在编译时就可确定个数，方便通过偏移量直接定位)等等。首先来看栈帧的初始化函数<code>_PyFrame_InitializeSpecials</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c"><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-keyword">void</span><br>_PyFrame_InitializeSpecials(<br>    InterpreterFrame *frame, PyFunctionObject *func,<br>    PyObject *locals, <span class="hljs-keyword">int</span> nlocalsplus)<br>&#123;<br>    Py_INCREF(func);<br>    frame-&gt;f_func = func;<br>    frame-&gt;f_code = (PyCodeObject *)Py_NewRef(func-&gt;func_code);<br>    frame-&gt;f_builtins = func-&gt;func_builtins;<br>    frame-&gt;f_globals = func-&gt;func_globals;<br>    frame-&gt;f_locals = Py_XNewRef(locals);<br>    frame-&gt;stacktop = nlocalsplus;<br>    frame-&gt;frame_obj = <span class="hljs-literal">NULL</span>;<br>    frame-&gt;generator = <span class="hljs-literal">NULL</span>;<br>    frame-&gt;f_lasti = <span class="hljs-number">-1</span>;<br>    frame-&gt;f_state = FRAME_CREATED;<br>    frame-&gt;is_entry = <span class="hljs-literal">false</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>继续顺藤摸瓜，看哪些地方调用它。在Python/ceval.c文件中的_PyEvalFramePushAndInit中，ceval.c文件中基本都是与Python VM执行字节码相关的程序有关。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> InterpreterFrame *<br>_PyEvalFramePushAndInit(PyThreadState *tstate, PyFunctionObject *func,<br>                        PyObject *locals, PyObject* <span class="hljs-keyword">const</span>* args,<br>                        <span class="hljs-keyword">size_t</span> argcount, PyObject *kwnames)<br>&#123;<br>    <span class="hljs-comment">// 从函数对象中获取代码对象</span><br>    PyCodeObject * code = (PyCodeObject *)func-&gt;func_code;<br>    <span class="hljs-comment">// 计算栈帧所需占用的大小</span><br>    <span class="hljs-keyword">size_t</span> size = code-&gt;co_nlocalsplus + code-&gt;co_stacksize + FRAME_SPECIALS_SIZE;<br>    <span class="hljs-comment">// 为栈帧对象申请一块内存，然后加入到本地线程的上下文中</span><br>    InterpreterFrame *frame = _PyThreadState_BumpFramePointer(tstate, size);<br>    <span class="hljs-keyword">if</span> (frame == <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-keyword">goto</span> fail;<br>    &#125;<br>    <span class="hljs-comment">// 对申请到的栈帧对象进行初始化</span><br>    _PyFrame_InitializeSpecials(frame, func, locals, code-&gt;co_nlocalsplus);<br>    PyObject **localsarray = &amp;frame-&gt;localsplus[<span class="hljs-number">0</span>];<br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; code-&gt;co_nlocalsplus; i++) &#123;<br>        localsarray[i] = <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    <span class="hljs-comment">// 初始化局部变量</span><br>    <span class="hljs-keyword">if</span> (initialize_locals(tstate, func, localsarray, args, argcount, kwnames)) &#123;<br>        _PyFrame_Clear(frame);<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    <span class="hljs-keyword">return</span> frame;<br>fail:<br>    <span class="hljs-comment">/* Consume the references */</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">size_t</span> i = <span class="hljs-number">0</span>; i &lt; argcount; i++) &#123;<br>        Py_DECREF(args[i]);<br>    &#125;<br>    <span class="hljs-keyword">if</span> (kwnames) &#123;<br>        Py_ssize_t kwcount = PyTuple_GET_SIZE(kwnames);<br>        <span class="hljs-keyword">for</span> (Py_ssize_t i = <span class="hljs-number">0</span>; i &lt; kwcount; i++) &#123;<br>            Py_DECREF(args[i+argcount]);<br>        &#125;<br>    &#125;<br>    PyErr_NoMemory();<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<p>1.<code>_PyEvalFramePushAndInit</code>该函数会用于call_function等字节码中，因为调用函数，意味着创建新的栈帧对象，并加入到栈帧调用链中，进入子函数后，栈帧也相应的跳到对应的栈帧对象，然后执行栈帧对象中的代码对象，执行完成，将返回结果保存到调用方的栈帧对象中并释放回收当前栈帧。</p>
+<p>2.该函数中有两个比较重要的函数，分别是<code>_PyThreadState_BumpFramePointer</code>, <code>initialize_locals</code>两个函数，前者时在本地线程的上下文中申请size大小的栈帧对象，并添加到栈帧链的末尾(逻辑结构上认为是链式)。后者时初始化栈帧对象中的函数局部变量，包含函数的参数等。接下来就来分析下这两个函数内部的实现。</p>
+<p>3.<code>_PyThreadState_BumpFramePointer</code>函数源码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> <span class="hljs-keyword">inline</span> InterpreterFrame *<br>_PyThreadState_BumpFramePointer(PyThreadState *tstate, <span class="hljs-keyword">size_t</span> size)<br>&#123;<br>    <span class="hljs-comment">// 获取上一个栈帧对象在动态数组中地址</span><br>    PyObject **base = tstate-&gt;datastack_top;<br>    <span class="hljs-keyword">if</span> (base) &#123;<br>        <span class="hljs-comment">// 如果存在栈帧对象</span><br>        <span class="hljs-comment">// 计算新栈帧对象的地址</span><br>        PyObject **top = base + size;<br>        <span class="hljs-comment">// 不能超过数据栈的上限</span><br>        assert(tstate-&gt;datastack_limit);<br>        <span class="hljs-keyword">if</span> (top &lt; tstate-&gt;datastack_limit) &#123;<br>            <span class="hljs-comment">// 将栈帧对象的地址添加到动态数组</span><br>            tstate-&gt;datastack_top = top;<br>            <span class="hljs-keyword">return</span> (InterpreterFrame *)base;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> _PyThreadState_BumpFramePointerSlow(tstate, size);<br>&#125;<br><br><span class="hljs-class"><span class="hljs-keyword">struct</span> _<span class="hljs-title">ts</span> &#123;</span><br>    ...<br>    PyObject **datastack_top; <span class="hljs-comment">// 动态数组, 指向动态数组中的元素地址</span><br>    PyObject **datastack_limit;  <span class="hljs-comment">// 动态数组, 指向动态数组中的元素地址</span><br>    ...<br></code></pre></td></tr></table></figure>
+
+<p>4.<code>initialize_locals</code>函数源码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">未完待续~<br></code></pre></td></tr></table></figure>
+
+
+
+<p>5.<strong>看了上述分析，做一个小的总结：</strong></p>
+<p>栈帧对象在存储结构上是以连续的动态数组的方式组织起来，逻辑结构上，采用双向链表的方式组织起来。使用数组的好处是可以通过偏移量直接定位数据；使用双向链表的好处是插入(分配)，删除(回收)更加高效。所以阅读源码，不仅仅只是阅读，而是学着理解设计者设计和实现的思路并丰富自己。</p>
+<h3 id="三、Python-执行过程及其VM的执行原理"><a href="#三、Python-执行过程及其VM的执行原理" class="headerlink" title="三、Python 执行过程及其VM的执行原理"></a>三、Python 执行过程及其VM的执行原理</h3><p>众所周知，Python是解释型语言，从Python应用层面来看，Python是允许写一部分代码，就执行一部分代码，使用过jupyter notebook的同学应该都深有体会。</p>
+<p>1.一般，所有语言的入口函数基本上都以main函数开头，Python也不例外。Python执行py文件的入口源码位于/Python/pythonrun.c</p>
+<p>​    1).执行Python某py文件时，首先会打开py文件并封装成文件对象：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c">PyObject *<br>PyRun_FileExFlags(FILE *fp, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *filename, <span class="hljs-keyword">int</span> start, PyObject *globals,<br>                  PyObject *locals, <span class="hljs-keyword">int</span> closeit, PyCompilerFlags *flags)<br>&#123;<br>    PyObject *filename_obj = PyUnicode_DecodeFSDefault(filename);<br>    <span class="hljs-keyword">if</span> (filename_obj == <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br><br>    PyObject *res = pyrun_file(fp, filename_obj, start, globals,<br>                               locals, closeit, flags);<br>    Py_DECREF(filename_obj);<br>    <span class="hljs-keyword">return</span> res;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>​    2).根据文件对象，构建AST抽象语法数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> PyObject *<br>pyrun_file(FILE *fp, PyObject *filename, <span class="hljs-keyword">int</span> start, PyObject *globals,<br>           PyObject *locals, <span class="hljs-keyword">int</span> closeit, PyCompilerFlags *flags)<br>&#123;<br><br>	<span class="hljs-comment">// ...</span><br>    mod_ty mod;<br>    <span class="hljs-comment">// 构建AST语法树</span><br>    mod = _PyParser_ASTFromFile(fp, filename, <span class="hljs-literal">NULL</span>, start, <span class="hljs-literal">NULL</span>, <span class="hljs-literal">NULL</span>,<br>                                flags, <span class="hljs-literal">NULL</span>, arena);<br>	<br>    <span class="hljs-keyword">if</span> (closeit) &#123;<br>        fclose(fp);<br>    &#125;<br><br>    PyObject *ret;<br>    <span class="hljs-keyword">if</span> (mod != <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-comment">// 将AST转为字节码, 然后执行字节码</span><br>        ret = run_mod(mod, filename, globals, locals, flags, arena);<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;<br>        ret = <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    _PyArena_Free(arena);<br><br>    <span class="hljs-keyword">return</span> ret;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>​    3).将AST抽象语法数转为字节码，并执行字节码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">static</span> PyObject *<br>run_mod(mod_ty mod, PyObject *filename, PyObject *globals, PyObject *locals,<br>            PyCompilerFlags *flags, PyArena *arena)<br>&#123;<br>    PyThreadState *tstate = _PyThreadState_GET();<br>    <span class="hljs-comment">// 将AST语法树转为字节码</span><br>    PyCodeObject *co = _PyAST_Compile(mod, filename, flags, <span class="hljs-number">-1</span>, arena);<br>    <span class="hljs-keyword">if</span> (co == <span class="hljs-literal">NULL</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br><br>    <span class="hljs-keyword">if</span> (_PySys_Audit(tstate, <span class="hljs-string">&quot;exec&quot;</span>, <span class="hljs-string">&quot;O&quot;</span>, co) &lt; <span class="hljs-number">0</span>) &#123;<br>        Py_DECREF(co);<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 执行字节码, 最底层调用_PyEval_EvalFrameDefault方法执行字节码对象。</span><br>    PyObject *v = run_eval_code_obj(tstate, co, globals, locals);<br>    Py_DECREF(co);<br>    <span class="hljs-keyword">return</span> v;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>总结：</strong></p>
+<p>Python执行某py文件的过程大体上可以分为三部：</p>
+<ul>
+<li><p>执行Python某py文件时，首先会打开py文件并封装成文件对象。</p>
+</li>
+<li><p>根据文件对象，构建AST抽象语法数。</p>
+</li>
+<li><p>将AST抽象语法数转为字节码，并调用_PyEval_EvalFrameDefault方法执行逐行字节码。</p>
+</li>
+</ul>
+<p>2.在了解了Python执行py文件的过程后，可以发现Python VM真正执行的是一行一行的字节码。Python自己定义了一套字节码，</p>
+<p>位于/Include/opcode.h头文件中，在我目前的Python3.11.0 a0版本中，已经增长到155个字节码了。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 查看字节码的函数</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test</span>(<span class="hljs-params">name, age, *args</span>):</span><br>    <span class="hljs-built_in">print</span>(name, age)<br><br><span class="hljs-built_in">print</span>(dis(test))<br><span class="hljs-comment"># 对应结果</span><br> <span class="hljs-number">56</span>           <span class="hljs-number">0</span> LOAD_GLOBAL              <span class="hljs-number">0</span> (<span class="hljs-built_in">print</span>)<br>              <span class="hljs-number">2</span> LOAD_FAST                <span class="hljs-number">0</span> (name)<br>              <span class="hljs-number">4</span> LOAD_FAST                <span class="hljs-number">1</span> (age)<br>              <span class="hljs-number">6</span> CALL_FUNCTION            <span class="hljs-number">2</span><br>              <span class="hljs-number">8</span> POP_TOP<br>             <span class="hljs-number">10</span> LOAD_CONST               <span class="hljs-number">0</span> (<span class="hljs-literal">None</span>)<br>             <span class="hljs-number">12</span> RETURN_VALUE<br><span class="hljs-literal">None</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p>3.接下来，分析下<code>_PyEval_EvalFrameDefault</code>函数，它是Python VM 执行字节码的核心函数，并结合<code>_PyEval_EvalFrameDefault</code>函数，分析下上述函数对应的各个字节码的执行逻辑。<code>_PyEval_EvalFrameDefault</code>函数位于/Python/ceval.c文件中。由于该函数代码段过长，我这里截取部分进行分析，其他部分用<code>...</code>代替。    </p>
+<p>首先了解下字节码的结构组成，总共16bit， 根据自己主机的CPU端模式的架构决定，我的电脑上是小端存储。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> WORDS_BIGENDIAN</span><br><span class="hljs-comment">// 字节码大小为16bit, 包含两部分, 操作码和操作数</span><br><span class="hljs-comment">// 字节序列为大端方式正序存储，即高位字节排放在内存的低地址端, 低位字节排列在内存的高地址端</span><br><span class="hljs-meta">#  <span class="hljs-meta-keyword">define</span> _Py_OPCODE(word) ((word) &gt;&gt; 8)</span><br><span class="hljs-meta">#  <span class="hljs-meta-keyword">define</span> _Py_OPARG(word) ((word) &amp; 255)</span><br><span class="hljs-meta">#  <span class="hljs-meta-keyword">define</span> _Py_MAKECODEUNIT(opcode, oparg) (((opcode)&lt;&lt;8)|(oparg))</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">else</span></span><br><span class="hljs-comment">// x86的CPU默认是小端</span><br><span class="hljs-comment">// 字节序列为小端方式存储, 即高位字节排放在内存的高地址端, 低位字节排放在内存的低地址端</span><br><span class="hljs-comment">// opcode -------&gt; oparg</span><br><span class="hljs-comment">// 低地址 --------&gt; 高地址</span><br><span class="hljs-comment">//  低位  -------&gt;  高位</span><br><span class="hljs-comment">//  8bit     |     8bit</span><br><span class="hljs-meta">#  <span class="hljs-meta-keyword">define</span> _Py_OPCODE(word) ((word) &amp; 255)</span><br><span class="hljs-meta">#  <span class="hljs-meta-keyword">define</span> _Py_OPARG(word) ((word) &gt;&gt; 8)</span><br><span class="hljs-meta">#  <span class="hljs-meta-keyword">define</span> _Py_MAKECODEUNIT(opcode, oparg) ((opcode)|((oparg)&lt;&lt;8))</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-comment">// 虚拟机执行字节码的核心代码</span><br>PyObject* _Py_HOT_FUNCTION<br><span class="hljs-constructor">_PyEval_EvalFrameDefault(PyThreadState <span class="hljs-operator">*</span><span class="hljs-params">tstate</span>, InterpreterFrame <span class="hljs-operator">*</span><span class="hljs-params">frame</span>, <span class="hljs-params">int</span> <span class="hljs-params">throwflag</span>)</span><br>&#123;<br>	<span class="hljs-comment">// ...</span><br>	<span class="hljs-comment">// 当前指令的操作码</span><br>    <span class="hljs-built_in">int</span> opcode;<br>    <span class="hljs-comment">// 当前指令的操作数</span><br>    <span class="hljs-built_in">int</span> oparg;<br>    <span class="hljs-comment">// 返回结果</span><br>    PyObject *retval = NULL;<br>    <br>    <span class="hljs-comment">// ...</span><br>    <span class="hljs-comment">// 获取栈帧对象中的代码对象</span><br>     PyCodeObject *co = frame-&gt;f_code;<br>     <br>    <span class="hljs-comment">// ...</span><br>    <span class="hljs-comment">// 名字空间</span><br>    PyObject *names = co-&gt;co_names;<br>    <span class="hljs-comment">// 常量空间</span><br>    PyObject *consts = co-&gt;co_consts;<br>    <br>    <span class="hljs-comment">// ...</span><br>    <span class="hljs-comment">// 获取栈顶指针的地址，等于frame-&gt;localsplus+frame-&gt;stacktop, 即栈帧基地址 + 栈顶指针偏移量</span><br>    PyObject **stack_pointer = <span class="hljs-constructor">_PyFrame_GetStackPointer(<span class="hljs-params">frame</span>)</span>;<br>    frame-&gt;stacktop = -<span class="hljs-number">1</span>;<br>    frame-&gt;f_state = FRAME_EXECUTING;<br>    <br>    <span class="hljs-comment">// ...</span><br>    <span class="hljs-comment">// 获取指令的操作码</span><br>    opcode = <span class="hljs-constructor">_Py_OPCODE(<span class="hljs-operator">*</span><span class="hljs-params">next_instr</span>)</span>;<br>    <br>    <span class="hljs-comment">// ...</span><br>    dispatch_opcode:<br>        switch (opcode) &#123;<br>            <span class="hljs-constructor">TARGET(NOP)</span>: &#123;<br>                <span class="hljs-constructor">DISPATCH()</span>;<br>            &#125;<br><br>            <span class="hljs-comment">/* We keep LOAD_CLOSURE so that the bytecode stays more readable. */</span><br>            <span class="hljs-comment">// 加载局部变量值或闭包变量值</span><br>            <span class="hljs-constructor">TARGET(LOAD_CLOSURE)</span>:<br>            <span class="hljs-constructor">TARGET(LOAD_FAST)</span>: &#123;<br>                PyObject *value = <span class="hljs-constructor">GETLOCAL(<span class="hljs-params">oparg</span>)</span>;<br>                <span class="hljs-keyword">if</span> (value<span class="hljs-operator"> == </span>NULL) &#123;<br>                    goto unbound_local_error;<br>                &#125;<br>                <span class="hljs-constructor">Py_INCREF(<span class="hljs-params">value</span>)</span>;<br>                <span class="hljs-comment">// 将局部变量推入栈帧</span><br>                <span class="hljs-constructor">PUSH(<span class="hljs-params">value</span>)</span>;<br>                <span class="hljs-constructor">DISPATCH()</span>;<br>            &#125;<br><br>            <span class="hljs-comment">// 加载常量值</span><br>            <span class="hljs-constructor">TARGET(LOAD_CONST)</span>: &#123;<br>                <span class="hljs-constructor">PREDICTED(LOAD_CONST)</span>;<br>                PyObject *value = <span class="hljs-constructor">GETITEM(<span class="hljs-params">consts</span>, <span class="hljs-params">oparg</span>)</span>;<br>                <span class="hljs-constructor">Py_INCREF(<span class="hljs-params">value</span>)</span>;<br>                <span class="hljs-comment">// 将常量值推入栈帧</span><br>                <span class="hljs-constructor">PUSH(<span class="hljs-params">value</span>)</span>;<br>                <span class="hljs-constructor">DISPATCH()</span>;<br>            &#125;<br><br>            <span class="hljs-comment">// 保存变量到局部名字空间</span><br>            <span class="hljs-constructor">TARGET(STORE_FAST)</span>: &#123;<br>                <span class="hljs-constructor">PREDICTED(STORE_FAST)</span>;<br>                <span class="hljs-comment">// 从栈帧中弹出局部变量值, 并保存到局部名字空间</span><br>                PyObject *value = <span class="hljs-constructor">POP()</span>;<br>                <span class="hljs-comment">// 保存到栈中指定oparg操作数对应的位置</span><br>                <span class="hljs-constructor">SETLOCAL(<span class="hljs-params">oparg</span>, <span class="hljs-params">value</span>)</span>;<br>                <span class="hljs-constructor">DISPATCH()</span>;<br>            &#125;<br>            <span class="hljs-comment">// 调用bound_method对象</span><br>            <span class="hljs-constructor">TARGET(CALL_METHOD)</span>: &#123;<br>            <span class="hljs-comment">/* Designed to work in tamdem with LOAD_METHOD. */</span><br>            PyObject **sp, *res;<br>            <span class="hljs-built_in">int</span> meth_found;<br><br>            sp = stack_pointer;<br>            <span class="hljs-comment">/* `meth` is NULL when LOAD_METHOD thinks that it&#x27;s not</span><br><span class="hljs-comment">                a method call.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">                Stack layout:</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">                       ... | NULL | callable | arg1 | ... | argN</span><br><span class="hljs-comment">                                                            ^- TOP()</span><br><span class="hljs-comment">                                               ^- (-oparg)</span><br><span class="hljs-comment">                                    ^- (-oparg-1)</span><br><span class="hljs-comment">                             ^- (-oparg-2)</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">                `callable` will be POPed by call_function.</span><br><span class="hljs-comment">                NULL will will be POPed manually later.</span><br><span class="hljs-comment">                If `meth` isn&#x27;t NULL, it&#x27;s a method call.  Stack layout:</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">                     ... | method | self | arg1 | ... | argN</span><br><span class="hljs-comment">                                                        ^- TOP()</span><br><span class="hljs-comment">                                           ^- (-oparg)</span><br><span class="hljs-comment">                                    ^- (-oparg-1)</span><br><span class="hljs-comment">                           ^- (-oparg-2)</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">               `self` and `method` will be POPed by call_function.</span><br><span class="hljs-comment">               We&#x27;ll be passing `oparg + 1` to call_function, to</span><br><span class="hljs-comment">               make it accept the `self` as a first argument.</span><br><span class="hljs-comment">            */</span><br>            <span class="hljs-comment">// 用于检测回调的对象是否是bound_method函数, 如果是标识1, 否标识0</span><br>            <span class="hljs-comment">// 这里的oparg表示第一个参数在栈中的位置</span><br>            meth_found = (<span class="hljs-constructor">PEEK(<span class="hljs-params">oparg</span> + 2)</span> != NULL);<br>            res = call<span class="hljs-constructor">_function(<span class="hljs-params">tstate</span>, &amp;<span class="hljs-params">sp</span>, <span class="hljs-params">oparg</span> + <span class="hljs-params">meth_found</span>, NULL, <span class="hljs-params">cframe</span>.<span class="hljs-params">use_tracing</span>)</span>;<br>            stack_pointer = sp;<br><br>            <span class="hljs-constructor">STACK_SHRINK(1 - <span class="hljs-params">meth_found</span>)</span>;<br>            <span class="hljs-comment">// 将结果推入栈</span><br>            <span class="hljs-constructor">PUSH(<span class="hljs-params">res</span>)</span>;<br>            <span class="hljs-keyword">if</span> (res<span class="hljs-operator"> == </span>NULL) &#123;<br>                goto error;<br>            &#125;<br>            <span class="hljs-constructor">CHECK_EVAL_BREAKER()</span>;<br>            <span class="hljs-constructor">DISPATCH()</span>;<br>        &#125;<br>        <br>        <span class="hljs-comment">// 回调普通function函数</span><br>        <span class="hljs-constructor">TARGET(CALL_FUNCTION)</span>: &#123;<br>            <span class="hljs-constructor">PREDICTED(CALL_FUNCTION)</span>;<br>            PyObject **sp, *res;<br>            <span class="hljs-comment">// 指向栈顶的指针</span><br>            sp = stack_pointer;<br><br>            <span class="hljs-comment">// 创建新栈帧对象, 获取当前栈中的函数名, 参数并进入新栈帧中回调, 然后将结果res推入当前栈中，并回收新创建的栈帧对				象。</span><br>            res = call<span class="hljs-constructor">_function(<span class="hljs-params">tstate</span>, &amp;<span class="hljs-params">sp</span>, <span class="hljs-params">oparg</span>, NULL, <span class="hljs-params">cframe</span>.<span class="hljs-params">use_tracing</span>)</span>;<br>            stack_pointer = sp;<br>            <span class="hljs-constructor">PUSH(<span class="hljs-params">res</span>)</span>;<br>            <span class="hljs-keyword">if</span> (res<span class="hljs-operator"> == </span>NULL) &#123;<br>                goto error;<br>            &#125;<br>            <span class="hljs-constructor">CHECK_EVAL_BREAKER()</span>;<br>            <span class="hljs-constructor">DISPATCH()</span>;<br>        &#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>说明：</strong></p>
+<ul>
+<li>未完待续~</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/C/">C</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/categories/C/Python/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+                    
+                      <a class="hover-with-bg" href="/tags/C/">C</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/04/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90Python%E7%9A%84GIL%E8%A7%A3%E9%87%8A%E5%99%A8%E9%94%81%E7%9A%84%E6%9E%84%E9%80%A0%E4%B8%8E%E5%AE%9E%E7%8E%B0/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">源码分析Python的GIL解释器锁的构造与实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/12/22/%E5%88%86%E6%9E%90CPython%E4%B8%AD%E7%9A%84%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
+                        <span class="hidden-mobile">源码分析CPython中的垃圾回收机制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

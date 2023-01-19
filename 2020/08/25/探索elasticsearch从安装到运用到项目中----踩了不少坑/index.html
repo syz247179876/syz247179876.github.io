@@ -1,0 +1,587 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="主机环境8GB，操作系统Manjaro，Python3.6.6 ， Django2.2之前用whoosh+haystack+jieba实现的搜索，感觉速度不是特别快，这次学习下elasticsearch+haystack+ik实现搜索功能。 elasticsearch是一个分布式的搜索引擎，支持集群，部署在不同的机器上。同时支持分词插件，比如ik分词，可视化插件kibana等。 我所理解的elas">
+<meta property="og:type" content="article">
+<meta property="og:title" content="探索elasticsearch从安装到运用到项目中----踩了不少坑">
+<meta property="og:url" content="https://syzzjw.cn/2020/08/25/%E6%8E%A2%E7%B4%A2elasticsearch%E4%BB%8E%E5%AE%89%E8%A3%85%E5%88%B0%E8%BF%90%E7%94%A8%E5%88%B0%E9%A1%B9%E7%9B%AE%E4%B8%AD----%E8%B8%A9%E4%BA%86%E4%B8%8D%E5%B0%91%E5%9D%91/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="主机环境8GB，操作系统Manjaro，Python3.6.6 ， Django2.2之前用whoosh+haystack+jieba实现的搜索，感觉速度不是特别快，这次学习下elasticsearch+haystack+ik实现搜索功能。 elasticsearch是一个分布式的搜索引擎，支持集群，部署在不同的机器上。同时支持分词插件，比如ik分词，可视化插件kibana等。 我所理解的elas">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/bootstarp%E6%A3%80%E6%9F%A5%E4%B8%BATrue.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elasic%E5%B7%B2%E6%9C%89%E7%BB%93%E7%82%B9%E8%A2%AB%E4%BD%BF%E7%94%A8.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elastic%E4%B8%8D%E8%83%BD%E7%94%A8root%E5%90%AF%E5%8A%A8.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elastic%E6%97%A5%E5%BF%97%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elastic%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98.png">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C.png">
+<meta property="article:published_time" content="2020-08-25T06:16:50.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.463Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="ElasticSearch">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/bootstarp%E6%A3%80%E6%9F%A5%E4%B8%BATrue.png">
+  
+  <title>探索elasticsearch从安装到运用到项目中----踩了不少坑 - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="探索elasticsearch从安装到运用到项目中----踩了不少坑">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-08-25 14:16" pubdate>
+        2020年8月25日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      5.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      17 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">探索elasticsearch从安装到运用到项目中----踩了不少坑</h1>
+            
+            <div class="markdown-body">
+              <h3 id="主机环境8GB，操作系统Manjaro，Python3-6-6-，-Django2-2"><a href="#主机环境8GB，操作系统Manjaro，Python3-6-6-，-Django2-2" class="headerlink" title="主机环境8GB，操作系统Manjaro，Python3.6.6 ， Django2.2"></a><strong>主机环境8GB，操作系统Manjaro，Python3.6.6 ， Django2.2</strong></h3><p>之前用whoosh+haystack+jieba实现的搜索，感觉速度不是特别快，这次学习下elasticsearch+haystack+ik实现搜索功能。</p>
+<p>elasticsearch是一个分布式的搜索引擎，支持集群，部署在不同的机器上。同时支持分词插件，比如ik分词，可视化插件kibana等。</p>
+<p>我所理解的elasticsearch主要的原理：</p>
+<p>首先在自己程序中配置要产生索引的表字段和指定索引库，然后根据这些字段，创建索引数据结构，保存在es中的索引库中，借着通过API根据关键字从指定的索引库中查找结果，以JSON格式返回，然后根据这些结果再去数据库中查找相应的记录，最终对这些查询集序列化，返回给前端。</p>
+<p>es主要解决了数据库在模糊查询关键字的时候，会忽略所建立的索引，从而导致大数据量的查询效率低的问题。</p>
+<hr>
+<h4 id="一-安装elasticsearch"><a href="#一-安装elasticsearch" class="headerlink" title="一   安装elasticsearch"></a><strong>一   安装elasticsearch</strong></h4><p>1.安装JAVA虚拟机，这个就不说了</p>
+<p>2.去官网找到网址，命令行</p>
+<p><code>wget  https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.8.1-linux-x86_64.tar.gz</code></p>
+<p>3.然后解压到制定目录</p>
+<p><code>tar -zxvf elasticsearch-7.8.1-linux-x86_64.tar.gz -C /opt/elasticsearch</code> ，-C表明指定具体解压的目录。</p>
+<p>因为我的是manjaro操作系统，自带了包管理器pacman，直接<code>sudo pacman -S elasticsearch</code>，一键安装。不过pacman的软件库中的elasticsearch没有官网的版本新。</p>
+<hr>
+<h4 id="二-配置elasticsearch"><a href="#二-配置elasticsearch" class="headerlink" title="二   配置elasticsearch"></a><strong>二   配置elasticsearch</strong></h4><p>1.创建非root用户</p>
+<p>因为elasticsearch默认不能使用root角色启动服务，所以需要创建另外的用户。创建用户的指令</p>
+<p><code>useradd syz</code></p>
+<p><code>password syz</code></p>
+<p>使用<code>sudo su syz</code>进入相应的用户下</p>
+<p>这一步因为我的manjaro做了主系统，一开始就已经设置了一个不是root的用户，所以这一步是跳过的，如果已经有了非root用户，则可以不用在创建新的用户。直接将elasticsearch相关文件的所属用户或组修改成非root就可以操作了。</p>
+<hr>
+<p>2.配置elasticsearch.yml</p>
+<p>找到自己elasticsearch目录下的elasticsearch.yml,进入其中修改配置文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> es的集群名</span><br>cluster.name:my-application<br><span class="hljs-meta">#</span><span class="bash"> es结点值</span><br>node.name:node-1<br><span class="hljs-meta">#</span><span class="bash"> 数据存放的地方</span><br>path.data:/var/lib/elasticsearch<br><span class="hljs-meta">#</span><span class="bash">日志存放的地方</span><br>path.logs:/var/log/elasticsearch<br><span class="hljs-meta">#</span><span class="bash"> 自己的ip地址</span><br>network:192.168.0.105<br><span class="hljs-meta">#</span><span class="bash"> 端口号</span><br>http.port:9200<br>bootstrap.memory_lock:false<br>bootstrap.initial_master_nodes:false<br></code></pre></td></tr></table></figure>
+
+<hr>
+<p>3.启动elasticsearch<br>进入其bin目录。</p>
+<p><code>./elasticsearch</code></p>
+<p>后台运行：<code>./elasticsearch -d</code></p>
+<hr>
+<h4 id="三-启动elasticsearch遇到的一些错误汇总"><a href="#三-启动elasticsearch遇到的一些错误汇总" class="headerlink" title="三   启动elasticsearch遇到的一些错误汇总"></a><strong>三   启动elasticsearch遇到的一些错误汇总</strong></h4><p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/bootstarp%E6%A3%80%E6%9F%A5%E4%B8%BATrue.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elasic%E5%B7%B2%E6%9C%89%E7%BB%93%E7%82%B9%E8%A2%AB%E4%BD%BF%E7%94%A8.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<p>说明：这个表示当前以运行的服务器结点个数达到上线，我出先这个问题的原因是之前已经启动了一个结点，启动失败了，然后再次启动就会出错。解决方法是kill掉之前启动不成功的结点，重新启动。</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elastic%E4%B8%8D%E8%83%BD%E7%94%A8root%E5%90%AF%E5%8A%A8.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elastic%E6%97%A5%E5%BF%97%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<hr>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/elastic%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+<hr>
+<h4 id="四-在Django的前后端分离中对接elasticsearch"><a href="#四-在Django的前后端分离中对接elasticsearch" class="headerlink" title="四   在Django的前后端分离中对接elasticsearch"></a><strong>四   在Django的前后端分离中对接elasticsearch</strong></h4><p><strong>以下是吐嘈：</strong></p>
+<p>这地方，按照原始的思路，打算使用DRF对接elasticsearch，但是使用过程中也是出现了蛮多的问题。例如使用drf-haystack序列化searchset，返回的结果竟然是空，我用curl直接查找索引库可以查找到数据。</p>
+<p>使用drf-haystack对接whoosh搜索引擎，虽然返回了结果，但是却返回了所有的结果，不同的关键字，返回同样所有的结果集。</p>
+<p>忙了一天，百度浏览了博客，基本上都一模一样，没有一个人出了问题，大多数只是表面的对接了一下，我就纳闷了？是版本冲突还是啥？具体也不晓得之后也去了github上查看，fork和star的人好少，估计也不怎么维护，所以最终决定放弃drf-haystack，还是自己写个类来在内部请求es，然后解析json，在去hit数据库，拿到对应的结果集，最后序列化给前端。</p>
+<hr>
+<p>先上代码，因为昨天实现好对elasticsearch的操作类，写的可能不够完善。不过基本的根据关键字查找到对应的索引结果，是可以实现了。一些复杂的工程还需要去学习es的一些API参数，以满足不同的场景。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 视图类</span><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CommoditySearchOperation</span>(<span class="hljs-params">GenericAPIView</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;ES搜索操作&quot;&quot;&quot;</span><br><br>    index_models = [Commodity]<br><br>    serializer_class = CommoditySerializer<br><br>    pagination_class = CommodityResultsSetPagination<br><br>    elastic_class = ElasticSearchOperation<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_elastic_class</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">return</span> self.elastic_class<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_elastic</span>(<span class="hljs-params">self, *args, **kwargs</span>):</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">getattr</span>(self, <span class="hljs-string">&#x27;elastic&#x27;</span>, <span class="hljs-literal">None</span>):<br>            <span class="hljs-keyword">return</span> <span class="hljs-built_in">getattr</span>(self, <span class="hljs-string">&#x27;elastic&#x27;</span>)<br>        elastic_ = self.get_elastic_class()<br>        <span class="hljs-built_in">setattr</span>(self, <span class="hljs-string">&#x27;elastic&#x27;</span>, elastic_(*args, **kwargs))<br>        <span class="hljs-keyword">return</span> self.elastic<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_queryset</span>(<span class="hljs-params">self</span>):</span><br>        elastic = self.get_elastic(request=self.request)<br>        <span class="hljs-keyword">return</span> elastic.get_queryset()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, request</span>):</span><br>        queryset = self.get_queryset()<br>        common_logger.info(queryset)<br>        page = self.paginate_queryset(queryset)  <span class="hljs-comment"># 返回一个list页对象,默认返回第一页的page对象</span><br>        <span class="hljs-keyword">if</span> page <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            serializer = self.get_serializer(page, many=<span class="hljs-literal">True</span>)<br>            <span class="hljs-keyword">return</span> self.get_paginated_response(serializer.data)<br>        serializer = self.get_serializer(queryset, many=<span class="hljs-literal">True</span>)<br>        <span class="hljs-keyword">return</span> Response(serializer.data)<br><br><br><span class="hljs-comment"># 序列化器类</span><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CommoditySerializer</span>(<span class="hljs-params">serializers.ModelSerializer</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;商品序列化器&quot;&quot;&quot;</span><br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Meta</span>:</span><br>        model = Commodity<br>        fields = <span class="hljs-string">&#x27;__all__&#x27;</span><br>		<br>		<br><br><span class="hljs-comment"># 对es操作类</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ElasticSearchOperation</span>:</span><br>    <span class="hljs-string">&quot;&quot;&quot;直接对es的请求封装&quot;&quot;&quot;</span><br><br>    <span class="hljs-comment"># __slots__ = (&#x27;query&#x27;, &#x27;_instance&#x27;, &#x27;url&#x27;, &#x27;request&#x27;)</span><br>    Model = Commodity<br><br>    BASE_URL = <span class="hljs-string">&#x27;http://192.168.0.105:9200/&#x27;</span><br>    FUNC = <span class="hljs-string">&#x27;_search&#x27;</span><br>    INDEX_DB = <span class="hljs-string">&#x27;shop&#x27;</span><br><br>    <span class="hljs-comment"># def __new__(cls, *args, **kwargs):</span><br>    <span class="hljs-comment">#     if not hasattr(cls, &#x27;_instance&#x27;):</span><br>    <span class="hljs-comment">#         cls._instance = super().__new__(cls, *args, **kwargs)</span><br>    <span class="hljs-comment">#     return cls._instance</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, *args, **kwargs</span>):</span><br>        <span class="hljs-keyword">for</span> key, value <span class="hljs-keyword">in</span> kwargs.items():<br>            <span class="hljs-built_in">setattr</span>(self, key, value)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">combine_url</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">assert</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;request&#x27;</span>), <span class="hljs-string">&#x27;Should include request &#x27;</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;url&#x27;</span>):<br>            <span class="hljs-keyword">return</span> self.url<br>        query = self.request.query_params.copy()<br>        query.pop(<span class="hljs-string">&#x27;page&#x27;</span>)<br>        url = self.BASE_URL + self.INDEX_DB + <span class="hljs-string">&#x27;/&#x27;</span> + self.FUNC + <span class="hljs-string">&#x27;?&#x27;</span> + <span class="hljs-string">&#x27;&amp;&#x27;</span>.join(<br>            [<span class="hljs-string">&#x27;q=&#x27;</span> + key + <span class="hljs-string">&#x27;:&#x27;</span> + value <span class="hljs-keyword">for</span> key, value <span class="hljs-keyword">in</span> query.items()])<br>        <span class="hljs-built_in">setattr</span>(self, <span class="hljs-string">&#x27;url&#x27;</span>, url)<br>        common_logger.info(url)<br>        <span class="hljs-keyword">return</span> url<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_search_results</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;pk_list&#x27;</span>):<br>            <span class="hljs-keyword">return</span> self.pk_list<br>        url = self.combine_url()<br>        response = requests.get(url).json()<br>        hits = response.get(<span class="hljs-string">&#x27;hits&#x27;</span>).get(<span class="hljs-string">&#x27;hits&#x27;</span>)<br>        pk_list = [<span class="hljs-built_in">int</span>(document.get(<span class="hljs-string">&#x27;_source&#x27;</span>).get(<span class="hljs-string">&#x27;django_id&#x27;</span>)) <span class="hljs-keyword">for</span> document <span class="hljs-keyword">in</span> hits]<br>        <span class="hljs-built_in">setattr</span>(self, <span class="hljs-string">&#x27;pk_list&#x27;</span>, pk_list)<br>        common_logger.info(pk_list)<br>        <span class="hljs-keyword">return</span> pk_list<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_queryset</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;根据索引结果查询数据库&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">assert</span> <span class="hljs-built_in">hasattr</span>(self, <span class="hljs-string">&#x27;Model&#x27;</span>), <span class="hljs-string">&#x27;Should define Model&#x27;</span><br>        pk_list = self.get_search_results()<br>        ordering = <span class="hljs-string">&#x27;FIELD(`id`, &#123;&#125;)&#x27;</span>.<span class="hljs-built_in">format</span>(<span class="hljs-string">&#x27;,&#x27;</span>.join([<span class="hljs-built_in">str</span>(pk) <span class="hljs-keyword">for</span> pk <span class="hljs-keyword">in</span> pk_list]))  <span class="hljs-comment"># 设定排序</span><br>        <span class="hljs-keyword">return</span> self.Model.commodity_.<span class="hljs-built_in">filter</span>(pk__in=pk_list).extra(select=&#123;<span class="hljs-string">&quot;ordering&quot;</span>: ordering&#125;, order_by=(<span class="hljs-string">&quot;ordering&quot;</span>,))<br><br></code></pre></td></tr></table></figure>
+
+<hr>
+<p><strong>说明：</strong>我没有去仔细看drf-haystack的代码，只是利用了es向外提供了Restful的Api。为了不暴露自己的ip和端口号。加了一层视图封装一下。</p>
+<p>基本流程：前端请求GET方法到后台，后台获取GET的参数。然后通过这些参数，拼接成请求es索引库的url，发送GET请求，获取JSON格式的结果，对其解析，解析出model的id，随即利用extra制定其结果集的顺序（这里需要制定），不然queryset返回的是按id从小到达的，而不是按照es返回的按照score排列的结果集了。最后，将这些queryset进行序列化，添加分页器等等，将结果返回给前端。</p>
+<p>存在的几个问题，记录下，下次需要解决：</p>
+<p>1.es每次hit索引库，只返回了10条结果，如何让它一次返回更多的数据。</p>
+<p>2.我的这种方法性能上是否还需要提高？</p>
+<p>其实，Python中存在elasticsearch包，可以创建多重模式的elasticsearch，并提供丰富的Client和API，以后使用到的时候，我再学习并写篇笔记！今天就到这里。</p>
+<hr>
+<h4 id="五-返回的结果示例："><a href="#五-返回的结果示例：" class="headerlink" title="五   返回的结果示例："></a><strong>五   返回的结果示例：</strong></h4><p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C.png" srcset="/img/loading.gif" lazyload>{width=90%}</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/ElasticSearch/">ElasticSearch</a>
+                    
+                      <a class="hover-with-bg" href="/categories/ElasticSearch/Django/">Django</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/tags/ElasticSearch/">ElasticSearch</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/08/25/15%20.%20%E4%B8%89%E6%95%B0%E4%B9%8B%E5%92%8C%20%EF%BC%88%E4%B8%89%E6%8C%87%E9%92%88%E8%A7%A3%EF%BC%89/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">15. 三数之和 （三指针解）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/08/25/11%20%E7%9B%9B%E6%B0%B4%E6%9C%80%E5%A4%9A%E7%9A%84%E5%AE%B9%E5%99%A8%20%EF%BC%88%E5%8F%8C%E6%8C%87%E9%92%88%E8%A7%A3%EF%BC%89/">
+                        <span class="hidden-mobile">11. 盛水最多的容器 （双指针解）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

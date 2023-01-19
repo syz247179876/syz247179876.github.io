@@ -1,0 +1,574 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="python装饰器与闭包详解（看着一篇就够了）什么是闭包？闭包简单来说就是函数中嵌套函数。复杂点讲其实是指延伸了作用于的函数，具备自由变量，在第一层函数中定义自由变量，在深入的函数中就可以调用该自由变量  关于闭包的核心关键点—-自由变量什么是自由变量？ 自由变量：指未在本地作用于中绑定的变量，可以将超函数中的本地作用域中的局部变量作为自由变量。 对于可变序列类型（不可散列对象）：闭包中，可变序列">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 装饰器闭包详解（看这一篇就够了）">
+<meta property="og:url" content="https://syzzjw.cn/2020/05/28/python%20%E8%A3%85%E9%A5%B0%E5%99%A8%E9%97%AD%E5%8C%85%E8%AF%A6%E8%A7%A3%EF%BC%88%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%89/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="python装饰器与闭包详解（看着一篇就够了）什么是闭包？闭包简单来说就是函数中嵌套函数。复杂点讲其实是指延伸了作用于的函数，具备自由变量，在第一层函数中定义自由变量，在深入的函数中就可以调用该自由变量  关于闭包的核心关键点—-自由变量什么是自由变量？ 自由变量：指未在本地作用于中绑定的变量，可以将超函数中的本地作用域中的局部变量作为自由变量。 对于可变序列类型（不可散列对象）：闭包中，可变序列">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-28T13:13:43.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.451Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>Python 装饰器闭包详解（看这一篇就够了） - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Python 装饰器闭包详解（看这一篇就够了）">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-05-28 21:13" pubdate>
+        2020年5月28日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      12 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Python 装饰器闭包详解（看这一篇就够了）</h1>
+            
+            <div class="markdown-body">
+              <h3 id="python装饰器与闭包详解（看着一篇就够了）"><a href="#python装饰器与闭包详解（看着一篇就够了）" class="headerlink" title="python装饰器与闭包详解（看着一篇就够了）"></a><strong>python装饰器与闭包详解（看着一篇就够了）</strong></h3><h4 id="什么是闭包？"><a href="#什么是闭包？" class="headerlink" title="什么是闭包？"></a><strong>什么是闭包？</strong></h4><p>闭包简单来说就是函数中嵌套函数。<br>复杂点讲其实是指延伸了作用于的函数，具备自由变量，在第一层函数中定义自由变量，在深入的函数中就可以调用该自由变量</p>
+<hr>
+<h4 id="关于闭包的核心关键点—-自由变量"><a href="#关于闭包的核心关键点—-自由变量" class="headerlink" title="关于闭包的核心关键点—-自由变量"></a><strong>关于闭包的核心关键点—-自由变量</strong></h4><p><strong>什么是自由变量？</strong></p>
+<p>自由变量：指未在本地作用于中绑定的变量，可以将超函数中的本地作用域中的局部变量作为自由变量。</p>
+<p><strong>对于可变序列类型（不可散列对象）：</strong>闭包中，可变序列类型的变量等价于自由变量，例如<code>list.append()</code>追加方法，并不会改变引用的对象，因而会一直保持自由变量特性。</p>
+<p><strong>对于不可变序列类型（可散列对象）：</strong>闭包中，不可变序列类型的变量必须要用nonlocal声明其为自由变量。为什么呢？看下面这个例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">counts</span>():</span><br>    sums = <span class="hljs-number">0</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">compute</span>():</span><br>        sums += <span class="hljs-number">1</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">sum</span>)<br>    <span class="hljs-keyword">return</span> compute()<br>counts()<br></code></pre></td></tr></table></figure>
+
+<p>报错：<code>UnboundLocalError: local variable &#39;sums&#39; referenced before assignment</code></p>
+<p><strong>原因分析：</strong><br>因为在<code>counts()</code>定义了不可变序列类型sums，而在<code>compute()</code>中<code>sums+=1</code>等价于先对<code>sum + 1</code>,然后产生新的局部变量赋值给sum，会产生异常，原因是sums变成了局部变量，<code>sum + 1</code>赋值给了一个未初始化的不在内存的对象。</p>
+<p>解决方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">counts</span>():</span><br>    sums = <span class="hljs-number">0</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">compute</span>():</span><br>	    <span class="hljs-keyword">nonlocal</span> sums  <span class="hljs-comment"># 添加自由变量</span><br>        sums += <span class="hljs-number">1</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">sum</span>)<br>    <span class="hljs-keyword">return</span> compute()<br>counts()<br></code></pre></td></tr></table></figure>
+
+<p>**注： **添加自由变量后，就可以将sums绑定为自由变量，具备自由变量特性。</p>
+<hr>
+<h4 id="什么是装饰器？"><a href="#什么是装饰器？" class="headerlink" title="什么是装饰器？"></a><strong>什么是装饰器？</strong></h4><p>是可调用的对象（一般通过实现类的__call__方法），其参数是另一个函数（被装饰的函数），装饰器可能会处理被装饰的函数，可能会返回被装饰的函数，也可能会返回另一个函数或者可调用的对象。</p>
+<hr>
+<h4 id="怎么使用装饰器"><a href="#怎么使用装饰器" class="headerlink" title="怎么使用装饰器?"></a><strong>怎么使用装饰器?</strong></h4><h4 id="不带参数的装饰器"><a href="#不带参数的装饰器" class="headerlink" title="不带参数的装饰器"></a><strong>不带参数的装饰器</strong></h4><p>首先举个简单的例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">counts</span>(<span class="hljs-params">func</span>):</span>  <span class="hljs-comment"># func（被装饰的函数）会传递过来</span><br>    sums = <span class="hljs-number">0</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;what is your name?&#x27;</span>)  <span class="hljs-comment"># 装饰器导入的时候会调用它</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">compute</span>(<span class="hljs-params">name</span>):</span><br>        <span class="hljs-keyword">nonlocal</span> sums            <span class="hljs-comment"># 声明自由变量</span><br>        sums += <span class="hljs-number">1</span>                <br>        func(name)               <span class="hljs-comment"># 调用被装饰的函数</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;sums:%d&#x27;</span> % sums)<br>    <span class="hljs-keyword">return</span> compute               <span class="hljs-comment"># 返回另一个函数或可调用的对象</span><br><br><span class="hljs-meta">@counts</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test</span>(<span class="hljs-params">name</span>):</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;my name is %s&#x27;</span>% name)<br>test(<span class="hljs-string">&#x27;syz&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">what is your name ?  # 运行时导入<br>my name <span class="hljs-keyword">is</span> syz  <span class="hljs-comment"># </span><br>sums:<span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>首先介绍下装饰器运行时和导入时的区别：</strong></p>
+<p>在导入模块时，首先执行装饰器函数，而被装饰器装饰的函数或者装饰器返回的函数只在运行时调用，这也就是通常所说的导入时和运行时的区别。</p>
+<p><code>test(&#39;syz&#39;)</code> &lt;==&gt;（等价于） <code>counts(test)(&#39;syz&#39;)</code></p>
+<hr>
+<h4 id="带参数的装饰器"><a href="#带参数的装饰器" class="headerlink" title="带参数的装饰器"></a><strong>带参数的装饰器</strong></h4><p>接下来进阶一下，假设我们一个函数要根据不同的参数执行相应的业务逻辑（可能不会调用这个函数本身，也可能调用另外的函数），这时候我们就需要一个带参数的装饰器了。</p>
+<p>先看一个例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">aim_or_wholes</span>(<span class="hljs-params">choice=<span class="hljs-literal">True</span></span>):</span>   <span class="hljs-comment"># 带默认值的参数True</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">decorate</span>(<span class="hljs-params">func</span>):</span>           <span class="hljs-comment"># 传入被装饰的函数</span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">inner</span>(<span class="hljs-params">num1,num2,**m</span>):</span>      <span class="hljs-comment"># 接收被装饰函数的参数</span><br>            <span class="hljs-built_in">print</span>(num1,num2,m)         <span class="hljs-comment"># 可以看一下传递过来的参数</span><br>            <span class="hljs-comment">#print(args,kwargs)</span><br>            <span class="hljs-comment">#print(kwargs.pop(&#x27;m&#x27;))</span><br>            <span class="hljs-keyword">if</span> choice:<br>                <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;6666&#x27;</span><br>            <span class="hljs-keyword">else</span>:<br>                m = func(<span class="hljs-number">3</span>,<span class="hljs-number">4</span>)<br>            <span class="hljs-keyword">return</span> m<br>        <span class="hljs-keyword">return</span> inner<br>    <span class="hljs-keyword">return</span> decorate<br><br>m = &#123;<span class="hljs-string">&#x27;name&#x27;</span>:<span class="hljs-string">&#x27;syz&#x27;</span>&#125;<br><br><span class="hljs-meta">@aim_or_wholes(<span class="hljs-params"><span class="hljs-literal">False</span></span>)</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test</span>(<span class="hljs-params">num1,num2,**m</span>):</span><br>    <span class="hljs-keyword">return</span> num1+num2<br><br>test(num1=<span class="hljs-number">1</span>,num2=<span class="hljs-number">3</span>,m=<span class="hljs-number">4</span>)<br><br></code></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-number">1</span> <span class="hljs-number">3</span> &#123;<span class="hljs-string">&#x27;m&#x27;</span>: <span class="hljs-number">4</span>&#125;<br><span class="hljs-number">7</span><br></code></pre></td></tr></table></figure>
+
+
+<p><strong>注：</strong></p>
+<p>① <code>**</code>表示对字典拆包</p>
+<p>② 通过三层函数组建的装饰器可以称之为装饰器工厂函数，可以表示带参数的装饰器，两层函数组键的装饰器为普通装饰器。</p>
+<hr>
+<h4 id="类装饰器"><a href="#类装饰器" class="headerlink" title="类装饰器"></a><strong>类装饰器</strong></h4><p>类装饰器相对于函数装饰器的一大优点就是好拓展。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> time<br><span class="hljs-keyword">import</span> functools<br> <br> <br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">T1</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, name</span>):</span><br>        self.name = name<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span>(<span class="hljs-params">self, func</span>):</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;I am outer!&#x27;</span>)<br> <br><span class="hljs-meta">        @functools.wraps(<span class="hljs-params">func</span>)    </span><span class="hljs-comment"># 这个装饰器用户获取func中除了参数以外的元属性</span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dec</span>(<span class="hljs-params">*args, **kwargs</span>):</span><br>            t0 = time.time()<br>            result = func(*args, **kwargs)<br>            elapsed = time.time() - t0<br>            name = func.__name__  <span class="hljs-comment"># 获取函数名</span><br>            arg_lst = []<br>            <span class="hljs-keyword">if</span> args:<br>                arg_lst.append(<span class="hljs-string">&#x27;, &#x27;</span>.join(<span class="hljs-built_in">repr</span>(arg) <span class="hljs-keyword">for</span> arg <span class="hljs-keyword">in</span> args))<br>            <span class="hljs-keyword">if</span> kwargs:<br>                pairs = [<span class="hljs-string">&#x27;%s=%r&#x27;</span> % (k, w) <span class="hljs-keyword">for</span> k, w <span class="hljs-keyword">in</span> <span class="hljs-built_in">sorted</span>(kwargs.items())]<br>                arg_lst.append(<span class="hljs-string">&#x27;, &#x27;</span>.join(pairs))<br>            arg_str = <span class="hljs-string">&#x27;, &#x27;</span>.join(arg_lst)<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;[%0.8fs] %s(%s) -&gt; %r &#x27;</span> % (elapsed, name, arg_str, result))<br>        <span class="hljs-keyword">return</span> dec<br><br><br><br><span class="hljs-meta">@T1(<span class="hljs-params"><span class="hljs-string">&#x27;test&#x27;</span></span>)</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">t2</span>():</span><br>    l = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]<br>    ff = [x*x <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> l]<br>    <span class="hljs-built_in">print</span>(ff)<br><br>t2()<br></code></pre></td></tr></table></figure>
+
+
+<p><strong>结果：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><br>I am outer!<br>[<span class="hljs-number">1</span>, <span class="hljs-number">4</span>, <span class="hljs-number">9</span>]<br>[0.00000000s] t2() -&gt; None<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>注：</strong></p>
+<p>① 两层函数+一层类体或三层函数可以构成装饰器工厂函数，装饰器工厂函数说白了就是带参数的装饰器，装饰器工厂函数返回的是真正的装饰器。</p>
+<p>② <code>t2()</code> &lt;=&gt;（等价于）<code>T1(&#39;test&#39;)(t2)()</code></p>
+<p>③ 这里使用了<code>__call__</code>函数，而<code>T1(&#39;test&#39;)</code>&lt;=&gt;<code>obj</code>，这样就转变为<code>obj(t2)()</code>,是不是很眼熟，没错，这个就是函数的调用方式，秘诀就在于<code>__call__</code>函数，可以让类实例函数化。</p>
+<hr>
+<h4 id="最后再来一个我的查重项目中的一个带参数装饰器，被装饰的函数在类中定义"><a href="#最后再来一个我的查重项目中的一个带参数装饰器，被装饰的函数在类中定义" class="headerlink" title="最后再来一个我的查重项目中的一个带参数装饰器，被装饰的函数在类中定义"></a><strong>最后再来一个我的查重项目中的一个带参数装饰器，被装饰的函数在类中定义</strong></h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 装饰器</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">aim_or_whole</span>(<span class="hljs-params">choice=<span class="hljs-literal">True</span></span>):</span><br>    pattern = get_content_regex(<span class="hljs-literal">False</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">decorate</span>(<span class="hljs-params">func</span>):</span><br><span class="hljs-meta">        @functools.wraps(<span class="hljs-params">func</span>)</span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">inner</span>(<span class="hljs-params">obj, row=<span class="hljs-literal">None</span>, whole=choice</span>):</span><br>            <span class="hljs-comment"># 因为被装饰函数在类中定义，所以inner需要额外一个参数作为类实例obj</span><br>            <span class="hljs-keyword">global</span> dict_context<br>            <span class="hljs-keyword">if</span> choice:<br>                message = <span class="hljs-string">&#x27;全体匹配&#x27;</span><br>                dict_context = func(obj, row, <span class="hljs-literal">True</span>)<br>                sums = <span class="hljs-number">0</span><br>                <span class="hljs-keyword">for</span> key, values <span class="hljs-keyword">in</span> dict_context.items():<br>                    <span class="hljs-keyword">for</span> value <span class="hljs-keyword">in</span> values:<br>                        value = re.sub(pattern, <span class="hljs-string">&#x27;&#x27;</span>, value)<br>                        sums += <span class="hljs-built_in">len</span>(value)<br>                <span class="hljs-keyword">return</span> sums<br>            <span class="hljs-keyword">else</span>:<br>                message = <span class="hljs-string">&#x27;主体匹配&#x27;</span><br>                <span class="hljs-keyword">pass</span>  <span class="hljs-comment"># 自定义choice = True时的情况</span><br><br>        <span class="hljs-keyword">return</span> inner<br><br>    <span class="hljs-keyword">return</span> decorate<br></code></pre></td></tr></table></figure>
+
+
+<p><strong>注：</strong></p>
+<p>这里需要关注的是，<code> def inner(obj, row=None, whole=choice):</code>中需要多一个obj实例，相当于self，<code>func(obj, row, True)</code>同样func也需要。因此我们可以总结一下，如果参数不需要动态变化(<code>*args,**kwargs</code>),那么装饰器函数中的函数的参数最好被装饰的函数的参数一致。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/05/29/request.POST%E4%B8%8D%E8%83%BD%E4%BF%AE%E6%94%B9%E5%B1%9E%E6%80%A7%E5%80%BC%E7%9A%84%E9%97%AE%E9%A2%98/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Django中request.POST不能修改属性值的问题</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/05/28/python%E5%AE%9E%E7%8E%B0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82/">
+                        <span class="hidden-mobile">Python实现设计模式之抽象工厂</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

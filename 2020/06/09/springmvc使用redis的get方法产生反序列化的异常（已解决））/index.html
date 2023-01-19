@@ -1,0 +1,550 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="RedisTemplate的get方法的反序列化的异常处理 一、背景使用redis的哈希表实现投票功能的统计，在get数据时，产生了反序列化的问题。 产生异常的代码： 12345678910111213141516&#x2F;&#x2F; get the number of praise and oppose and abandon of vote    public Map&lt;String, Object&amp;gt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringMVC使用Redis的get方法产生反序列化的异常（已解决））">
+<meta property="og:url" content="https://syzzjw.cn/2020/06/09/springmvc%E4%BD%BF%E7%94%A8redis%E7%9A%84get%E6%96%B9%E6%B3%95%E4%BA%A7%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E7%9A%84%E5%BC%82%E5%B8%B8%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89%EF%BC%89/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="RedisTemplate的get方法的反序列化的异常处理 一、背景使用redis的哈希表实现投票功能的统计，在get数据时，产生了反序列化的问题。 产生异常的代码： 12345678910111213141516&#x2F;&#x2F; get the number of praise and oppose and abandon of vote    public Map&lt;String, Object&amp;gt">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/redis1.png">
+<meta property="article:published_time" content="2020-06-09T12:14:05.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.453Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="SpringMVC">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/redis1.png">
+  
+  <title>SpringMVC使用Redis的get方法产生反序列化的异常（已解决）） - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="SpringMVC使用Redis的get方法产生反序列化的异常（已解决））">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-06-09 20:14" pubdate>
+        2020年6月9日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      15 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">SpringMVC使用Redis的get方法产生反序列化的异常（已解决））</h1>
+            
+            <div class="markdown-body">
+              <h3 id="RedisTemplate的get方法的反序列化的异常处理"><a href="#RedisTemplate的get方法的反序列化的异常处理" class="headerlink" title="RedisTemplate的get方法的反序列化的异常处理"></a><strong>RedisTemplate的get方法的反序列化的异常处理</strong></h3><hr>
+<h4 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a><strong>一、背景</strong></h4><p>使用redis的<strong>哈希表</strong>实现投票功能的统计，在get数据时，产生了反序列化的问题。</p>
+<p>产生异常的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// get the number of praise and oppose and abandon of vote</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> Map&lt;String, Object&gt; <span class="hljs-title">statistic_vote</span><span class="hljs-params">(String pid)</span></span>&#123;<br>        HashOperations&lt;String,String,Object&gt; votes_redis = redisTemplate.opsForHash();<br>        Map&lt;String, Object&gt; result = <span class="hljs-keyword">new</span> HashMap&lt;&gt;();<br>        <span class="hljs-keyword">try</span>&#123;<br>            result.put(<span class="hljs-string">&quot;praise&quot;</span>,votes_redis.get(pid,<span class="hljs-string">&quot;praise&quot;</span>));<br>            result.put(<span class="hljs-string">&quot;oppose&quot;</span>,votes_redis.get(pid,<span class="hljs-string">&quot;oppose&quot;</span>));<br>            result.put(<span class="hljs-string">&quot;abandon&quot;</span>,votes_redis.get(pid,<span class="hljs-string">&quot;abandon&quot;</span>));<br>            <span class="hljs-keyword">return</span> result;<br>        &#125;<br>        <span class="hljs-keyword">catch</span> (Exception e)&#123;<br>            e.printStackTrace();<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;<br>        &#125;<br>    &#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>错误：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs java">`org.springframework.data.redis.serializer.SerializationException: Cannot deserialize; nested exception is org.springframework.core.serializer.support.SerializationFailedException: Failed to deserialize payload. Is the <span class="hljs-keyword">byte</span> array a result of corresponding serialization <span class="hljs-keyword">for</span> DefaultDeserializer?; nested exception is java.io.EOFException<br>	at org.springframework.data.redis.serializer.JdkSerializationRedisSerializer.deserialize(JdkSerializationRedisSerializer.java:<span class="hljs-number">84</span>)<br>	at org.springframework.data.redis.core.AbstractOperations.deserializeHashValue(AbstractOperations.java:<span class="hljs-number">354</span>)<br>	at org.springframework.data.redis.core.DefaultHashOperations.get(DefaultHashOperations.java:<span class="hljs-number">55</span>)<br>	at com.syz.util.RedisImpl.statistic_vote(RedisImpl.java:<span class="hljs-number">88</span>)<br>	at com.syz.controller.MainsiteController.vote_result(MainsiteController.java:<span class="hljs-number">139</span>)<br>	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)<br>	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:<span class="hljs-number">62</span>)<br>	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:<span class="hljs-number">43</span>)<br>	at java.lang.reflect.Method.invoke(Method.java:<span class="hljs-number">498</span>)<br>	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:<span class="hljs-number">190</span>)<br>	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:<span class="hljs-number">138</span>)<br>	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:<span class="hljs-number">105</span>)<br>	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:<span class="hljs-number">879</span>)<br>	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:<span class="hljs-number">793</span>)<br>	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:<span class="hljs-number">87</span>)<br>	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:<span class="hljs-number">1040</span>)<br>	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:<span class="hljs-number">943</span>)<br>	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:<span class="hljs-number">1006</span>)<br>	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:<span class="hljs-number">898</span>)<br>	at javax.servlet.http.HttpServlet.service(HttpServlet.java:<span class="hljs-number">634</span>)<br>	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:<span class="hljs-number">883</span>)<br>	at javax.servlet.http.HttpServlet.service(HttpServlet.java:<span class="hljs-number">741</span>)<br>	`<br></code></pre></td></tr></table></figure>
+
+<p>根据异常，可以初步判断是由于spring使用了默认的<code>DefaultDeserializer</code>反序列化器，也就是使用了<code>org.springframework.data.redis.serializer.JdkSerializationRedisSerializer.deserialize</code>这个反序列器，产生了异常，使得序列化和反序列化的方法不一致。</p>
+<hr>
+<h4 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a><strong>解决方法：</strong></h4><p>在redis的xml配置文件中增加如下的序列化器</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs java">&lt;context:property-placeholder location=<span class="hljs-string">&quot;classpath:redis.properties&quot;</span> /&gt;<br>    &lt;bean id=<span class="hljs-string">&quot;redisTemplate&quot;</span> <span class="hljs-class"><span class="hljs-keyword">class</span></span>=<span class="hljs-string">&quot;org.springframework.data.redis.core.RedisTemplate&quot;</span>&gt;<br>        &lt;property name=<span class="hljs-string">&quot;connectionFactory&quot;</span>  ref=<span class="hljs-string">&quot;jedisConnFactory&quot;</span> /&gt;<br>        &lt;!--序列化，不然报ERR hash value is not an integer;错，不能使用increment--&gt;<br>        &lt;property name=<span class="hljs-string">&quot;keySerializer&quot;</span>&gt;<br>            &lt;bean <span class="hljs-class"><span class="hljs-keyword">class</span></span>=<span class="hljs-string">&quot;org.springframework.data.redis.serializer.StringRedisSerializer&quot;</span>/&gt;<br>        &lt;/property&gt;<br>        &lt;property name=<span class="hljs-string">&quot;valueSerializer&quot;</span>&gt;<br>            &lt;bean <span class="hljs-class"><span class="hljs-keyword">class</span></span>=<span class="hljs-string">&quot;org.springframework.data.redis.serializer.StringRedisSerializer&quot;</span>/&gt;<br>        &lt;/property&gt;<br>    &lt;/bean&gt;<br></code></pre></td></tr></table></figure>
+
+
+<p>增加了之后，重启服务器运行，仍产报反序列化的异常，可是我上面明明改了呀。经过仔细的检查代码，发现我是用的是散列表存储，而不是简单的key-value键值对，哎哟，简单的key-value满足不了散列表，因此我们还得添加针对hash表的序列化器的配置。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs java"><br>&lt;property name=<span class="hljs-string">&quot;hashKeySerializer&quot;</span>&gt;<br>            &lt;bean <span class="hljs-class"><span class="hljs-keyword">class</span></span>=<span class="hljs-string">&quot;org.springframework.data.redis.serializer.StringRedisSerializer&quot;</span>/&gt;<br>        &lt;/property&gt;<br>        &lt;property name=<span class="hljs-string">&quot;hashValueSerializer&quot;</span>&gt;<br>            &lt;bean <span class="hljs-class"><span class="hljs-keyword">class</span></span>=<span class="hljs-string">&quot;org.springframework.data.redis.serializer.StringRedisSerializer&quot;</span>/&gt;<br>        &lt;/property&gt;<br>		<br></code></pre></td></tr></table></figure>
+
+<p>增加hashKey的序列化器，重启服务器后，运行正常~</p>
+<p><img src="https://django-blog-syz.oss-cn-shanghai.aliyuncs.com/redis1.png" srcset="/img/loading.gif" lazyload alt="redis正确截图" title="redis正确截图"></p>
+<p>如果正常的话，显示在redis中的将是正常的编码，否则序列化不对就会产生奇怪的符号。</p>
+<hr>
+<h4 id="总结："><a href="#总结：" class="headerlink" title="总结："></a><strong>总结：</strong></h4><p>1、稍微总结一下，对于序列化和反序列化，一定要保证我用什么类型序列化，我就要用相对应的类型反序列化，不然类型不对，就会报错。</p>
+<p>2、对于redis中increment的方法，获取其值时，它没有被反序列化，因此不会报错，但是使用get方法，获取值时，就需要反序列化了，不然就会报错。</p>
+<p>3、对于put，get方法，键值对都要为String的类型，如果直接put的值为整型的话，会出现Long无法转换成String的异常。</p>
+<p>4、要对键和值都进行序列化，这样才能获得正确的数据</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/SpringMVC/">SpringMVC</a>
+                    
+                      <a class="hover-with-bg" href="/categories/SpringMVC/Redis/">Redis</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Redis/">Redis</a>
+                    
+                      <a class="hover-with-bg" href="/tags/SpringMVC/">SpringMVC</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/06/11/django-restful-framework%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96%E5%99%A8%E5%B5%8C%E5%A5%97%E9%80%92%E5%BD%92%E8%B0%83%E7%94%A8/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">django-restful-framework的序列化器嵌套递归调用</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/06/08/java%E4%BD%BF%E7%94%A8redis%E6%8A%A5ERR%20hash%20value%20is%20not%20an%20integer%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/">
+                        <span class="hidden-mobile">Java使用Redis报ERR hash value is not an integer（已解决）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

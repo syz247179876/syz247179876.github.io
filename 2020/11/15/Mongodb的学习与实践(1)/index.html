@@ -1,0 +1,600 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="捕捉一只在计算机领域不断努力的程序猿">
+  <meta name="author" content="云中">
+  <meta name="keywords" content="计算机, 后端, 算法, Python">
+  <meta name="description" content="之前做项目时候使用的关系性数据库在面对一些不可控的字段情况下,变得很复杂.因此尝试学习下Mongodb,来寻找更快速方便的解决方案. Mongodb官方有免费的集群云服务器,帮你现搭了由3个mongodb服务组成的集群.如果不想自己本地配置的话,直接去官方注册一下,申请云mongo,然后会给你连接字符串,包括shell,mongodb compass,或者不同语言建立连接的字符串.这样就可以去构建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mongodb的学习与实践(1)">
+<meta property="og:url" content="https://syzzjw.cn/2020/11/15/Mongodb%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%8E%E5%AE%9E%E8%B7%B5(1)/index.html">
+<meta property="og:site_name" content="云中小站">
+<meta property="og:description" content="之前做项目时候使用的关系性数据库在面对一些不可控的字段情况下,变得很复杂.因此尝试学习下Mongodb,来寻找更快速方便的解决方案. Mongodb官方有免费的集群云服务器,帮你现搭了由3个mongodb服务组成的集群.如果不想自己本地配置的话,直接去官方注册一下,申请云mongo,然后会给你连接字符串,包括shell,mongodb compass,或者不同语言建立连接的字符串.这样就可以去构建">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-11-15T13:13:20.000Z">
+<meta property="article:modified_time" content="2023-01-02T03:50:33.426Z">
+<meta property="article:author" content="云中">
+<meta property="article:tag" content="Mongodb">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>Mongodb的学习与实践(1) - 云中小站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"syzzjw.cn","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"❡"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>云中小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="https://syzzjw.cn/">
+                <i class="iconfont icon-addrbook"></i>
+                旧博客
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.jpg') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Mongodb的学习与实践(1)">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      云中
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-11-15 21:13" pubdate>
+        2020年11月15日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      12k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      36 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Mongodb的学习与实践(1)</h1>
+            
+            <div class="markdown-body">
+              <p>之前做项目时候使用的关系性数据库在面对一些不可控的字段情况下,变得很复杂.因此尝试学习下Mongodb,来寻找更快速方便的解决方案.</p>
+<p>Mongodb官方有免费的集群云服务器,帮你现搭了由3个mongodb服务组成的集群.如果不想自己本地配置的话,直接去官方注册一下,申请云mongo,然后会给你连接字符串,包括shell,mongodb compass,或者不同语言建立连接的字符串.这样就可以去构建客户端连接.</p>
+<p>我这里去注册过了,不过我这里使用的本地的mongodb服务.</p>
+<p>我在linux环境下安装,直接去官网下载压缩包,解压,编写配置文件(port,host,path等),然后设置环境变量,最后启动mongo服务.这里细节就不多说了,网上都有安装教程.</p>
+<p>实在不会的戳这里<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaofeideboke/p/9837648.html">https://www.cnblogs.com/xiaofeideboke/p/9837648.html</a></p>
+<h2 id="以下代码均在jupyter-notebook编写"><a href="#以下代码均在jupyter-notebook编写" class="headerlink" title="以下代码均在jupyter-notebook编写"></a><strong>以下代码均在jupyter-notebook编写</strong></h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-keyword">import</span> pymongo<br><br><br>client = pymongo.MongoClient(<span class="hljs-string">&quot;mongodb://127.0.0.1:27017/?readPreference=primary&amp;appname=MongoDB%20Compass&amp;ssl=false&quot;</span>)<br>db = client.hellofriends  <span class="hljs-comment"># 选择数据库，没有就自动创建一个</span><br><br><br><br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 向数据库中的collection中插入一条数据，hellofriends为collection，如果没有则创建collection</span><br>db.hellofriends.insert_one(  <br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;canvas&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">100</span>,<br>     <span class="hljs-string">&quot;tags&quot;</span>: [<span class="hljs-string">&quot;cotton&quot;</span>],<br>     <span class="hljs-string">&quot;size&quot;</span>: &#123;<span class="hljs-string">&quot;h&quot;</span>: <span class="hljs-number">28</span>, <span class="hljs-string">&quot;w&quot;</span>: <span class="hljs-number">35.5</span>, <span class="hljs-string">&quot;uom&quot;</span>: <span class="hljs-string">&quot;cm&quot;</span>&#125;&#125;<br>     )<br><br><span class="hljs-comment"># 向数据库中插入多条数据</span><br>result1 = db.hellofriends.insert_many([<br>   &#123;<br>      <span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;syz&quot;</span>,<br>      <span class="hljs-string">&quot;age&quot;</span>:<span class="hljs-number">20</span>,<br>      <span class="hljs-string">&quot;hobby&quot;</span>:<span class="hljs-string">&quot;sleep&quot;</span><br>   &#125;,<br>   &#123;<br>      <span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;zjw66&quot;</span>,<br>      <span class="hljs-string">&quot;age&quot;</span>:<span class="hljs-number">21</span>,<br>       <span class="hljs-string">&quot;hobby&quot;</span>:<span class="hljs-string">&quot;run&quot;</span><br>   &#125;<br>])<br><br><br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 通过过滤参数查询指定的数据</span><br><span class="hljs-comment"># 等价于SELECT * FROM hellofriends WHERE name = &quot;syz&quot;</span><br>result = db.hellofriends.find(&#123;<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;syz&quot;</span>&#125;)<br><span class="hljs-comment"># result 为游标</span><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><br><span class="hljs-comment"># 等价于SELECT * FROM hellofriends WHERE age in (19, 21)</span><br>result = db.hellofriends.find(&#123;<span class="hljs-string">&quot;age&quot;</span>:&#123;<span class="hljs-string">&quot;$in&quot;</span>:[<span class="hljs-number">19</span>,<span class="hljs-number">21</span>]&#125;&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><br><span class="hljs-comment"># 等价于 select * from hellofriends where name = &quot;syz&quot; and age &lt; 20</span><br>result = db.hellofriends.find(&#123;<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;syz&quot;</span>, <span class="hljs-string">&quot;age&quot;</span>:&#123;<span class="hljs-string">&quot;$lt&quot;</span>:<span class="hljs-number">20</span>&#125;&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><br><span class="hljs-comment"># 等价于 select * from hellofriends where name = &quot;syz&quot; or age &lt; 20</span><br><br>result = db.hellofriends.find(&#123;<span class="hljs-string">&quot;$or&quot;</span>:[&#123;<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;syz&quot;</span>&#125;,&#123;<span class="hljs-string">&quot;age&quot;</span>:&#123;<span class="hljs-string">&#x27;$lt&#x27;</span>:<span class="hljs-number">21</span>&#125;&#125;]&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 等价于 select * from hellofriends where name = &quot;syz&quot; and (age &lt; 20 or hobby like &#x27;s%&#x27;)</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;syz&quot;</span>,<br>    <span class="hljs-string">&quot;$or&quot;</span>:[<br>        &#123;<span class="hljs-string">&quot;age&quot;</span>:&#123;<span class="hljs-string">&quot;$lt&quot;</span>:<span class="hljs-number">20</span>&#125;&#125;,<br>        &#123;<span class="hljs-string">&quot;hobby&quot;</span>:&#123;<span class="hljs-string">&quot;$regex&quot;</span>:<span class="hljs-string">&quot;^s&quot;</span>&#125;&#125;<br>    ]<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-keyword">from</span> collections <span class="hljs-keyword">import</span> OrderedDict<br><br><span class="hljs-comment"># 为了确保嵌套的字典是有序的，需要使用OrderedDict或者第三方包bson(垃圾包不要安)</span><br>db.hellofriends.insert_many([<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;journal&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">25</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: OrderedDict([(<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">14</span>), (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">21</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;cm&quot;</span>)]),<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;notebook&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">50</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: OrderedDict([(<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">8.5</span>), (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">11</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;in&quot;</span>)]),<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;paper&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">100</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: OrderedDict([(<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">8.5</span>), (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">11</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;in&quot;</span>)]),<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;D&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;planner&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">75</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: OrderedDict([(<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">22.85</span>), (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">30</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;cm&quot;</span>)]),<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;D&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;postcard&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">45</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: OrderedDict([(<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">10</span>), (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">15.25</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;cm&quot;</span>)]),<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>&#125;])<br><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 注意：整个嵌套的文档中的匹配要求需要与指定的文档（包括字段的顺序）要完全一致，</span><br><span class="hljs-comment"># 字段顺序和之前插入的顺序不对，查不到任何文档</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;size&quot;</span>:OrderedDict([(<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">14</span>), (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">21</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;cm&quot;</span>)])<br>&#125;)<br>result1 = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;size&quot;</span>:OrderedDict([ (<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-number">21</span>), (<span class="hljs-string">&quot;h&quot;</span>, <span class="hljs-number">14</span>), (<span class="hljs-string">&quot;uom&quot;</span>, <span class="hljs-string">&quot;cm&quot;</span>)])<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:  <span class="hljs-comment"># 会显示数据</span><br>    <span class="hljs-built_in">print</span>(i)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result1:  <span class="hljs-comment"># 不会显示任何数据</span><br>    <span class="hljs-built_in">print</span>(i)<br><br><br><br>    <br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 通过.符号来获取嵌套的文档</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;size.h&quot;</span>:&#123;<span class="hljs-string">&quot;$lt&quot;</span>:<span class="hljs-number">15</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 插入数组</span><br><br>db.hellofriends.insert_many([<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;journal&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">25</span>,<br>     <span class="hljs-string">&quot;tags&quot;</span>: [<span class="hljs-string">&quot;blank&quot;</span>, <span class="hljs-string">&quot;red&quot;</span>],<br>     <span class="hljs-string">&quot;dim_cm&quot;</span>: [<span class="hljs-number">14</span>, <span class="hljs-number">21</span>]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;notebook&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">50</span>,<br>     <span class="hljs-string">&quot;tags&quot;</span>: [<span class="hljs-string">&quot;red&quot;</span>, <span class="hljs-string">&quot;blank&quot;</span>],<br>     <span class="hljs-string">&quot;dim_cm&quot;</span>: [<span class="hljs-number">14</span>, <span class="hljs-number">21</span>]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;paper&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">100</span>,<br>     <span class="hljs-string">&quot;tags&quot;</span>: [<span class="hljs-string">&quot;red&quot;</span>, <span class="hljs-string">&quot;blank&quot;</span>, <span class="hljs-string">&quot;plain&quot;</span>],<br>     <span class="hljs-string">&quot;dim_cm&quot;</span>: [<span class="hljs-number">14</span>, <span class="hljs-number">21</span>]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;planner&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">75</span>,<br>     <span class="hljs-string">&quot;tags&quot;</span>: [<span class="hljs-string">&quot;blank&quot;</span>, <span class="hljs-string">&quot;red&quot;</span>],<br>     <span class="hljs-string">&quot;dim_cm&quot;</span>: [<span class="hljs-number">22.85</span>, <span class="hljs-number">30</span>]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;postcard&quot;</span>,<br>     <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">45</span>,<br>     <span class="hljs-string">&quot;tags&quot;</span>: [<span class="hljs-string">&quot;blue&quot;</span>],<br>     <span class="hljs-string">&quot;dim_cm&quot;</span>: [<span class="hljs-number">10</span>, <span class="hljs-number">15.25</span>]&#125;])<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 搜索指定tags顺序的文档，要考虑顺序,并且是精准查询，只含有red和blank</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;tags&quot;</span>:[<span class="hljs-string">&quot;red&quot;</span>,<span class="hljs-string">&quot;blank&quot;</span>]<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 搜索包含red和blank数组，但不考虑他们的顺序</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;tags&quot;</span>:&#123;<span class="hljs-string">&quot;$all&quot;</span>:[<span class="hljs-string">&quot;red&quot;</span>,<span class="hljs-string">&quot;blank&quot;</span>]&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查找数组中存在某个元素的文档</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;tags&quot;</span>:<span class="hljs-string">&quot;red&quot;</span><br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 对查找数组中的元素增加条件,只要数组中有满足某一个元素大于25且另外一个元素大于23</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;dim_cm&quot;</span>:&#123;<span class="hljs-string">&quot;$gt&quot;</span>:<span class="hljs-number">25</span>,<span class="hljs-string">&quot;$lt&quot;</span>:<span class="hljs-number">23</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 数组中需满足存在一个元素既大于23,又小于25就可以了</span><br><span class="hljs-comment"># $elemMatch表示 至少存在一个满足所有的条件的文档</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;dim_cm&quot;</span>:&#123;<span class="hljs-string">&quot;$elemMatch&quot;</span>:&#123;<span class="hljs-string">&quot;$gt&quot;</span>:<span class="hljs-number">22</span>, <span class="hljs-string">&quot;$lt&quot;</span>:<span class="hljs-number">25</span>&#125;&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查找满足某些条件下数组中某个具体索引位置的元素</span><br><span class="hljs-comment"># 例如查找dim_cm数组中索引为1的并&gt;22的元素</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;dim_cm.0&quot;</span>:&#123;<span class="hljs-string">&quot;$gt&quot;</span>:<span class="hljs-number">21</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 通过数组的长度查找对应的文档</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;tags&quot;</span>:&#123;<span class="hljs-string">&quot;$size&quot;</span>:<span class="hljs-number">3</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 数组中嵌套</span><br><span class="hljs-keyword">from</span> collections <span class="hljs-keyword">import</span> OrderedDict<br>db.hellofriends.insert_many([<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;journal&quot;</span>,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;A&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">5</span>)]),<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;C&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">15</span>)])]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;notebook&quot;</span>,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;C&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">5</span>)])]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;paper&quot;</span>,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;A&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">60</span>)]),<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">15</span>)])]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;planner&quot;</span>,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;A&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">40</span>)]),<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">5</span>)])]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;postcard&quot;</span>,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">15</span>)]),<br>         OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;C&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">35</span>)])]&#125;])<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-keyword">from</span> collections <span class="hljs-keyword">import</span> OrderedDict<br><br><span class="hljs-comment"># 精确查询某个嵌套的文档（精确查询要按照字典顺序）</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;instock&quot;</span>:OrderedDict([(<span class="hljs-string">&quot;warehouse&quot;</span>, <span class="hljs-string">&quot;A&quot;</span>), (<span class="hljs-string">&quot;qty&quot;</span>, <span class="hljs-number">5</span>)])<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查找只要数组中存在满足的条件即可</span><br><br><span class="hljs-comment"># 查找instock中的 qty&gt;=50 的文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;instock.qty&quot;</span>:&#123;<span class="hljs-string">&quot;$gte&quot;</span>:<span class="hljs-number">50</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查找数组中指定索引的并满足条件的文档</span><br><br><span class="hljs-comment"># 查找instock数组中索引为0且 qty&lt;=10 的文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;instock.0.qty&quot;</span>:&#123;<span class="hljs-string">&quot;$lte&quot;</span>:<span class="hljs-number">10</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><br><span class="hljs-comment"># elemMatch操作符</span><br><span class="hljs-comment"># 寻找满足instock数组中，6&lt;=qty&lt;=20条件下至少存在一条子文档的文档</span><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;instock&quot;</span>:&#123;<span class="hljs-string">&quot;$elemMatch&quot;</span>:&#123;<span class="hljs-string">&quot;qty&quot;</span>:&#123;<span class="hljs-string">&quot;$lte&quot;</span>:<span class="hljs-number">20</span>,<span class="hljs-string">&quot;$gte&quot;</span>:<span class="hljs-number">6</span>&#125;&#125;&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查找满足instock数组中，qty &gt;= 6 or qty &lt;= 20 条件下至少存在一条子文档的文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;instock.qty&quot;</span>:&#123;<span class="hljs-string">&quot;$lte&quot;</span>:<span class="hljs-number">20</span>,<span class="hljs-string">&quot;$gte&quot;</span>:<span class="hljs-number">6</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br><br>    <br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查找满足qty=5且warehouse=”A“的至少一条文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;instock.qty&quot;</span>:<span class="hljs-number">5</span>,<span class="hljs-string">&quot;instock.warehouse&quot;</span>:<span class="hljs-string">&quot;A&quot;</span><br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 用于限定查询文档字段量的demo</span><br>db.hellofriends.insert_many([<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;journal&quot;</span>,<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: &#123;<span class="hljs-string">&quot;h&quot;</span>: <span class="hljs-number">14</span>, <span class="hljs-string">&quot;w&quot;</span>: <span class="hljs-number">21</span>, <span class="hljs-string">&quot;uom&quot;</span>: <span class="hljs-string">&quot;cm&quot;</span>&#125;,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [&#123;<span class="hljs-string">&quot;warehouse&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">5</span>&#125;]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;notebook&quot;</span>,<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: &#123;<span class="hljs-string">&quot;h&quot;</span>: <span class="hljs-number">8.5</span>, <span class="hljs-string">&quot;w&quot;</span>: <span class="hljs-number">11</span>, <span class="hljs-string">&quot;uom&quot;</span>: <span class="hljs-string">&quot;in&quot;</span>&#125;,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [&#123;<span class="hljs-string">&quot;warehouse&quot;</span>: <span class="hljs-string">&quot;C&quot;</span>, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">5</span>&#125;]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;paper&quot;</span>,<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;D&quot;</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: &#123;<span class="hljs-string">&quot;h&quot;</span>: <span class="hljs-number">8.5</span>, <span class="hljs-string">&quot;w&quot;</span>: <span class="hljs-number">11</span>, <span class="hljs-string">&quot;uom&quot;</span>: <span class="hljs-string">&quot;in&quot;</span>&#125;,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [&#123;<span class="hljs-string">&quot;warehouse&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">60</span>&#125;]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;planner&quot;</span>,<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;D&quot;</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: &#123;<span class="hljs-string">&quot;h&quot;</span>: <span class="hljs-number">22.85</span>, <span class="hljs-string">&quot;w&quot;</span>: <span class="hljs-number">30</span>, <span class="hljs-string">&quot;uom&quot;</span>: <span class="hljs-string">&quot;cm&quot;</span>&#125;,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [&#123;<span class="hljs-string">&quot;warehouse&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">40</span>&#125;]&#125;,<br>    &#123;<span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-string">&quot;postcard&quot;</span>,<br>     <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;A&quot;</span>,<br>     <span class="hljs-string">&quot;size&quot;</span>: &#123;<span class="hljs-string">&quot;h&quot;</span>: <span class="hljs-number">10</span>, <span class="hljs-string">&quot;w&quot;</span>: <span class="hljs-number">15.25</span>, <span class="hljs-string">&quot;uom&quot;</span>: <span class="hljs-string">&quot;cm&quot;</span>&#125;,<br>     <span class="hljs-string">&quot;instock&quot;</span>: [<br>         &#123;<span class="hljs-string">&quot;warehouse&quot;</span>: <span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">15</span>&#125;,<br>         &#123;<span class="hljs-string">&quot;warehouse&quot;</span>: <span class="hljs-string">&quot;C&quot;</span>, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">35</span>&#125;]&#125;])<br><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 默认返回包含所有字段的文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;A&quot;</span><br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 返回指定fields的文档</span><br><br><span class="hljs-comment"># 返回的文档中只包含item和status和_id字段，</span><br><span class="hljs-comment"># 默认包含_id字段（即无需显示指定_id字段），可以通过显示显示&quot;_id&quot;:0,来排出该字段</span><br><br><span class="hljs-comment"># 等价于select _id, item, status fro hellofriends where status = &quot;A&quot;</span><br><br><br>result = db.hellofriends.find(<br>    &#123;<span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;A&quot;</span>&#125;, &#123;<span class="hljs-string">&quot;item&quot;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-number">1</span>&#125; <span class="hljs-comment"># 添加限制约束条件</span><br>)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;A&quot;</span><br>&#125;,&#123;<span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-number">0</span>, <span class="hljs-string">&quot;instock&quot;</span>:<span class="hljs-number">0</span>, <span class="hljs-string">&quot;item&quot;</span>:<span class="hljs-number">0</span>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 对嵌套的文档执行指定字段的映射</span><br><br><span class="hljs-comment"># 可以使用.fields，无法使用.index</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;A&quot;</span><br>&#125;,&#123;<span class="hljs-string">&quot;item&quot;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&quot;size.uom&quot;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&quot;instock.qty&quot;</span>:<span class="hljs-number">1</span>&#125;)<br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># $slice表示查询结果的数组中指定的元素数量</span><br><br><span class="hljs-comment"># 选择显示一个元素</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;A&quot;</span><br>&#125;,&#123;<span class="hljs-string">&quot;item&quot;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&quot;instock&quot;</span>:&#123;<span class="hljs-string">&quot;$slice&quot;</span>:<span class="hljs-number">1</span>&#125;&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 查询null数据或者缺失的字段</span><br><br>db.hellofriends.insert_many([&#123;<span class="hljs-string">&quot;_id&quot;</span>: <span class="hljs-number">1</span>, <span class="hljs-string">&quot;item&quot;</span>: <span class="hljs-literal">None</span>&#125;, &#123;<span class="hljs-string">&quot;_id&quot;</span>: <span class="hljs-number">2</span>&#125;])<br><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 精确查询，查找item为null或者不包含item字段的文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;item&quot;</span>:<span class="hljs-literal">None</span><br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 文档类型检查,10表示为null，只查询item为null的文档</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;item&quot;</span>:&#123;<span class="hljs-string">&quot;$type&quot;</span>:<span class="hljs-number">10</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># 只查询item不存在（并不是null or ‘’）的文档，区别于关系sql，关系sql只有null or &#x27;&#x27;</span><br>result = db.hellofriends.find(&#123;<br>    <span class="hljs-string">&quot;item&quot;</span>:&#123;<span class="hljs-string">&quot;$exists&quot;</span>:<span class="hljs-literal">False</span>&#125;<br>&#125;)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i)<br><br></code></pre></td></tr></table></figure>
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Mongodb/">Mongodb</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Mongodb/">Mongodb</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/11/25/%E5%AD%A6%E4%B9%A0rabbitmq%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8(2)/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">学习RabbitMQ的原理和简单应用(2)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/11/05/FastAPI%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/">
+                        <span class="hidden-mobile">FastAPI框架学习笔记（一）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <p> 司云中 </p> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a href="https://github.com/syz247179876" target="_blank" rel="nofollow noopener"><span>GitHub</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+  <!-- 备案信息 -->
+  <div class="beian">
+    <span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+        苏ICP备20018683
+      </a>
+    </span>
+    
+      
+        <span class="beian-police">
+          
+          <span class="beian-police">苏ICP备20018683</span>
+        </span>
+      
+    
+  </div>
+
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
