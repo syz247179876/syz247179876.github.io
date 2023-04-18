@@ -217,6 +217,64 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2020/06/07/spring%E5%92%8Cspringmvc%E6%90%AD%E9%85%8D%E6%B3%A8%E8%A7%A3%E6%89%AB%E6%8F%8F%E7%9A%84%E5%86%B2%E7%AA%81/" target="_self">
+          Spring和SpringMVC搭配注解扫描的冲突
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/06/07/spring%E5%92%8Cspringmvc%E6%90%AD%E9%85%8D%E6%B3%A8%E8%A7%A3%E6%89%AB%E6%8F%8F%E7%9A%84%E5%86%B2%E7%AA%81/" target="_self">
+          
+          
+            
+          
+          spring和springmvc搭配时注解扫描的冲突问题因为两者是父子容器的关系，所以采用注解扫描的时候，应该区分不同层使用不同的扫描，一般spring扫描dao层和service层，而springmvc扫描controller层。
+
+因此有两种解决办法：
+法一:在springMVC的配置文件中，只过滤其扫描controller层。
+12345&lt;contex:component-scan b
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-06-07 14:14" pubdate>
+              2020-06-07
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/SpringMVC/">SpringMVC</a>
+            
+              <a href="/categories/SpringMVC/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/SpringMVC/">SpringMVC</a>
+            
+              <a href="/tags/Java/">Java</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2020/06/05/ajax%E5%BC%82%E6%AD%A5%E5%8A%A8%E6%80%81%E5%A2%9E%E5%8A%A0dom%E5%85%83%E7%B4%A0%EF%BC%8C%E4%B8%BA%E5%85%B6%E7%BB%91%E5%AE%9A%E4%BA%8B%E4%BB%B6%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%88%E5%B7%B2%E8%A7%A3%E5%86%B3%EF%BC%89/" target="_self">
           ajax异步动态增加dom元素，为其绑定事件的问题（已解决）
         </a>
@@ -704,60 +762,6 @@
               <a href="/tags/Django/">Django</a>
             
               <a href="/tags/drf/">drf</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2020/05/28/python%20%E8%A3%85%E9%A5%B0%E5%99%A8%E9%97%AD%E5%8C%85%E8%AF%A6%E8%A7%A3%EF%BC%88%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%89/" target="_self">
-          Python 装饰器闭包详解（看这一篇就够了）
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2020/05/28/python%20%E8%A3%85%E9%A5%B0%E5%99%A8%E9%97%AD%E5%8C%85%E8%AF%A6%E8%A7%A3%EF%BC%88%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%89/" target="_self">
-          
-          
-            
-          
-          python装饰器与闭包详解（看着一篇就够了）什么是闭包？闭包简单来说就是函数中嵌套函数。复杂点讲其实是指延伸了作用于的函数，具备自由变量，在第一层函数中定义自由变量，在深入的函数中就可以调用该自由变量
-
-关于闭包的核心关键点—-自由变量什么是自由变量？
-自由变量：指未在本地作用于中绑定的变量，可以将超函数中的本地作用域中的局部变量作为自由变量。
-对于可变序列类型（不可散列对象）：闭包中，可变序列
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2020-05-28 21:13" pubdate>
-              2020-05-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-category"></i>
-            
-              <a href="/categories/Python/">Python</a>
-            
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Python/">Python</a>
             
           </div>
         

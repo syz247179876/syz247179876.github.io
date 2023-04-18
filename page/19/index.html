@@ -217,6 +217,63 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2020/03/17/%E9%98%BF%E9%87%8C%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%83%A8%E7%BD%B2%E5%8F%91%E9%80%81%E9%82%AE%E4%BB%B6%E7%9A%84%E9%97%AE%E9%A2%98/" target="_self">
+          阿里云服务器部署发送邮件的问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/03/17/%E9%98%BF%E9%87%8C%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%83%A8%E7%BD%B2%E5%8F%91%E9%80%81%E9%82%AE%E4%BB%B6%E7%9A%84%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          django自带发邮件模块：from django.core.mail import send_mail
+本地测试使用的是25端口，可以正常发送邮件，但是部署到阿里云服务器上却不能发送
+官方解释：
+因为服务器的25端口是默认关闭的，需要使用SSL加密端口（通常是465）来对外发送邮件，调用的邮件服务器需要支持SSL加密。
+解决方案：
+因此我们就需要将本地设置的25端口改为465端口，同时要注意：E
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-03-17 10:02" pubdate>
+              2020-03-17
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/email/">email</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2020/03/16/jquery%E7%9F%A5%E8%AF%86%E7%82%B9/" target="_self">
           jquery知识点
         </a>
@@ -702,61 +759,6 @@ sudo aot-get install upgrade ,更新软件包
               <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
             
               <a href="/tags/%E8%B4%AA%E5%BF%83%E6%80%9D%E6%83%B3/">贪心思想</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2020/03/12/Leetcode%2013.%E7%BD%97%E9%A9%AC%E6%95%B0%E5%AD%97%E8%BD%AC%E6%95%B4%E6%95%B0/" target="_self">
-          Leetcode 13.罗马数字转整数
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2020/03/12/Leetcode%2013.%E7%BD%97%E9%A9%AC%E6%95%B0%E5%AD%97%E8%BD%AC%E6%95%B4%E6%95%B0/" target="_self">
-          
-          
-            
-          
-          原题是这样的：
-罗马数字包含以下七种字符: I， V， X， L，C，D 和 M。
-字符          数值I             1V             5X             10L             50C             100D             500M             1000
-例如， 罗马数字 2 写做 II ，即为两个并列的 1。1
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2020-03-12 21:14" pubdate>
-              2020-03-12
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-category"></i>
-            
-              <a href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
-            
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
-            
-              <a href="/tags/%E5%85%88%E5%87%8F%E5%90%8E%E5%8A%A0/">先减后加</a>
             
           </div>
         
