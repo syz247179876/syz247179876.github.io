@@ -193,6 +193,62 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2020/05/29/request.POST%E4%B8%8D%E8%83%BD%E4%BF%AE%E6%94%B9%E5%B1%9E%E6%80%A7%E5%80%BC%E7%9A%84%E9%97%AE%E9%A2%98/" target="_self">
+          Django中request.POST不能修改属性值的问题
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/05/29/request.POST%E4%B8%8D%E8%83%BD%E4%BF%AE%E6%94%B9%E5%B1%9E%E6%80%A7%E5%80%BC%E7%9A%84%E9%97%AE%E9%A2%98/" target="_self">
+          
+          
+            
+          
+          ####** 对于提示不能修改request.POST,request.GET的错误**
+最近，在玩drf开发，想要根据不同的需求对request.POST中添加user，发现报了错This QueryDict instance is immutable，发现这个QueryDict实例不能够修改。
+经过查阅了官方文档和网上的博客，解决了问题。
+解决方法：
+法一：使用request.POST.cop
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-05-29 14:13" pubdate>
+              2020-05-29
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/drf/">drf</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2020/05/28/python%20%E8%A3%85%E9%A5%B0%E5%99%A8%E9%97%AD%E5%8C%85%E8%AF%A6%E8%A7%A3%EF%BC%88%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%89/" target="_self">
           Python 装饰器闭包详解（看这一篇就够了）
         </a>
@@ -666,61 +722,6 @@ You have multiple authentication backends configured and therefore must provide 
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/Django/">Django</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2020/05/19/django%20%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BDsettings.py%20%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_self">
-          Django 如何加载settings.py 的源码分析
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2020/05/19/django%20%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BDsettings.py%20%E7%9A%84%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_self">
-          
-          
-            
-          
-          Django加载setting.py的核心过程的源码分析先简单总结一下大致的过程：
-django项目启动编译，先加载global_settings.py中的配置，然后再加载根目录下的settings.py并利用反射机制进行覆盖。
-原理步骤分析：
-首先从入口manage.py分析：12345678910111213141516171819202122import osimport sysdef ma
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2020-05-19 13:11" pubdate>
-              2020-05-19
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-category"></i>
-            
-              <a href="/categories/Django/">Django</a>
-            
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Django/">Django</a>
-            
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
             
           </div>
         

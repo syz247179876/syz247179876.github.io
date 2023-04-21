@@ -193,6 +193,71 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2020/08/19/%E5%AF%B9DRF%E7%9A%84APIView%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/" target="_self">
+          对DRF的APIView执行流程的源码学习
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/08/19/%E5%AF%B9DRF%E7%9A%84APIView%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/" target="_self">
+          
+          
+            
+          
+          跟着源码学习下DRF的APIView执行流程原理一  入口函数as_view() 方法——入口{width=90%}
+说明：
+一般通过urlconf中配置路由时，需绑定类视图的as_view()方法。注意必须以类名.as_view()形式调用，而不能实例化调用，因为@classonlymethod中重写了__get__内置方法进行限制。
+{width=90%}
+
+二   基类中的as_view()
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-08-19 14:16" pubdate>
+              2020-08-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Django/">Django</a>
+            
+              <a href="/categories/Django/DRF/">DRF</a>
+            
+              <a href="/categories/Django/DRF/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Django/">Django</a>
+            
+              <a href="/tags/Python/">Python</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+            
+              <a href="/tags/DRF/">DRF</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2020/08/18/%E5%88%86%E4%BA%ABredis%E4%B8%ADbittop%E5%92%8Cbitcount%E7%9A%84%E6%9C%89%E8%B6%A3%E7%9A%84%E5%AE%9E%E4%BE%8B/" target="_self">
           分享Redis中bittop和bitcount的有趣的实例
         </a>
@@ -696,63 +761,6 @@ source
               <a href="/tags/Nginx/">Nginx</a>
             
               <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2020/07/30/Vue%E4%B8%ADprops%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BD%BF%E7%94%A8%E5%92%8C%E7%90%86%E8%A7%A3/" target="_self">
-          Vue中props属性的使用和理解
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2020/07/30/Vue%E4%B8%ADprops%E5%B1%9E%E6%80%A7%E7%9A%84%E4%BD%BF%E7%94%A8%E5%92%8C%E7%90%86%E8%A7%A3/" target="_self">
-          
-          
-            
-          
-          Vue中的props：主要用于获取父组件传过来的数据。
-
-话不多说，先上代码，再做分析：
-12345678&lt;div id=&quot;posts&quot;&gt;			&lt;blog-post			  v-for=&quot;post in posts&quot;			  v-bind:key=&quot;post.id&quot;			  v-bind:postss=&quot;pos
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2020-07-30 15:54" pubdate>
-              2020-07-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-category"></i>
-            
-              <a href="/categories/Vue/">Vue</a>
-            
-              <a href="/categories/Vue/%E5%89%8D%E7%AB%AF/">前端</a>
-            
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%89%8D%E7%AB%AF/">前端</a>
-            
-              <a href="/tags/Vue/">Vue</a>
             
           </div>
         
